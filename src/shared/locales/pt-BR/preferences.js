@@ -107,7 +107,8 @@ export default {
   'bt-tracker-content': 'Lista de trackers',
   'proxy-server': 'Servidor proxy',
   'invalid-proxy-url': 'Invalid proxy URL format',
-  'proxy-unsupported-protocol': 'Protocolo de proxy não suportado. Aria2 Next suporta apenas proxy HTTP (http/https/ftp).',
+  'proxy-unsupported-protocol':
+    'Protocolo de proxy não suportado. Aria2 Next suporta apenas proxy HTTP (http/https/ftp).',
   'proxy-http-only-hint': 'Aria2 Next suporta apenas proxy HTTP. Proxy SOCKS não é suportado.',
   'user-agent-string': 'String UA',
   port: 'Portas de escuta',
@@ -116,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Recuperação de conflito de portas',
   'port-conflict-recovery-enable': 'Ativar recuperação de conflito de portas',
   'port-conflict-recovery-range': 'Intervalo de portas alternativas',
-  'port-conflict-recovery-range-hint': 'Usado quando uma porta gerenciada está ocupada. A porta escolhida precisa estar livre para TCP e UDP.',
+  'port-conflict-recovery-range-hint':
+    'Usado quando uma porta gerenciada está ocupada. A porta escolhida precisa estar livre para TCP e UDP.',
   'port-conflict-recovery-apply-to': 'Aplicar a',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,7 +127,8 @@ export default {
   'port-auto-switched': 'Conflito de portas detectado. Alternado para {ports}.',
   'port-auto-switch-bind-failed': 'Conflito na porta {label}: falha ao vincular a porta reserva {port}.',
   'port-auto-switch-no-available-port': 'Conflito na porta {label}: nenhuma porta reserva disponível foi encontrada.',
-  'port-auto-switch-disabled': 'Conflito na porta {label}: a porta {port} está em uso. A troca automática de portas está desativada.',
+  'port-auto-switch-disabled':
+    'Conflito na porta {label}: a porta {port} está em uso. A troca automática de portas está desativada.',
   'bt-port': 'Porta BT',
   'dht-port': 'Porta DHT',
   security: 'Segurança',
@@ -326,10 +329,9 @@ export default {
   'file-category-auto-archive': 'arquivamento automático',
   'file-category-auto-archive-hint':
     'Tipos não reconhecidos são salvos no caminho padrão e arquivados automaticamente após o download',
-  'auto-submit-from-extension': 'Pular confirmação para downloads da extensão',
-  'silent-auto-submit-from-extension': 'Processar downloads da extensao em segundo plano',
-  'silent-auto-submit-from-extension-tip':
-    'Quando a confirmacao e ignorada, downloads da extensao podem ser aceitos sem mostrar a janela principal.',
+  'auto-submit-from-extension': 'Ignorar confirmação para downloads da extensão',
+  'silent-auto-submit-from-extension': 'Não mostrar a janela principal para downloads da extensão',
+  'auto-select-all-files-from-extension': 'Baixar todos os arquivos torrent e magnet por padrão',
   'extension-api-port': 'Porta da API da extensão',
   'extension-api-secret-tip': 'Insira esta chave nas configurações da extensão do navegador para autenticação.',
   'extension-api-secret': 'Chave secreta da API da extensão',
@@ -354,7 +356,7 @@ export default {
   'unit-seconds': 'seg',
   'concurrency-and-segments': 'Conexões e segmentos',
   'retry-and-file-behavior': 'Recuperação e tentativas',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'Porta de escuta ED2K',
   'ed2k-server': 'Servidores ED2K',

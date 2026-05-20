@@ -117,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Port Conflict Recovery',
   'port-conflict-recovery-enable': 'Enable port conflict recovery',
   'port-conflict-recovery-range': 'Fallback port range',
-  'port-conflict-recovery-range-hint': 'Used when a managed port is occupied. The selected port must be free for both TCP and UDP.',
+  'port-conflict-recovery-range-hint':
+    'Used when a managed port is occupied. The selected port must be free for both TCP and UDP.',
   'port-conflict-recovery-apply-to': 'Apply to',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -326,9 +327,8 @@ export default {
   'file-category-auto-archive-hint':
     'Unrecognized types are saved to the default path and auto-archived after download',
   'auto-submit-from-extension': 'Skip confirmation for extension downloads',
-  'silent-auto-submit-from-extension': 'Process extension downloads in the background',
-  'silent-auto-submit-from-extension-tip':
-    'When confirmation is skipped, extension downloads can be accepted without showing the main window.',
+  'silent-auto-submit-from-extension': 'Do not show the main window for extension downloads',
+  'auto-select-all-files-from-extension': 'Download all torrent and magnet files by default',
   'extension-api-port': 'Extension API Port',
   'extension-api-secret-tip': 'Enter this secret in the browser extension settings to authenticate.',
   'extension-api-secret': 'Extension API Secret',
@@ -353,7 +353,7 @@ export default {
   'unit-seconds': 'sec',
   'concurrency-and-segments': 'Concurrency & Segments',
   'retry-and-file-behavior': 'Retry & File Options',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

@@ -447,12 +447,12 @@ onMounted(async () => {
       <NFormItem :label="t('preferences.auto-submit-from-extension')">
         <NSwitch v-model:value="form.autoSubmitFromExtension" />
       </NFormItem>
-      <NCollapseTransition :show="form.autoSubmitFromExtension">
+      <NCollapseTransition :show="form.autoSubmitFromExtension" class="collapse-indent">
         <NFormItem :label="t('preferences.silent-auto-submit-from-extension')">
-          <div class="stacked-control">
-            <NSwitch v-model:value="form.silentAutoSubmitFromExtension" />
-            <div class="info-text">{{ t('preferences.silent-auto-submit-from-extension-tip') }}</div>
-          </div>
+          <NSwitch v-model:value="form.silentAutoSubmitFromExtension" />
+        </NFormItem>
+        <NFormItem :label="t('preferences.auto-select-all-files-from-extension')">
+          <NSwitch v-model:value="form.autoSelectAllFilesFromExtension" />
         </NFormItem>
       </NCollapseTransition>
       <NFormItem :label="t('preferences.extension-api-port')">
@@ -745,10 +745,9 @@ onMounted(async () => {
   max-width: 520px;
   word-wrap: break-word;
 }
-.stacked-control {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.form-preference :deep(.collapse-indent) {
+  position: relative;
+  margin-left: 16px;
 }
 .info-link {
   color: var(--color-primary);

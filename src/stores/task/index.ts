@@ -268,7 +268,10 @@ export const useTaskStore = defineStore('task', () => {
     // follow-up download immediately — file selection is not needed.
     const { usePreferenceStore } = await import('@/stores/preference')
     const preferenceStore = usePreferenceStore()
-    if (shouldShowFileSelection(preferenceStore.config)) {
+    const pauseMetadataOption = magnetOptions['pause-metadata']
+    const pauseMetadata =
+      typeof pauseMetadataOption === 'string' ? pauseMetadataOption : preferenceStore.config.pauseMetadata
+    if (shouldShowFileSelection({ pauseMetadata })) {
       const { useAppStore } = await import('@/stores/app')
       const appStore = useAppStore()
       appStore.pendingMagnetGids = [...appStore.pendingMagnetGids, gid]

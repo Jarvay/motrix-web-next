@@ -341,14 +341,14 @@ fn read_api_secret(app: &AppHandle) -> String {
 /// Route a download request through the shared external-input channel.
 fn route_to_frontend(app: &AppHandle, req: &AddRequest) {
     let deep_link_str = build_deep_link_url(req);
-    if should_silent_route_extension_input(app) {
+    if should_silent_route_extension_input(app, req) {
         deep_link::route_silent_external_inputs(app, vec![deep_link_str], "http-api");
     } else {
         deep_link::route_external_inputs(app, vec![deep_link_str], "http-api");
     }
 }
 
-fn should_silent_route_extension_input(app: &AppHandle) -> bool {
+fn should_silent_route_extension_input(app: &AppHandle, req: &AddRequest) -> bool {
     app.store("config.json")
         .ok()
         .and_then(|s| s.get("preferences"))
@@ -361,9 +361,51 @@ fn should_silent_route_extension_input(app: &AppHandle) -> bool {
                 .get("silentAutoSubmitFromExtension")
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(true);
-            auto_submit && silent
+            let auto_select_all = p
+                .get("autoSelectAllFilesFromExtension")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false);
+            let pause_metadata = p
+                .get("pauseMetadata")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true);
+            should_silent_route_url(
+                &req.url,
+                auto_submit,
+                silent,
+                auto_select_all,
+                pause_metadata,
+            )
         })
         .unwrap_or(false)
+}
+
+fn should_silent_route_url(
+    raw_url: &str,
+    auto_submit: bool,
+    silent: bool,
+    auto_select_all: bool,
+    pause_metadata: bool,
+) -> bool {
+    if !(auto_submit && silent) {
+        return false;
+    }
+    if auto_select_all {
+        return true;
+    }
+
+    let lower = raw_url.to_ascii_lowercase();
+    if lower.starts_with("magnet:") {
+        return !pause_metadata;
+    }
+    !is_file_selection_url(raw_url)
+}
+
+fn is_file_selection_url(raw_url: &str) -> bool {
+    let path = url::Url::parse(raw_url)
+        .map(|url| url.path().to_ascii_lowercase())
+        .unwrap_or_else(|_| raw_url.to_ascii_lowercase());
+    path.ends_with(".torrent") || path.ends_with(".metalink") || path.ends_with(".meta4")
 }
 
 /// Build a `motrixnext://new?url=X&referer=Y&cookie=Z` deep-link URL.

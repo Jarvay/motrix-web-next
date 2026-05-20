@@ -116,7 +116,8 @@ export default {
   'port-conflict-recovery': 'Khôi phục xung đột cổng',
   'port-conflict-recovery-enable': 'Bật khôi phục xung đột cổng',
   'port-conflict-recovery-range': 'Dải cổng dự phòng',
-  'port-conflict-recovery-range-hint': 'Dùng khi một cổng được quản lý đang bị chiếm. Cổng được chọn phải trống cho cả TCP và UDP.',
+  'port-conflict-recovery-range-hint':
+    'Dùng khi một cổng được quản lý đang bị chiếm. Cổng được chọn phải trống cho cả TCP và UDP.',
   'port-conflict-recovery-apply-to': 'Áp dụng cho',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -325,9 +326,8 @@ export default {
   'file-category-auto-archive-hint':
     'Các loại không nhận dạng được sẽ được lưu vào đường dẫn mặc định và tự động lưu trữ sau khi tải xuống',
   'auto-submit-from-extension': 'Bỏ qua xác nhận cho tải xuống từ tiện ích',
-  'silent-auto-submit-from-extension': 'Xu ly tai xuong tu tien ich trong nen',
-  'silent-auto-submit-from-extension-tip':
-    'Khi bo qua xac nhan, tai xuong tu tien ich co the duoc nhan ma khong hien cua so chinh.',
+  'silent-auto-submit-from-extension': 'Không hiển thị cửa sổ chính cho tải xuống từ tiện ích',
+  'auto-select-all-files-from-extension': 'Mặc định tải xuống mọi tệp torrent và magnet',
   'extension-api-port': 'Cổng API tiện ích',
   'extension-api-secret-tip': 'Nhập khóa này vào cài đặt tiện ích mở rộng trình duyệt để xác thực.',
   'extension-api-secret': 'Khóa bí mật API tiện ích',
@@ -352,7 +352,7 @@ export default {
   'unit-seconds': 'giây',
   'concurrency-and-segments': 'Kết nối và phân đoạn',
   'retry-and-file-behavior': 'Khôi phục và thử lại',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

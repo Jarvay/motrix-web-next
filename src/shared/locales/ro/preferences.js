@@ -116,7 +116,8 @@ export default {
   'port-conflict-recovery': 'Recuperare conflict porturi',
   'port-conflict-recovery-enable': 'Activează recuperarea conflictelor de port',
   'port-conflict-recovery-range': 'Interval de porturi de rezervă',
-  'port-conflict-recovery-range-hint': 'Folosit când un port gestionat este ocupat. Portul ales trebuie să fie liber atât pentru TCP, cât și pentru UDP.',
+  'port-conflict-recovery-range-hint':
+    'Folosit când un port gestionat este ocupat. Portul ales trebuie să fie liber atât pentru TCP, cât și pentru UDP.',
   'port-conflict-recovery-apply-to': 'Aplică la',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,7 +126,8 @@ export default {
   'port-auto-switched': 'Conflict de port detectat. S-a comutat la {ports}.',
   'port-auto-switch-bind-failed': 'Conflict de port {label}: portul de rezervă {port} nu a putut fi legat.',
   'port-auto-switch-no-available-port': 'Conflict de port {label}: nu a fost găsit niciun port de rezervă disponibil.',
-  'port-auto-switch-disabled': 'Conflict de port {label}: portul {port} este folosit. Schimbarea automată a porturilor este dezactivată.',
+  'port-auto-switch-disabled':
+    'Conflict de port {label}: portul {port} este folosit. Schimbarea automată a porturilor este dezactivată.',
   'bt-port': 'Port BT',
   'dht-port': 'Port DHT',
   security: 'Securitate',
@@ -326,10 +328,9 @@ export default {
   'file-category-auto-archive': 'arhivare automată',
   'file-category-auto-archive-hint':
     'Tipurile nerecunoscute sunt salvate în calea implicită și arhivate automat după descărcare',
-  'auto-submit-from-extension': 'Omite confirmarea pentru descărcările din extensie',
-  'silent-auto-submit-from-extension': 'Proceseaza descarcarile extensiei in fundal',
-  'silent-auto-submit-from-extension-tip':
-    'Cand confirmarea este omisa, descarcarile extensiei pot fi acceptate fara afisarea ferestrei principale.',
+  'auto-submit-from-extension': 'Omite confirmarea pentru descărcările extensiei',
+  'silent-auto-submit-from-extension': 'Nu afișa fereastra principală pentru descărcările extensiei',
+  'auto-select-all-files-from-extension': 'Descarcă implicit toate fișierele torrent și magnet',
   'extension-api-port': 'Port API extensie',
   'extension-api-secret-tip': 'Introduceți această cheie în setările extensiei browserului pentru autentificare.',
   'extension-api-secret': 'Cheie secretă API extensie',
@@ -355,7 +356,7 @@ export default {
   'unit-seconds': 'sec',
   'concurrency-and-segments': 'Conexiuni și segmente',
   'retry-and-file-behavior': 'Recuperare și reîncercare',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

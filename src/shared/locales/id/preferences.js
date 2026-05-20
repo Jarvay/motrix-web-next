@@ -107,7 +107,8 @@ export default {
   'bt-tracker-content': 'Daftar tracker',
   'proxy-server': 'Server proxy',
   'invalid-proxy-url': 'Invalid proxy URL format',
-  'proxy-unsupported-protocol': 'Protokol proxy tidak didukung. Aria2 Next hanya mendukung proxy HTTP (http/https/ftp).',
+  'proxy-unsupported-protocol':
+    'Protokol proxy tidak didukung. Aria2 Next hanya mendukung proxy HTTP (http/https/ftp).',
   'proxy-http-only-hint': 'Aria2 Next hanya mendukung proxy HTTP. Proxy SOCKS tidak didukung.',
   'user-agent-string': 'String UA',
   port: 'Port pendengar',
@@ -116,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Pemulihan konflik port',
   'port-conflict-recovery-enable': 'Aktifkan pemulihan konflik port',
   'port-conflict-recovery-range': 'Rentang port cadangan',
-  'port-conflict-recovery-range-hint': 'Digunakan saat port terkelola sedang dipakai. Port yang dipilih harus bebas untuk TCP dan UDP.',
+  'port-conflict-recovery-range-hint':
+    'Digunakan saat port terkelola sedang dipakai. Port yang dipilih harus bebas untuk TCP dan UDP.',
   'port-conflict-recovery-apply-to': 'Terapkan ke',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,7 +127,8 @@ export default {
   'port-auto-switched': 'Konflik port terdeteksi. Dialihkan ke {ports}.',
   'port-auto-switch-bind-failed': 'Konflik port {label}: gagal mengikat port cadangan {port}.',
   'port-auto-switch-no-available-port': 'Konflik port {label}: tidak ada port cadangan yang tersedia.',
-  'port-auto-switch-disabled': 'Konflik port {label}: port {port} sedang digunakan. Pengalihan port otomatis dinonaktifkan.',
+  'port-auto-switch-disabled':
+    'Konflik port {label}: port {port} sedang digunakan. Pengalihan port otomatis dinonaktifkan.',
   'bt-port': 'Port BT',
   'dht-port': 'Port DHT',
   security: 'Keamanan',
@@ -326,9 +329,8 @@ export default {
   'file-category-auto-archive-hint':
     'Jenis yang tidak dikenali disimpan ke jalur default dan diarsipkan secara otomatis setelah unduhan',
   'auto-submit-from-extension': 'Lewati konfirmasi untuk unduhan ekstensi',
-  'silent-auto-submit-from-extension': 'Proses unduhan ekstensi di latar belakang',
-  'silent-auto-submit-from-extension-tip':
-    'Saat konfirmasi dilewati, unduhan ekstensi dapat diterima tanpa menampilkan jendela utama.',
+  'silent-auto-submit-from-extension': 'Jangan tampilkan jendela utama untuk unduhan ekstensi',
+  'auto-select-all-files-from-extension': 'Unduh semua file torrent dan magnet secara default',
   'extension-api-port': 'Port API Ekstensi',
   'extension-api-secret-tip': 'Masukkan kunci ini di pengaturan ekstensi browser untuk autentikasi.',
   'extension-api-secret': 'Kunci API Ekstensi',
@@ -353,7 +355,7 @@ export default {
   'unit-seconds': 'dtk',
   'concurrency-and-segments': 'Koneksi & segmen',
   'retry-and-file-behavior': 'Pemulihan & coba ulang',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

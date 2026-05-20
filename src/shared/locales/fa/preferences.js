@@ -117,7 +117,8 @@ export default {
   'port-conflict-recovery': 'بازیابی تداخل پورت',
   'port-conflict-recovery-enable': 'فعال‌سازی بازیابی تداخل پورت',
   'port-conflict-recovery-range': 'بازه پورت جایگزین',
-  'port-conflict-recovery-range-hint': 'وقتی یک پورت مدیریت‌شده اشغال باشد استفاده می‌شود. پورت انتخابی باید برای هر دو TCP و UDP آزاد باشد.',
+  'port-conflict-recovery-range-hint':
+    'وقتی یک پورت مدیریت‌شده اشغال باشد استفاده می‌شود. پورت انتخابی باید برای هر دو TCP و UDP آزاد باشد.',
   'port-conflict-recovery-apply-to': 'اعمال برای',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -325,10 +326,9 @@ export default {
   'file-category-auto-archive': 'بایگانی خودکار',
   'file-category-auto-archive-hint':
     'انواع ناشناخته در مسیر پیش‌فرض ذخیره و پس از دانلود به‌صورت خودکار بایگانی می‌شوند',
-  'auto-submit-from-extension': 'رد شدن از تأیید برای دانلودهای افزونه',
-  'silent-auto-submit-from-extension': 'پردازش دانلودهای افزونه در پس زمينه',
-  'silent-auto-submit-from-extension-tip':
-    'وقتي تاييد رد مي‌شود، دانلودهاي افزونه بدون نمايش پنجره اصلي پذيرفته مي‌شوند.',
+  'auto-submit-from-extension': 'رد کردن تأیید دانلودهای افزونه',
+  'silent-auto-submit-from-extension': 'پنجره اصلی برای دانلودهای افزونه نمایش داده نشود',
+  'auto-select-all-files-from-extension': 'دانلود همه فایل‌های تورنت و مگنت به‌صورت پیش‌فرض',
   'extension-api-port': 'پورت API افزونه',
   'extension-api-secret-tip': 'این کلید را در تنظیمات افزونه مرورگر برای احراز هویت وارد کنید.',
   'extension-api-secret': 'کلید API افزونه',
@@ -353,7 +353,7 @@ export default {
   'unit-seconds': 'ثانیه',
   'concurrency-and-segments': 'اتصال و بخش‌بندی',
   'retry-and-file-behavior': 'بازیابی و تلاش مجدد',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

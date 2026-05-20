@@ -118,7 +118,8 @@ export default {
   'port-conflict-recovery': 'Récupération des conflits de port',
   'port-conflict-recovery-enable': 'Activer la récupération des conflits de port',
   'port-conflict-recovery-range': 'Plage de ports de secours',
-  'port-conflict-recovery-range-hint': 'Utilisée lorsqu\'un port géré est occupé. Le port choisi doit être libre pour TCP et UDP.',
+  'port-conflict-recovery-range-hint':
+    "Utilisée lorsqu'un port géré est occupé. Le port choisi doit être libre pour TCP et UDP.",
   'port-conflict-recovery-apply-to': 'Appliquer à',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -126,8 +127,9 @@ export default {
   'port-conflict-recovery-invalid-range': 'Saisissez une plage de ports de secours valide entre 1024 et 65535.',
   'port-auto-switched': 'Conflit de ports détecté. Changement effectué : {ports}.',
   'port-auto-switch-bind-failed': 'Conflit du port {label} : impossible de lier le port de secours {port}.',
-  'port-auto-switch-no-available-port': 'Conflit du port {label} : aucun port de secours disponible n\'a été trouvé.',
-  'port-auto-switch-disabled': 'Conflit du port {label} : le port {port} est utilisé. Le changement automatique de port est désactivé.',
+  'port-auto-switch-no-available-port': "Conflit du port {label} : aucun port de secours disponible n'a été trouvé.",
+  'port-auto-switch-disabled':
+    'Conflit du port {label} : le port {port} est utilisé. Le changement automatique de port est désactivé.',
   'bt-port': 'Port BT',
   'dht-port': 'Port DHT',
   security: 'Sécurité',
@@ -331,10 +333,9 @@ export default {
   'file-category-auto-archive': 'archivage automatique',
   'file-category-auto-archive-hint':
     'Les types non reconnus sont enregistrés dans le chemin par défaut et archivés automatiquement après le téléchargement',
-  'auto-submit-from-extension': "Télécharger directement depuis l'extension",
-  'silent-auto-submit-from-extension': 'Traiter les telechargements de l\'extension en arriere-plan',
-  'silent-auto-submit-from-extension-tip':
-    'Lorsque la confirmation est ignoree, les telechargements de l\'extension peuvent etre acceptes sans afficher la fenetre principale.',
+  'auto-submit-from-extension': "Ignorer la confirmation pour les téléchargements de l'extension",
+  'silent-auto-submit-from-extension': "Ne pas afficher la fenêtre principale pour les téléchargements de l'extension",
+  'auto-select-all-files-from-extension': 'Télécharger tous les fichiers torrent et magnet par défaut',
   'extension-api-port': "Port API de l'extension",
   'extension-api-secret-tip':
     "Saisissez cette clé dans les paramètres de l'extension du navigateur pour l'authentification.",
@@ -361,7 +362,7 @@ export default {
   'unit-seconds': 'sec',
   'concurrency-and-segments': 'Connexions et segments',
   'retry-and-file-behavior': 'Reprise et nouvelles tentatives',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'Port d’écoute ED2K',
   'ed2k-server': 'Serveurs ED2K',

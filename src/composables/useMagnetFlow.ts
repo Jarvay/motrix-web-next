@@ -62,8 +62,8 @@ export function buildSelectFileOption(indices: number[]): string {
  * Defaults to true (show dialog) when the config value is missing,
  * aligning with the industry standard of giving users control over file selection.
  */
-export function shouldShowFileSelection(config: { pauseMetadata?: boolean }): boolean {
-  return config.pauseMetadata !== false
+export function shouldShowFileSelection(config: { pauseMetadata?: boolean | string }): boolean {
+  return config.pauseMetadata !== false && config.pauseMetadata !== 'false'
 }
 
 /** Actions needed to apply file selection to a download based on its current status. */

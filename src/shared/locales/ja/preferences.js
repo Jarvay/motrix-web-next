@@ -117,7 +117,8 @@ export default {
   'port-conflict-recovery': 'ポート競合の復旧',
   'port-conflict-recovery-enable': 'ポート競合の復旧を有効にする',
   'port-conflict-recovery-range': '代替ポート範囲',
-  'port-conflict-recovery-range-hint': '管理対象ポートが使用中のときに使われます。選択されるポートは TCP と UDP の両方で空いている必要があります。',
+  'port-conflict-recovery-range-hint':
+    '管理対象ポートが使用中のときに使われます。選択されるポートは TCP と UDP の両方で空いている必要があります。',
   'port-conflict-recovery-apply-to': '適用先',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -297,7 +298,8 @@ export default {
   'detect-system-proxy': 'システムプロキシを検出',
   'proxy-detected-success': 'システム設定からプロキシを検出しました',
   'proxy-system-not-detected': 'システムプロキシが検出されませんでした',
-  'proxy-system-socks-rejected': 'システムプロキシはSOCKSプロトコルを使用しています。Aria2 Nextではサポートされていません',
+  'proxy-system-socks-rejected':
+    'システムプロキシはSOCKSプロトコルを使用しています。Aria2 Nextではサポートされていません',
   'proxy-system-detect-failed': 'システムプロキシの検出に失敗しました',
   'speed-schedule': '速度スケジュール',
   'speed-schedule-enabled': 'スケジュールを有効化',
@@ -325,10 +327,9 @@ export default {
   'file-category-auto-archive': '自動アーカイブ',
   'file-category-auto-archive-hint':
     '認識できないタイプはデフォルトパスに保存され、ダウンロード後に自動的にアーカイブされます',
-  'auto-submit-from-extension': '拡張機能からのダウンロードを確認なしで開始',
-  'silent-auto-submit-from-extension': '拡張機能のダウンロードをバックグラウンドで処理',
-  'silent-auto-submit-from-extension-tip':
-    '確認をスキップする場合、メインウィンドウを表示せずに拡張機能からのダウンロードを受け付けます。',
+  'auto-submit-from-extension': '拡張機能からのダウンロード確認をスキップ',
+  'silent-auto-submit-from-extension': '拡張機能ダウンロードでメインウィンドウを表示しない',
+  'auto-select-all-files-from-extension': 'Torrent と Magnet の全ファイルを既定でダウンロード',
   'extension-api-port': '拡張機能 API ポート',
   'extension-api-secret-tip': '認証のためにブラウザ拡張機能の設定にこのシークレットを入力してください。',
   'extension-api-secret': '拡張機能 API シークレット',
@@ -354,7 +355,7 @@ export default {
   'unit-seconds': '秒',
   'concurrency-and-segments': '接続とセグメント',
   'retry-and-file-behavior': '復旧とリトライ',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K 待受ポート',
   'ed2k-server': 'ED2K サーバー',

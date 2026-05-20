@@ -118,7 +118,8 @@ export default {
   'port-conflict-recovery': 'Ανάκτηση σύγκρουσης θυρών',
   'port-conflict-recovery-enable': 'Ενεργοποίηση ανάκτησης σύγκρουσης θυρών',
   'port-conflict-recovery-range': 'Εύρος εφεδρικών θυρών',
-  'port-conflict-recovery-range-hint': 'Χρησιμοποιείται όταν μια διαχειριζόμενη θύρα είναι κατειλημμένη. Η επιλεγμένη θύρα πρέπει να είναι διαθέσιμη τόσο για TCP όσο και για UDP.',
+  'port-conflict-recovery-range-hint':
+    'Χρησιμοποιείται όταν μια διαχειριζόμενη θύρα είναι κατειλημμένη. Η επιλεγμένη θύρα πρέπει να είναι διαθέσιμη τόσο για TCP όσο και για UDP.',
   'port-conflict-recovery-apply-to': 'Εφαρμογή σε',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -127,7 +128,8 @@ export default {
   'port-auto-switched': 'Εντοπίστηκε διένεξη θυρών. Έγινε αλλαγή σε {ports}.',
   'port-auto-switch-bind-failed': 'Διένεξη θύρας {label}: δεν ήταν δυνατή η δέσμευση της εναλλακτικής θύρας {port}.',
   'port-auto-switch-no-available-port': 'Διένεξη θύρας {label}: δεν βρέθηκε διαθέσιμη εναλλακτική θύρα.',
-  'port-auto-switch-disabled': 'Διένεξη θύρας {label}: η θύρα {port} χρησιμοποιείται. Η αυτόματη αλλαγή θυρών είναι απενεργοποιημένη.',
+  'port-auto-switch-disabled':
+    'Διένεξη θύρας {label}: η θύρα {port} χρησιμοποιείται. Η αυτόματη αλλαγή θυρών είναι απενεργοποιημένη.',
   'bt-port': 'Θύρα BT',
   'dht-port': 'Θύρα DHT',
   security: 'Ασφάλεια',
@@ -330,10 +332,9 @@ export default {
   'file-category-auto-archive': 'αυτόματη αρχειοθέτηση',
   'file-category-auto-archive-hint':
     'Οι μη αναγνωρισμένοι τύποι αποθηκεύονται στην προεπιλεγμένη διαδρομή και αρχειοθετούνται αυτόματα μετά τη λήψη',
-  'auto-submit-from-extension': 'Παράλειψη επιβεβαίωσης για λήψεις επέκτασης',
-  'silent-auto-submit-from-extension': 'Επεξεργασια ληψεων επεκτασης στο παρασκηνιο',
-  'silent-auto-submit-from-extension-tip':
-    'Οταν παρακαμπτεται η επιβεβαιωση, οι ληψεις επεκτασης μπορουν να γινουν δεκτες χωρις να εμφανιστει το κυριο παραθυρο.',
+  'auto-submit-from-extension': 'Παράκαμψη επιβεβαίωσης για λήψεις επέκτασης',
+  'silent-auto-submit-from-extension': 'Να μην εμφανίζεται το κύριο παράθυρο για λήψεις επέκτασης',
+  'auto-select-all-files-from-extension': 'Λήψη όλων των αρχείων torrent και magnet από προεπιλογή',
   'extension-api-port': 'Θύρα API επέκτασης',
   'extension-api-secret-tip':
     'Εισαγάγετε αυτό το κλειδί στις ρυθμίσεις της επέκτασης του προγράμματος περιήγησης για έλεγχο ταυτότητας.',
@@ -360,7 +361,7 @@ export default {
   'unit-seconds': 'δευτ',
   'concurrency-and-segments': 'Συνδέσεις & τμήματα',
   'retry-and-file-behavior': 'Ανάκτηση & επανάληψη',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

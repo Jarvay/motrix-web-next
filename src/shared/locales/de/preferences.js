@@ -117,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Portkonflikt-Wiederherstellung',
   'port-conflict-recovery-enable': 'Portkonflikt-Wiederherstellung aktivieren',
   'port-conflict-recovery-range': 'Fallback-Portbereich',
-  'port-conflict-recovery-range-hint': 'Wird verwendet, wenn ein verwalteter Port belegt ist. Der gewählte Port muss sowohl für TCP als auch UDP frei sein.',
+  'port-conflict-recovery-range-hint':
+    'Wird verwendet, wenn ein verwalteter Port belegt ist. Der gewählte Port muss sowohl für TCP als auch UDP frei sein.',
   'port-conflict-recovery-apply-to': 'Anwenden auf',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -126,7 +127,8 @@ export default {
   'port-auto-switched': 'Portkonflikt erkannt. Gewechselt: {ports}.',
   'port-auto-switch-bind-failed': 'Portkonflikt bei {label}: Ersatzport {port} konnte nicht gebunden werden.',
   'port-auto-switch-no-available-port': 'Portkonflikt bei {label}: kein verfügbarer Ersatzport gefunden.',
-  'port-auto-switch-disabled': 'Portkonflikt bei {label}: Port {port} ist belegt. Automatischer Portwechsel ist deaktiviert.',
+  'port-auto-switch-disabled':
+    'Portkonflikt bei {label}: Port {port} ist belegt. Automatischer Portwechsel ist deaktiviert.',
   'bt-port': 'BT-Port',
   'dht-port': 'DHT-Port',
   security: 'Sicherheit',
@@ -327,10 +329,9 @@ export default {
   'file-category-auto-archive': 'Auto-Archivierung',
   'file-category-auto-archive-hint':
     'Unbekannte Dateitypen werden im Standard-Pfad gespeichert und nach dem Download automatisch archiviert',
-  'auto-submit-from-extension': 'Bestätigung für Erweiterungs-Downloads überspringen',
-  'silent-auto-submit-from-extension': 'Erweiterungsdownloads im Hintergrund verarbeiten',
-  'silent-auto-submit-from-extension-tip':
-    'Wenn die Bestatigung ubersprungen wird, konnen Erweiterungsdownloads angenommen werden, ohne das Hauptfenster anzuzeigen.',
+  'auto-submit-from-extension': 'Bestätigung für Erweiterungsdownloads überspringen',
+  'silent-auto-submit-from-extension': 'Hauptfenster bei Erweiterungsdownloads nicht anzeigen',
+  'auto-select-all-files-from-extension': 'Alle Torrent- und Magnet-Dateien standardmäßig laden',
   'extension-api-port': 'Erweiterungs-API-Port',
   'extension-api-secret-tip':
     'Geben Sie diesen Schlüssel in den Einstellungen der Browser-Erweiterung zur Authentifizierung ein.',
@@ -357,7 +358,7 @@ export default {
   'unit-seconds': 'Sek',
   'concurrency-and-segments': 'Verbindungen & Segmente',
   'retry-and-file-behavior': 'Wiederaufnahme & Wiederholung',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K-Lauschport',
   'ed2k-server': 'ED2K-Server',

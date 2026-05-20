@@ -107,7 +107,8 @@ export default {
   'bt-tracker-content': 'Trackerlijst',
   'proxy-server': 'Proxyserver',
   'invalid-proxy-url': 'Invalid proxy URL format',
-  'proxy-unsupported-protocol': 'Niet-ondersteund proxyprotocol. Aria2 Next ondersteunt alleen HTTP-proxy (http/https/ftp).',
+  'proxy-unsupported-protocol':
+    'Niet-ondersteund proxyprotocol. Aria2 Next ondersteunt alleen HTTP-proxy (http/https/ftp).',
   'proxy-http-only-hint': 'Aria2 Next ondersteunt alleen HTTP-proxy. SOCKS-proxy wordt niet ondersteund.',
   'user-agent-string': 'UA-tekenreeks',
   port: 'Luisterpoorten',
@@ -116,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Herstel bij poortconflict',
   'port-conflict-recovery-enable': 'Herstel bij poortconflict inschakelen',
   'port-conflict-recovery-range': 'Fallback-poortbereik',
-  'port-conflict-recovery-range-hint': 'Gebruikt wanneer een beheerde poort bezet is. De gekozen poort moet vrij zijn voor zowel TCP als UDP.',
+  'port-conflict-recovery-range-hint':
+    'Gebruikt wanneer een beheerde poort bezet is. De gekozen poort moet vrij zijn voor zowel TCP als UDP.',
   'port-conflict-recovery-apply-to': 'Toepassen op',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,7 +127,8 @@ export default {
   'port-auto-switched': 'Poortconflict gedetecteerd. Gewisseld naar {ports}.',
   'port-auto-switch-bind-failed': 'Poortconflict voor {label}: reservepoort {port} kon niet worden gebonden.',
   'port-auto-switch-no-available-port': 'Poortconflict voor {label}: geen beschikbare reservepoort gevonden.',
-  'port-auto-switch-disabled': 'Poortconflict voor {label}: poort {port} is in gebruik. Automatisch poort wisselen is uitgeschakeld.',
+  'port-auto-switch-disabled':
+    'Poortconflict voor {label}: poort {port} is in gebruik. Automatisch poort wisselen is uitgeschakeld.',
   'bt-port': 'BT-poort',
   'dht-port': 'DHT-poort',
   security: 'Beveiliging',
@@ -326,10 +329,9 @@ export default {
   'file-category-auto-archive': 'automatisch archiveren',
   'file-category-auto-archive-hint':
     'Niet-herkende typen worden opgeslagen in het standaardpad en automatisch gearchiveerd na het downloaden',
-  'auto-submit-from-extension': 'Bevestiging overslaan voor extensie-downloads',
-  'silent-auto-submit-from-extension': 'Extensiedownloads op de achtergrond verwerken',
-  'silent-auto-submit-from-extension-tip':
-    'Wanneer bevestiging wordt overgeslagen, kunnen extensiedownloads worden geaccepteerd zonder het hoofdvenster te tonen.',
+  'auto-submit-from-extension': 'Bevestiging voor extensiedownloads overslaan',
+  'silent-auto-submit-from-extension': 'Hoofdvenster niet tonen voor extensiedownloads',
+  'auto-select-all-files-from-extension': 'Alle torrent- en magnetbestanden standaard downloaden',
   'extension-api-port': 'Extensie API-poort',
   'extension-api-secret-tip': 'Voer deze sleutel in bij de instellingen van de browserextensie voor authenticatie.',
   'extension-api-secret': 'API-sleutel extensie',
@@ -354,7 +356,7 @@ export default {
   'unit-seconds': 'sec',
   'concurrency-and-segments': 'Verbindingen en segmenten',
   'retry-and-file-behavior': 'Herstel en opnieuw proberen',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

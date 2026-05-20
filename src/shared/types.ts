@@ -300,11 +300,11 @@ export interface AppConfig {
   proxy: ProxyConfig
   protocols: ProtocolsConfig
   clipboard: ClipboardConfig
-  /** When true, extension-intercepted URI downloads (HTTP/FTP/magnet) bypass
-   *  the AddTask dialog and submit immediately using user defaults.
-   *  Torrent/metalink URLs always show the dialog regardless — they require
-   *  a fetch→parse→file-select pipeline that cannot be skipped. */
+  /** When true, extension-intercepted URI downloads bypass the AddTask dialog. */
   autoSubmitFromExtension: boolean
+  /** When true, extension-intercepted torrent, metalink, and magnet tasks
+   *  skip file selection and download every file. */
+  autoSelectAllFilesFromExtension: boolean
   /** When true, auto-submitted extension downloads are handled in the
    *  background without raising the main window. Only applies when
    *  autoSubmitFromExtension is enabled. */

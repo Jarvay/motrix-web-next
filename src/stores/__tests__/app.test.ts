@@ -16,12 +16,31 @@ vi.mock('@tauri-apps/plugin-os', () => ({
 }))
 
 const submitManualUrisMock = vi.hoisted(() => vi.fn().mockResolvedValue({}))
+const submitBatchItemsMock = vi.hoisted(() => vi.fn().mockResolvedValue(0))
+const resolveUnresolvedItemsMock = vi.hoisted(() =>
+  vi.fn(async (items: import('@shared/types').BatchItem[], _t: (key: string) => string, _downloadProxy?: string) => {
+    for (const item of items) {
+      item.payload = 'resolved-payload'
+      item.status = 'pending'
+    }
+  }),
+)
 
 vi.mock('@/composables/useAddTaskSubmit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/composables/useAddTaskSubmit')>()
   return {
     ...actual,
     submitManualUris: (...args: Parameters<typeof actual.submitManualUris>) => submitManualUrisMock(...args),
+    submitBatchItems: (...args: Parameters<typeof actual.submitBatchItems>) => submitBatchItemsMock(...args),
+  }
+})
+
+vi.mock('@/composables/useAddTaskFileOps', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/composables/useAddTaskFileOps')>()
+  return {
+    ...actual,
+    resolveUnresolvedItems: (...args: Parameters<typeof actual.resolveUnresolvedItems>) =>
+      resolveUnresolvedItemsMock(...args),
   }
 })
 
@@ -34,6 +53,9 @@ describe('useAppStore', () => {
     resetBatchIdCounter()
     submitManualUrisMock.mockReset()
     submitManualUrisMock.mockResolvedValue({ submittedTaskNames: [], magnetGids: [], magnetFailures: [] })
+    submitBatchItemsMock.mockReset()
+    submitBatchItemsMock.mockResolvedValue(0)
+    resolveUnresolvedItemsMock.mockClear()
   })
 
   // ── enqueueBatch ────────────────────────────────────────────────
@@ -687,31 +709,63 @@ describe('useAppStore', () => {
       expect(store.addTaskVisible).toBe(true)
     })
 
-    it('always shows dialog for .torrent URLs (requires fetch→parse→file-select)', async () => {
+    it('shows dialog for .torrent URLs when file auto-select is disabled', async () => {
       const store = useAppStore()
       const { usePreferenceStore } = await import('@/stores/preference')
       const prefStore = usePreferenceStore()
       prefStore.config.autoSubmitFromExtension = true
+      prefStore.config.autoSelectAllFilesFromExtension = false
 
       store.handleDeepLinkUrls([buildDeepLink('https://example.com/linux.torrent')])
 
-      // Torrent URLs must go through dialog regardless of auto-submit setting
       expect(store.pendingBatch).toHaveLength(1)
       expect(store.pendingBatch[0].kind).toBe('torrent')
       expect(store.addTaskVisible).toBe(true)
     })
 
-    it('always shows dialog for .metalink URLs (requires fetch→parse pipeline)', async () => {
+    it('shows dialog for .metalink URLs when file auto-select is disabled', async () => {
       const store = useAppStore()
       const { usePreferenceStore } = await import('@/stores/preference')
       const prefStore = usePreferenceStore()
       prefStore.config.autoSubmitFromExtension = true
+      prefStore.config.autoSelectAllFilesFromExtension = false
 
       store.handleDeepLinkUrls([buildDeepLink('https://example.com/bundle.meta4')])
 
       expect(store.pendingBatch).toHaveLength(1)
       expect(store.pendingBatch[0].kind).toBe('metalink')
       expect(store.addTaskVisible).toBe(true)
+    })
+
+    it('auto-submits torrent URLs when file auto-select is enabled', async () => {
+      const store = useAppStore()
+      const { usePreferenceStore } = await import('@/stores/preference')
+      const prefStore = usePreferenceStore()
+      prefStore.config.autoSubmitFromExtension = true
+      prefStore.config.autoSelectAllFilesFromExtension = true
+
+      store.handleDeepLinkUrls([buildDeepLink('https://example.com/linux.torrent')])
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      expect(store.pendingBatch).toHaveLength(0)
+      expect(store.addTaskVisible).toBe(false)
+      expect(resolveUnresolvedItemsMock).toHaveBeenCalledTimes(1)
+      expect(submitBatchItemsMock).toHaveBeenCalledTimes(1)
+    })
+
+    it('auto-submits magnet URLs with metadata pause disabled when file auto-select is enabled', async () => {
+      const store = useAppStore()
+      const { usePreferenceStore } = await import('@/stores/preference')
+      const prefStore = usePreferenceStore()
+      prefStore.config.autoSubmitFromExtension = true
+      prefStore.config.autoSelectAllFilesFromExtension = true
+
+      store.handleDeepLinkUrls([buildDeepLink('magnet:?xt=urn:btih:abc123')])
+      await new Promise((resolve) => setTimeout(resolve, 0))
+
+      expect(submitManualUrisMock).toHaveBeenCalledTimes(1)
+      expect(submitManualUrisMock.mock.calls[0][1]).toMatchObject({ 'pause-metadata': 'false' })
+      expect(store.addTaskVisible).toBe(false)
     })
 
     it('handles mixed batch: auto-submits URIs, dialogs torrent', async () => {

@@ -296,6 +296,7 @@ export const DEFAULT_APP_CONFIG = {
   protocols: { magnet: true, ed2k: true, thunder: false, motrixnext: true },
   clipboard: { enable: true, http: true, ftp: true, magnet: true, ed2k: true, thunder: true, btHash: true },
   autoSubmitFromExtension: true,
+  autoSelectAllFilesFromExtension: false,
   silentAutoSubmitFromExtension: true,
   userAgent:
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',

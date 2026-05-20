@@ -107,7 +107,8 @@ export default {
   'bt-tracker-content': 'Tracker listesi',
   'proxy-server': 'Proxy sunucusu',
   'invalid-proxy-url': 'Invalid proxy URL format',
-  'proxy-unsupported-protocol': 'Desteklenmeyen proxy protokolü. Aria2 Next yalnızca HTTP proxy destekler (http/https/ftp).',
+  'proxy-unsupported-protocol':
+    'Desteklenmeyen proxy protokolü. Aria2 Next yalnızca HTTP proxy destekler (http/https/ftp).',
   'proxy-http-only-hint': 'Aria2 Next yalnızca HTTP proxy destekler. SOCKS proxy desteklenmez.',
   'user-agent-string': 'UA dizesi',
   port: 'Dinleme portları',
@@ -116,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Port çakışması kurtarma',
   'port-conflict-recovery-enable': 'Port çakışması kurtarmayı etkinleştir',
   'port-conflict-recovery-range': 'Yedek port aralığı',
-  'port-conflict-recovery-range-hint': 'Yönetilen bir port dolu olduğunda kullanılır. Seçilen port hem TCP hem de UDP için boş olmalıdır.',
+  'port-conflict-recovery-range-hint':
+    'Yönetilen bir port dolu olduğunda kullanılır. Seçilen port hem TCP hem de UDP için boş olmalıdır.',
   'port-conflict-recovery-apply-to': 'Uygula',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -124,8 +126,10 @@ export default {
   'port-conflict-recovery-invalid-range': 'Lütfen 1024 ile 65535 arasında geçerli bir yedek port aralığı girin.',
   'port-auto-switched': 'Port çakışması algılandı. {ports} olarak değiştirildi.',
   'port-auto-switch-bind-failed': '{label} bağlantı noktası çakışması: yedek bağlantı noktası {port} bağlanamadı.',
-  'port-auto-switch-no-available-port': '{label} bağlantı noktası çakışması: kullanılabilir yedek bağlantı noktası bulunamadı.',
-  'port-auto-switch-disabled': '{label} bağlantı noktası çakışması: {port} kullanılıyor. Otomatik bağlantı noktası değiştirme kapalı.',
+  'port-auto-switch-no-available-port':
+    '{label} bağlantı noktası çakışması: kullanılabilir yedek bağlantı noktası bulunamadı.',
+  'port-auto-switch-disabled':
+    '{label} bağlantı noktası çakışması: {port} kullanılıyor. Otomatik bağlantı noktası değiştirme kapalı.',
   'bt-port': 'BT portu',
   'dht-port': 'DHT portu',
   security: 'Güvenlik',
@@ -324,10 +328,9 @@ export default {
   'file-category-auto-archive': 'otomatik arşivle',
   'file-category-auto-archive-hint':
     'Tanınmayan türler varsayılan yola kaydedilir ve indirdikten sonra otomatik olarak arşivlenir',
-  'auto-submit-from-extension': 'Eklenti indirmeleri için onayı atla',
-  'silent-auto-submit-from-extension': 'Uzanti indirmelerini arka planda isle',
-  'silent-auto-submit-from-extension-tip':
-    'Onay atlandiginda uzanti indirmeleri ana pencere gosterilmeden kabul edilebilir.',
+  'auto-submit-from-extension': 'Uzantı indirmelerinde onayı atla',
+  'silent-auto-submit-from-extension': 'Uzantı indirmelerinde ana pencereyi gösterme',
+  'auto-select-all-files-from-extension': 'Torrent ve magnet dosyalarının tümünü varsayılan olarak indir',
   'extension-api-port': 'Uzantı API Portu',
   'extension-api-secret-tip': 'Kimlik doğrulaması için bu anahtarı tarayıcı eklentisi ayarlarına girin.',
   'extension-api-secret': 'Eklenti API Anahtarı',
@@ -352,7 +355,7 @@ export default {
   'unit-seconds': 'sn',
   'concurrency-and-segments': 'Bağlantılar ve segmentler',
   'retry-and-file-behavior': 'Kurtarma ve yeniden deneme',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

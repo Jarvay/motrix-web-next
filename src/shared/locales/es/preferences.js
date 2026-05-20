@@ -117,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Recuperación de conflictos de puerto',
   'port-conflict-recovery-enable': 'Activar recuperación de conflictos de puerto',
   'port-conflict-recovery-range': 'Rango de puertos alternativos',
-  'port-conflict-recovery-range-hint': 'Se usa cuando un puerto gestionado está ocupado. El puerto elegido debe estar libre tanto para TCP como para UDP.',
+  'port-conflict-recovery-range-hint':
+    'Se usa cuando un puerto gestionado está ocupado. El puerto elegido debe estar libre tanto para TCP como para UDP.',
   'port-conflict-recovery-apply-to': 'Aplicar a',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,8 +126,10 @@ export default {
   'port-conflict-recovery-invalid-range': 'Introduce un rango válido de puertos alternativos entre 1024 y 65535.',
   'port-auto-switched': 'Conflicto de puertos detectado. Se cambió {ports}.',
   'port-auto-switch-bind-failed': 'Conflicto del puerto {label}: no se pudo enlazar el puerto alternativo {port}.',
-  'port-auto-switch-no-available-port': 'Conflicto del puerto {label}: no se encontró ningún puerto alternativo disponible.',
-  'port-auto-switch-disabled': 'Conflicto del puerto {label}: el puerto {port} está en uso. El cambio automático de puertos está desactivado.',
+  'port-auto-switch-no-available-port':
+    'Conflicto del puerto {label}: no se encontró ningún puerto alternativo disponible.',
+  'port-auto-switch-disabled':
+    'Conflicto del puerto {label}: el puerto {port} está en uso. El cambio automático de puertos está desactivado.',
   'bt-port': 'Puerto BT',
   'dht-port': 'Puerto DHT',
   security: 'Seguridad',
@@ -330,9 +333,8 @@ export default {
   'file-category-auto-archive-hint':
     'Los tipos no reconocidos se guardan en la ruta predeterminada y se archivan automáticamente después de la descarga',
   'auto-submit-from-extension': 'Omitir confirmación para descargas de la extensión',
-  'silent-auto-submit-from-extension': 'Procesar descargas de la extension en segundo plano',
-  'silent-auto-submit-from-extension-tip':
-    'Cuando se omite la confirmacion, las descargas de la extension pueden aceptarse sin mostrar la ventana principal.',
+  'silent-auto-submit-from-extension': 'No mostrar la ventana principal para descargas de la extensión',
+  'auto-select-all-files-from-extension': 'Descargar todos los archivos torrent y magnet por defecto',
   'extension-api-port': 'Puerto de API de extensión',
   'extension-api-secret-tip':
     'Introduzca esta clave en la configuración de la extensión del navegador para autenticarse.',
@@ -359,7 +361,7 @@ export default {
   'unit-seconds': 'seg',
   'concurrency-and-segments': 'Conexiones y segmentos',
   'retry-and-file-behavior': 'Recuperación y reintentos',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'Puerto de escucha ED2K',
   'ed2k-server': 'Servidores ED2K',

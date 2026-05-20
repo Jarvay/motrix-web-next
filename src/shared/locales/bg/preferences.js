@@ -116,7 +116,8 @@ export default {
   'port-conflict-recovery': 'Възстановяване при конфликт на портове',
   'port-conflict-recovery-enable': 'Включи възстановяване при конфликт на портове',
   'port-conflict-recovery-range': 'Диапазон за резервни портове',
-  'port-conflict-recovery-range-hint': 'Използва се, когато управляван порт е зает. Избраният порт трябва да е свободен както за TCP, така и за UDP.',
+  'port-conflict-recovery-range-hint':
+    'Използва се, когато управляван порт е зает. Избраният порт трябва да е свободен както за TCP, така и за UDP.',
   'port-conflict-recovery-apply-to': 'Прилагане към',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,7 +126,8 @@ export default {
   'port-auto-switched': 'Открит е конфликт на портове. Превключено към {ports}.',
   'port-auto-switch-bind-failed': 'Конфликт на порт {label}: резервният порт {port} не можа да бъде свързан.',
   'port-auto-switch-no-available-port': 'Конфликт на порт {label}: няма наличен резервен порт.',
-  'port-auto-switch-disabled': 'Конфликт на порт {label}: порт {port} е зает. Автоматичното превключване на портове е изключено.',
+  'port-auto-switch-disabled':
+    'Конфликт на порт {label}: порт {port} е зает. Автоматичното превключване на портове е изключено.',
   'bt-port': 'BT порт',
   'dht-port': 'DHT порт',
   security: 'Сигурност',
@@ -325,10 +327,9 @@ export default {
   'file-category-auto-archive': 'автоматично архивиране',
   'file-category-auto-archive-hint':
     'Неразпознатите типове се записват в пътя по подразбиране и автоматично се архивират след изтегляне',
-  'auto-submit-from-extension': 'Пропусни потвърждение за изтегляния от разширение',
-  'silent-auto-submit-from-extension': 'Обработвай изтеглянията от разширението във фонов режим',
-  'silent-auto-submit-from-extension-tip':
-    'Когато потвърждението е пропуснато, изтеглянията от разширението могат да се приемат без показване на главния прозорец.',
+  'auto-submit-from-extension': 'Пропускай потвърждението за изтегляния от разширението',
+  'silent-auto-submit-from-extension': 'Не показвай главния прозорец за изтегляния от разширението',
+  'auto-select-all-files-from-extension': 'Изтегляй всички torrent и magnet файлове по подразбиране',
   'extension-api-port': 'Порт на API за разширението',
   'extension-api-secret-tip': 'Въведете този ключ в настройките на разширението за удостоверяване.',
   'extension-api-secret': 'API ключ за разширение',
@@ -353,7 +354,7 @@ export default {
   'unit-seconds': 'сек',
   'concurrency-and-segments': 'Връзки и сегменти',
   'retry-and-file-behavior': 'Възстановяване и повторен опит',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

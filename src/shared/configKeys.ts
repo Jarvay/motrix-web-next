@@ -6,6 +6,7 @@ const userKeys = [
   'auto-delete-stale-records',
   'auto-hide-window',
   'auto-submit-from-extension',
+  'auto-select-all-files-from-extension',
   'silent-auto-submit-from-extension',
   'auto-sync-tracker',
   'connect-timeout',

@@ -117,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Восстановление при конфликте портов',
   'port-conflict-recovery-enable': 'Включить восстановление при конфликте портов',
   'port-conflict-recovery-range': 'Диапазон запасных портов',
-  'port-conflict-recovery-range-hint': 'Используется, когда управляемый порт занят. Выбранный порт должен быть свободен и для TCP, и для UDP.',
+  'port-conflict-recovery-range-hint':
+    'Используется, когда управляемый порт занят. Выбранный порт должен быть свободен и для TCP, и для UDP.',
   'port-conflict-recovery-apply-to': 'Применить к',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -126,7 +127,8 @@ export default {
   'port-auto-switched': 'Обнаружен конфликт портов. Переключено на {ports}.',
   'port-auto-switch-bind-failed': 'Конфликт порта {label}: не удалось привязать запасной порт {port}.',
   'port-auto-switch-no-available-port': 'Конфликт порта {label}: доступный запасной порт не найден.',
-  'port-auto-switch-disabled': 'Конфликт порта {label}: порт {port} уже используется. Автоматическое переключение портов отключено.',
+  'port-auto-switch-disabled':
+    'Конфликт порта {label}: порт {port} уже используется. Автоматическое переключение портов отключено.',
   'bt-port': 'Порт BT',
   'dht-port': 'Порт DHT',
   security: 'Безопасность',
@@ -325,10 +327,9 @@ export default {
   'file-category-auto-archive': 'автоархивирование',
   'file-category-auto-archive-hint':
     'Нераспознанные типы файлов сохраняются в путь по умолчанию и автоматически архивируются после загрузки',
-  'auto-submit-from-extension': 'Пропустить подтверждение для загрузок из расширения',
-  'silent-auto-submit-from-extension': 'Обрабатывать загрузки расширения в фоне',
-  'silent-auto-submit-from-extension-tip':
-    'Когда подтверждение пропускается, загрузки расширения принимаются без показа главного окна.',
+  'auto-submit-from-extension': 'Пропускать подтверждение для загрузок расширения',
+  'silent-auto-submit-from-extension': 'Не показывать главное окно для загрузок расширения',
+  'auto-select-all-files-from-extension': 'По умолчанию загружать все файлы torrent и magnet',
   'extension-api-port': 'Порт API расширения',
   'extension-api-secret-tip': 'Введите этот ключ в настройках расширения браузера для аутентификации.',
   'extension-api-secret': 'Секретный ключ API расширения',
@@ -353,7 +354,7 @@ export default {
   'unit-seconds': 'сек',
   'concurrency-and-segments': 'Соединения и сегменты',
   'retry-and-file-behavior': 'Восстановление и повтор',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'Порт ED2K',
   'ed2k-server': 'Серверы ED2K',

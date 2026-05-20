@@ -107,7 +107,8 @@ export default {
   'bt-tracker-content': 'Tracker lista',
   'proxy-server': 'Proxy szerver',
   'invalid-proxy-url': 'Invalid proxy URL format',
-  'proxy-unsupported-protocol': 'Nem támogatott proxy protokoll. Az Aria2 Next csak HTTP proxyt támogat (http/https/ftp).',
+  'proxy-unsupported-protocol':
+    'Nem támogatott proxy protokoll. Az Aria2 Next csak HTTP proxyt támogat (http/https/ftp).',
   'proxy-http-only-hint': 'Az Aria2 Next csak HTTP proxyt támogat. A SOCKS proxy nem támogatott.',
   'user-agent-string': 'UA karakterlánc',
   port: 'Figyelő portok',
@@ -116,7 +117,8 @@ export default {
   'port-conflict-recovery': 'Portütközés helyreállítása',
   'port-conflict-recovery-enable': 'Portütközés helyreállításának engedélyezése',
   'port-conflict-recovery-range': 'Tartalék porttartomány',
-  'port-conflict-recovery-range-hint': 'Akkor használatos, ha egy kezelt port foglalt. A kiválasztott portnak TCP és UDP esetén is szabadnak kell lennie.',
+  'port-conflict-recovery-range-hint':
+    'Akkor használatos, ha egy kezelt port foglalt. A kiválasztott portnak TCP és UDP esetén is szabadnak kell lennie.',
   'port-conflict-recovery-apply-to': 'Alkalmazás erre',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -125,7 +127,8 @@ export default {
   'port-auto-switched': 'Portütközés észlelve. Átváltva: {ports}.',
   'port-auto-switch-bind-failed': 'Portütközés itt: {label}: a(z) {port} tartalék port nem köthető.',
   'port-auto-switch-no-available-port': 'Portütközés itt: {label}: nincs elérhető tartalék port.',
-  'port-auto-switch-disabled': 'Portütközés itt: {label}: a(z) {port} port használatban van. Az automatikus portváltás ki van kapcsolva.',
+  'port-auto-switch-disabled':
+    'Portütközés itt: {label}: a(z) {port} port használatban van. Az automatikus portváltás ki van kapcsolva.',
   'bt-port': 'BT port',
   'dht-port': 'DHT port',
   security: 'Biztonság',
@@ -324,10 +327,9 @@ export default {
   'file-category-auto-archive': 'automatikus archiválás',
   'file-category-auto-archive-hint':
     'A fel nem ismert típusok az alapértelmezett útvonalra kerülnek, és letöltés után automatikusan archiválódnak',
-  'auto-submit-from-extension': 'Megerősítés kihagyása a bővítmény letöltéseinél',
-  'silent-auto-submit-from-extension': 'Bovitmeny letolteseinek feldolgozasa a hatterben',
-  'silent-auto-submit-from-extension-tip':
-    'Ha a megerosites kihagyasa aktiv, a bovitmeny letoltesei a foablak megjelenitese nelkul fogadhatok.',
+  'auto-submit-from-extension': 'Bővítményletöltések megerősítésének kihagyása',
+  'silent-auto-submit-from-extension': 'Ne jelenjen meg a főablak bővítményletöltéseknél',
+  'auto-select-all-files-from-extension': 'Minden torrent- és magnet-fájl letöltése alapértelmezés szerint',
   'extension-api-port': 'Bővítmény API port',
   'extension-api-secret-tip': 'Adja meg ezt a kulcsot a böngészőbővítmény beállításaiban a hitelesítéshez.',
   'extension-api-secret': 'Bővítmény API kulcs',
@@ -352,7 +354,7 @@ export default {
   'unit-seconds': 'mp',
   'concurrency-and-segments': 'Kapcsolatok és szegmensek',
   'retry-and-file-behavior': 'Visszaállítás és újrapróbálkozás',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',

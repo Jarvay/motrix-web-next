@@ -108,7 +108,8 @@ export default {
   'bt-tracker-content': 'Lista tracker',
   'proxy-server': 'Server proxy',
   'invalid-proxy-url': 'Invalid proxy URL format',
-  'proxy-unsupported-protocol': 'Protocollo proxy non supportato. Aria2 Next supporta solo proxy HTTP (http/https/ftp).',
+  'proxy-unsupported-protocol':
+    'Protocollo proxy non supportato. Aria2 Next supporta solo proxy HTTP (http/https/ftp).',
   'proxy-http-only-hint': 'Aria2 Next supporta solo proxy HTTP. Il proxy SOCKS non è supportato.',
   'user-agent-string': 'Stringa UA',
   port: 'Porte di ascolto',
@@ -117,7 +118,8 @@ export default {
   'port-conflict-recovery': 'Ripristino conflitti porta',
   'port-conflict-recovery-enable': 'Attiva ripristino conflitti porta',
   'port-conflict-recovery-range': 'Intervallo porte di fallback',
-  'port-conflict-recovery-range-hint': 'Usato quando una porta gestita è occupata. La porta scelta deve essere libera sia per TCP sia per UDP.',
+  'port-conflict-recovery-range-hint':
+    'Usato quando una porta gestita è occupata. La porta scelta deve essere libera sia per TCP sia per UDP.',
   'port-conflict-recovery-apply-to': 'Applica a',
   'port-conflict-recovery-bt': 'BitTorrent TCP',
   'port-conflict-recovery-dht': 'DHT UDP',
@@ -126,7 +128,8 @@ export default {
   'port-auto-switched': 'Conflitto di porte rilevato. Passato a {ports}.',
   'port-auto-switch-bind-failed': 'Conflitto porta {label}: impossibile associare la porta alternativa {port}.',
   'port-auto-switch-no-available-port': 'Conflitto porta {label}: nessuna porta alternativa disponibile trovata.',
-  'port-auto-switch-disabled': 'Conflitto porta {label}: la porta {port} è in uso. Il cambio automatico delle porte è disattivato.',
+  'port-auto-switch-disabled':
+    'Conflitto porta {label}: la porta {port} è in uso. Il cambio automatico delle porte è disattivato.',
   'bt-port': 'Porta BT',
   'dht-port': 'Porta DHT',
   security: 'Sicurezza',
@@ -327,10 +330,9 @@ export default {
   'file-category-auto-archive': 'archiviazione automatica',
   'file-category-auto-archive-hint':
     'I tipi non riconosciuti vengono salvati nel percorso predefinito e archiviati automaticamente dopo il download',
-  'auto-submit-from-extension': "Scarica direttamente dall'estensione",
-  'silent-auto-submit-from-extension': 'Elabora i download dell\'estensione in background',
-  'silent-auto-submit-from-extension-tip':
-    'Quando la conferma viene saltata, i download dell\'estensione possono essere accettati senza mostrare la finestra principale.',
+  'auto-submit-from-extension': "Salta la conferma per i download dell'estensione",
+  'silent-auto-submit-from-extension': "Non mostrare la finestra principale per i download dell'estensione",
+  'auto-select-all-files-from-extension': 'Scarica tutti i file torrent e magnet per impostazione predefinita',
   'extension-api-port': 'Porta API estensione',
   'extension-api-secret-tip':
     "Inserisci questa chiave nelle impostazioni dell'estensione del browser per l'autenticazione.",
@@ -357,7 +359,7 @@ export default {
   'unit-seconds': 'sec',
   'concurrency-and-segments': 'Connessioni e segmenti',
   'retry-and-file-behavior': 'Ripristino e tentativi',
-  'ed2k': 'ED2K',
+  ed2k: 'ED2K',
   'ed2k-settings': 'ED2K',
   'ed2k-listen-port': 'ED2K Listen Port',
   'ed2k-server': 'ED2K Servers',
