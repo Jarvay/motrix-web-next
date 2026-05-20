@@ -205,6 +205,18 @@ export interface ClipboardConfig {
   btHash: boolean
 }
 
+/** Automatic local port conflict recovery policy. */
+export interface PortConflictRecoveryConfig {
+  enabled: boolean
+  rangeStart: number
+  rangeEnd: number
+  rpc: boolean
+  extensionApi: boolean
+  bt: boolean
+  dht: boolean
+  ed2k: boolean
+}
+
 /** A file category rule mapping extensions to a download directory. */
 export interface FileCategory {
   /** Display label — i18n key suffix for built-in categories, user-provided name for custom ones. */
@@ -318,6 +330,7 @@ export interface AppConfig {
   rpcSecret: string
   /** Automatically switches locally bound ports when another process or OS reservation blocks them. */
   autoChangeConflictingPorts: boolean
+  portConflictRecovery: PortConflictRecoveryConfig
   listenPort: number
   dhtListenPort: number
   ed2kListenPort: number

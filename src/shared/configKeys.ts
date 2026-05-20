@@ -46,6 +46,7 @@ const userKeys = [
   'new-task-show-downloading',
   'no-confirm-before-delete-task',
   'open-at-login',
+  'port-conflict-recovery',
   'protocols',
   'proxy',
   'resume-all-when-app-launched',

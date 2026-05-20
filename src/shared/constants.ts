@@ -268,6 +268,16 @@ export const DEFAULT_APP_CONFIG = {
   rpcListenPort: ENGINE_RPC_PORT,
   extensionApiPort: 16801,
   autoChangeConflictingPorts: true,
+  portConflictRecovery: {
+    enabled: true,
+    rangeStart: 30000,
+    rangeEnd: 39999,
+    rpc: true,
+    extensionApi: true,
+    bt: true,
+    dht: true,
+    ed2k: true,
+  },
   // extensionApiSecret is intentionally ABSENT from defaults.
   // rpcSecret is intentionally ABSENT from defaults.
   // For both secrets:

@@ -36,9 +36,19 @@ struct PortSpec {
     prefs_key: &'static str,
     system_key: &'static str,
     fallback: u16,
-    range: PortRange,
     transport: PortTransport,
     allows_zero: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct PortRecoveryPolicy {
+    enabled: bool,
+    range: PortRange,
+    rpc: bool,
+    extension_api: bool,
+    bt: bool,
+    dht: bool,
+    ed2k: bool,
 }
 
 const ENGINE_PORT_KINDS: [PortKind; 4] =
@@ -79,7 +89,44 @@ pub(crate) struct PortSwitchFailure {
 
 #[cfg(test)]
 fn range_for(kind: PortKind) -> PortRange {
-    spec_for(kind).range
+    default_range_for(kind)
+}
+
+fn default_recovery_policy(enabled: bool) -> PortRecoveryPolicy {
+    PortRecoveryPolicy {
+        enabled,
+        range: PortRange {
+            start: 30000,
+            end: 39999,
+        },
+        rpc: true,
+        extension_api: true,
+        bt: true,
+        dht: true,
+        ed2k: true,
+    }
+}
+
+#[cfg(test)]
+fn default_range_for(kind: PortKind) -> PortRange {
+    match kind {
+        PortKind::Rpc | PortKind::ExtensionApi => PortRange {
+            start: 16800,
+            end: 19999,
+        },
+        PortKind::Bt => PortRange {
+            start: 20000,
+            end: 24999,
+        },
+        PortKind::Dht => PortRange {
+            start: 25000,
+            end: 29999,
+        },
+        PortKind::Ed2k => PortRange {
+            start: 30000,
+            end: 34999,
+        },
+    }
 }
 
 fn spec_for(kind: PortKind) -> PortSpec {
@@ -89,10 +136,6 @@ fn spec_for(kind: PortKind) -> PortSpec {
             prefs_key: "rpcListenPort",
             system_key: "rpc-listen-port",
             fallback: 16800,
-            range: PortRange {
-                start: 16800,
-                end: 19999,
-            },
             transport: PortTransport::Tcp,
             allows_zero: false,
         },
@@ -101,10 +144,6 @@ fn spec_for(kind: PortKind) -> PortSpec {
             prefs_key: "extensionApiPort",
             system_key: "",
             fallback: 16801,
-            range: PortRange {
-                start: 16800,
-                end: 19999,
-            },
             transport: PortTransport::Tcp,
             allows_zero: false,
         },
@@ -113,10 +152,6 @@ fn spec_for(kind: PortKind) -> PortSpec {
             prefs_key: "listenPort",
             system_key: "listen-port",
             fallback: 21301,
-            range: PortRange {
-                start: 20000,
-                end: 24999,
-            },
             transport: PortTransport::Tcp,
             allows_zero: false,
         },
@@ -125,10 +160,6 @@ fn spec_for(kind: PortKind) -> PortSpec {
             prefs_key: "dhtListenPort",
             system_key: "dht-listen-port",
             fallback: 26701,
-            range: PortRange {
-                start: 25000,
-                end: 29999,
-            },
             transport: PortTransport::Udp,
             allows_zero: false,
         },
@@ -137,10 +168,6 @@ fn spec_for(kind: PortKind) -> PortSpec {
             prefs_key: "ed2kListenPort",
             system_key: "ed2k-listen-port",
             fallback: 4662,
-            range: PortRange {
-                start: 30000,
-                end: 34999,
-            },
             transport: PortTransport::Tcp,
             allows_zero: true,
         },
@@ -153,18 +180,64 @@ pub(crate) fn aria2_bt_bind_error_line(line: &str) -> bool {
         || line.contains("Errors occurred while binding port")
 }
 
-fn auto_switch_enabled(app: &AppHandle) -> bool {
-    app.store("config.json")
-        .ok()
-        .and_then(|s| s.get("preferences"))
-        .and_then(|p| p.get("autoChangeConflictingPorts")?.as_bool())
-        .unwrap_or(true)
+fn recovery_policy_from_preferences(prefs: &serde_json::Value) -> PortRecoveryPolicy {
+    let legacy_enabled = prefs
+        .get("autoChangeConflictingPorts")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    let defaults = default_recovery_policy(legacy_enabled);
+    let Some(value) = prefs
+        .get("portConflictRecovery")
+        .and_then(|v| v.as_object())
+    else {
+        return defaults;
+    };
+    let read_bool =
+        |key: &str, fallback: bool| value.get(key).and_then(|v| v.as_bool()).unwrap_or(fallback);
+    let read_port = |key: &str, fallback: u16| {
+        value
+            .get(key)
+            .and_then(|v| {
+                v.as_u64()
+                    .map(|n| n as u16)
+                    .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+            })
+            .unwrap_or(fallback)
+    };
+    let mut start = read_port("rangeStart", defaults.range.start);
+    let mut end = read_port("rangeEnd", defaults.range.end);
+    if start < 1024 {
+        start = 1024;
+    }
+    if start > end {
+        start = defaults.range.start;
+        end = defaults.range.end;
+    }
+    PortRecoveryPolicy {
+        enabled: read_bool("enabled", defaults.enabled),
+        range: PortRange { start, end },
+        rpc: read_bool("rpc", defaults.rpc),
+        extension_api: read_bool("extensionApi", defaults.extension_api),
+        bt: read_bool("bt", defaults.bt),
+        dht: read_bool("dht", defaults.dht),
+        ed2k: read_bool("ed2k", defaults.ed2k),
+    }
 }
 
-fn choose_available_port(kind: PortKind, reserved: &BTreeSet<u16>) -> Option<u16> {
-    let spec = spec_for(kind);
-    (spec.range.start..=spec.range.end)
-        .find(|port| !reserved.contains(port) && port_available(*port, spec.transport))
+fn recovery_enabled_for(policy: PortRecoveryPolicy, kind: PortKind) -> bool {
+    policy.enabled
+        && match kind {
+            PortKind::Rpc => policy.rpc,
+            PortKind::ExtensionApi => policy.extension_api,
+            PortKind::Bt => policy.bt,
+            PortKind::Dht => policy.dht,
+            PortKind::Ed2k => policy.ed2k,
+        }
+}
+
+fn choose_available_port(policy: PortRecoveryPolicy, reserved: &BTreeSet<u16>) -> Option<u16> {
+    (policy.range.start..=policy.range.end)
+        .find(|port| !reserved.contains(port) && tcp_available(*port) && udp_available(*port))
 }
 
 pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError> {
@@ -177,10 +250,10 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
 
     let mut prefs = prefs_store.get("preferences").unwrap_or_else(|| json!({}));
     let current = PortSnapshot::from_preferences(&prefs);
+    let policy = recovery_policy_from_preferences(&prefs);
     let mut reserved = current.all_ports();
     let mut next = current;
     let mut switches = Vec::new();
-    let auto_switch = auto_switch_enabled(app);
 
     for kind in ENGINE_PORT_KINDS {
         let port = next.get(kind);
@@ -191,7 +264,7 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
         if port_available(port, spec.transport) {
             continue;
         }
-        if !auto_switch {
+        if !recovery_enabled_for(policy, kind) {
             emit_failure(
                 app,
                 PortSwitchFailure {
@@ -204,7 +277,7 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
             continue;
         }
         reserved.remove(&port);
-        let Some(new_port) = choose_available_port(kind, &reserved) else {
+        let Some(new_port) = choose_available_port(policy, &reserved) else {
             emit_failure(
                 app,
                 PortSwitchFailure {
@@ -235,24 +308,6 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
 }
 
 pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, AppError> {
-    if !auto_switch_enabled(app) {
-        let prefs_store = app
-            .store("config.json")
-            .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
-        let prefs = prefs_store.get("preferences").unwrap_or_else(|| json!({}));
-        let current = PortSnapshot::from_preferences(&prefs);
-        emit_failure(
-            app,
-            PortSwitchFailure {
-                kind: PortKind::Bt,
-                port: current.bt,
-                reason: PortSwitchFailureReason::Disabled,
-                source: PortSwitchFailureSource::BtRuntime,
-            },
-        );
-        return Ok(Vec::new());
-    }
-
     let prefs_store = app
         .store("config.json")
         .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
@@ -262,14 +317,27 @@ pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, App
 
     let mut prefs = prefs_store.get("preferences").unwrap_or_else(|| json!({}));
     let current = PortSnapshot::from_preferences(&prefs);
+    let policy = recovery_policy_from_preferences(&prefs);
     let mut reserved = current.all_ports();
     let mut next = current;
     let mut switches = Vec::new();
 
     for kind in [PortKind::Bt, PortKind::Dht] {
         let old_port = next.get(kind);
+        if !recovery_enabled_for(policy, kind) {
+            emit_failure(
+                app,
+                PortSwitchFailure {
+                    kind,
+                    port: old_port,
+                    reason: PortSwitchFailureReason::Disabled,
+                    source: PortSwitchFailureSource::BtRuntime,
+                },
+            );
+            continue;
+        }
         reserved.remove(&old_port);
-        let Some(new_port) = choose_available_port(kind, &reserved) else {
+        let Some(new_port) = choose_available_port(policy, &reserved) else {
             emit_failure(
                 app,
                 PortSwitchFailure {
@@ -290,6 +358,10 @@ pub(crate) fn reconcile_bt_ports(app: &AppHandle) -> Result<Vec<PortSwitch>, App
         });
     }
 
+    if switches.is_empty() {
+        return Ok(Vec::new());
+    }
+
     persist_snapshot(&prefs_store, &system_store, &mut prefs, next)?;
     emit_switches(app, &switches);
     Ok(switches)
@@ -299,7 +371,16 @@ pub(crate) async fn recover_extension_api_port(
     app: &AppHandle,
     old_port: u16,
 ) -> Result<u16, AppError> {
-    if !auto_switch_enabled(app) {
+    let prefs_store = app
+        .store("config.json")
+        .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
+    let system_store = app
+        .store("system.json")
+        .map_err(|e| AppError::Store(format!("Failed to open system.json: {e}")))?;
+
+    let mut prefs = prefs_store.get("preferences").unwrap_or_else(|| json!({}));
+    let policy = recovery_policy_from_preferences(&prefs);
+    if !recovery_enabled_for(policy, PortKind::ExtensionApi) {
         emit_failure(
             app,
             PortSwitchFailure {
@@ -313,19 +394,10 @@ pub(crate) async fn recover_extension_api_port(
             "Failed to bind HTTP API on port {old_port}"
         )));
     }
-
-    let prefs_store = app
-        .store("config.json")
-        .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
-    let system_store = app
-        .store("system.json")
-        .map_err(|e| AppError::Store(format!("Failed to open system.json: {e}")))?;
-
-    let mut prefs = prefs_store.get("preferences").unwrap_or_else(|| json!({}));
     let mut snapshot = PortSnapshot::from_preferences(&prefs);
     let mut reserved = snapshot.all_ports();
     reserved.remove(&old_port);
-    let Some(new_port) = choose_available_port(PortKind::ExtensionApi, &reserved) else {
+    let Some(new_port) = choose_available_port(policy, &reserved) else {
         emit_failure(
             app,
             PortSwitchFailure {
@@ -556,10 +628,14 @@ mod tests {
 
     #[test]
     fn choose_available_port_skips_reserved_ports() {
-        let range = range_for(PortKind::Bt);
+        let policy = PortRecoveryPolicy {
+            range: range_for(PortKind::Bt),
+            ..default_recovery_policy(true)
+        };
+        let range = policy.range;
         let reserved = BTreeSet::from([range.start]);
 
-        let chosen = choose_available_port(PortKind::Bt, &reserved).expect("available BT port");
+        let chosen = choose_available_port(policy, &reserved).expect("available BT port");
 
         assert_ne!(chosen, range.start);
         assert!(chosen >= range.start);
@@ -570,13 +646,46 @@ mod tests {
     fn choose_available_port_rejects_tcp_conflicts() {
         let listener = TcpListener::bind(("127.0.0.1", 0)).expect("bind ephemeral TCP port");
         let occupied = listener.local_addr().expect("local addr").port();
+        let policy = PortRecoveryPolicy {
+            range: PortRange {
+                start: occupied,
+                end: occupied.saturating_add(1),
+            },
+            ..default_recovery_policy(true)
+        };
         let reserved = BTreeSet::new();
 
-        if occupied >= range_for(PortKind::Rpc).start && occupied <= range_for(PortKind::Rpc).end {
-            let chosen =
-                choose_available_port(PortKind::Rpc, &reserved).expect("available RPC port");
-            assert_ne!(chosen, occupied);
-        }
+        let chosen = choose_available_port(policy, &reserved).expect("available port");
+        assert_ne!(chosen, occupied);
+    }
+
+    #[test]
+    fn recovery_policy_reads_unified_range_and_kind_toggles() {
+        let prefs = json!({
+            "portConflictRecovery": {
+                "enabled": true,
+                "rangeStart": 31000,
+                "rangeEnd": 32000,
+                "rpc": false,
+                "extensionApi": true,
+                "bt": true,
+                "dht": false,
+                "ed2k": true
+            }
+        });
+
+        let policy = recovery_policy_from_preferences(&prefs);
+
+        assert_eq!(
+            policy.range,
+            PortRange {
+                start: 31000,
+                end: 32000
+            }
+        );
+        assert!(!recovery_enabled_for(policy, PortKind::Rpc));
+        assert!(recovery_enabled_for(policy, PortKind::ExtensionApi));
+        assert!(!recovery_enabled_for(policy, PortKind::Dht));
     }
 
     #[test]

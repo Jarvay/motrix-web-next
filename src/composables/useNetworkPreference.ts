@@ -8,7 +8,7 @@
  * Proxy validation logic is co-located here since it is only used in
  * this tab's save flow.
  */
-import type { AppConfig } from '@shared/types'
+import type { AppConfig, PortConflictRecoveryConfig } from '@shared/types'
 import { PROXY_SCOPES, PROXY_SCOPE_OPTIONS, DEFAULT_APP_CONFIG as D } from '@shared/constants'
 import { generateRandomInt } from '@shared/utils'
 import { isValidAria2ProxyUrl, UNSUPPORTED_PROXY_SCHEME_RE } from '@shared/utils/aria2Proxy'
@@ -27,12 +27,28 @@ export interface NetworkForm {
   }
   enableUpnp: boolean
   autoChangeConflictingPorts: boolean
+  portConflictRecovery: PortConflictRecoveryConfig
   listenPort: number
   dhtListenPort: number
   connectTimeout: number
   timeout: number
   fileAllocation: string
   userAgent: string
+}
+
+function buildPortConflictRecovery(config: AppConfig): PortConflictRecoveryConfig {
+  const defaults = D.portConflictRecovery
+  const saved = config.portConflictRecovery
+  return {
+    enabled: saved?.enabled ?? config.autoChangeConflictingPorts ?? defaults.enabled,
+    rangeStart: Number(saved?.rangeStart ?? defaults.rangeStart),
+    rangeEnd: Number(saved?.rangeEnd ?? defaults.rangeEnd),
+    rpc: saved?.rpc ?? defaults.rpc,
+    extensionApi: saved?.extensionApi ?? defaults.extensionApi,
+    bt: saved?.bt ?? defaults.bt,
+    dht: saved?.dht ?? defaults.dht,
+    ed2k: saved?.ed2k ?? defaults.ed2k,
+  }
 }
 
 // ── Pure Functions ──────────────────────────────────────────────────
@@ -52,6 +68,7 @@ export function buildNetworkForm(config: AppConfig): NetworkForm {
     },
     enableUpnp: config.enableUpnp ?? D.enableUpnp,
     autoChangeConflictingPorts: config.autoChangeConflictingPorts ?? D.autoChangeConflictingPorts,
+    portConflictRecovery: buildPortConflictRecovery(config),
     listenPort: Number(config.listenPort ?? D.listenPort),
     dhtListenPort: Number(config.dhtListenPort ?? D.dhtListenPort),
     connectTimeout: config.connectTimeout ?? D.connectTimeout,
@@ -87,7 +104,10 @@ export function buildNetworkSystemConfig(f: NetworkForm): Record<string, string>
  * Preserves port values as numbers and proxy as nested object.
  */
 export function transformNetworkForStore(f: NetworkForm): Partial<AppConfig> {
-  return { ...f }
+  return {
+    ...f,
+    autoChangeConflictingPorts: f.portConflictRecovery.enabled,
+  }
 }
 
 // ── Form Validation ─────────────────────────────────────────────────
@@ -97,6 +117,16 @@ export function transformNetworkForStore(f: NetworkForm): Partial<AppConfig> {
  * Returns null if valid, or an i18n error key if invalid.
  */
 export function validateNetworkForm(f: NetworkForm): string | null {
+  const recovery = f.portConflictRecovery
+  if (
+    !Number.isInteger(recovery.rangeStart) ||
+    !Number.isInteger(recovery.rangeEnd) ||
+    recovery.rangeStart < 1024 ||
+    recovery.rangeEnd > 65535 ||
+    recovery.rangeStart > recovery.rangeEnd
+  ) {
+    return 'preferences.port-conflict-recovery-invalid-range'
+  }
   if (f.proxy.enable && f.proxy.server) {
     if (!isValidAria2ProxyUrl(f.proxy.server)) {
       return UNSUPPORTED_PROXY_SCHEME_RE.test(f.proxy.server.trim())

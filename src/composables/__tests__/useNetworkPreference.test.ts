@@ -221,12 +221,32 @@ describe('buildNetworkForm', () => {
     expect(form).toHaveProperty('proxy')
     expect(form).toHaveProperty('enableUpnp')
     expect(form).toHaveProperty('autoChangeConflictingPorts')
+    expect(form).toHaveProperty('portConflictRecovery')
     expect(form).toHaveProperty('listenPort')
     expect(form).toHaveProperty('dhtListenPort')
     expect(form).toHaveProperty('connectTimeout')
     expect(form).toHaveProperty('timeout')
     expect(form).toHaveProperty('fileAllocation')
     expect(form).toHaveProperty('userAgent')
+  })
+
+  it('defaults port conflict recovery to enabled for every managed port type', () => {
+    const form = buildNetworkForm(emptyConfig)
+    expect(form.portConflictRecovery).toEqual({
+      enabled: true,
+      rangeStart: 30000,
+      rangeEnd: 39999,
+      rpc: true,
+      extensionApi: true,
+      bt: true,
+      dht: true,
+      ed2k: true,
+    })
+  })
+
+  it('uses the legacy auto switch value when no recovery policy exists', () => {
+    const form = buildNetworkForm({ autoChangeConflictingPorts: false } as AppConfig)
+    expect(form.portConflictRecovery.enabled).toBe(false)
   })
 })
 
@@ -237,6 +257,7 @@ describe('buildNetworkSystemConfig', () => {
     proxy: { enable: false, server: '', bypass: '', scope: [] },
     enableUpnp: true,
     autoChangeConflictingPorts: true,
+    portConflictRecovery: { ...DEFAULT_APP_CONFIG.portConflictRecovery },
     listenPort: 21301,
     dhtListenPort: 26701,
     connectTimeout: 10,
@@ -348,6 +369,7 @@ describe('transformNetworkForStore', () => {
     proxy: { enable: false, server: '', bypass: '', scope: [] },
     enableUpnp: true,
     autoChangeConflictingPorts: true,
+    portConflictRecovery: { ...DEFAULT_APP_CONFIG.portConflictRecovery },
     listenPort: 21301,
     dhtListenPort: 26701,
     connectTimeout: 10,
@@ -365,8 +387,12 @@ describe('transformNetworkForStore', () => {
   })
 
   it('preserves automatic conflicting port switching preference', () => {
-    const result = transformNetworkForStore({ ...baseForm, autoChangeConflictingPorts: false })
+    const result = transformNetworkForStore({
+      ...baseForm,
+      portConflictRecovery: { ...baseForm.portConflictRecovery, enabled: false },
+    })
     expect(result.autoChangeConflictingPorts).toBe(false)
+    expect(result.portConflictRecovery).toMatchObject({ enabled: false })
   })
 
   it('preserves proxy config through transform', () => {
@@ -401,6 +427,7 @@ describe('validateNetworkForm', () => {
     proxy: { enable: false, server: '', bypass: '', scope: [] },
     enableUpnp: true,
     autoChangeConflictingPorts: true,
+    portConflictRecovery: { ...DEFAULT_APP_CONFIG.portConflictRecovery },
     listenPort: 21301,
     dhtListenPort: 26701,
     connectTimeout: 10,
@@ -411,6 +438,15 @@ describe('validateNetworkForm', () => {
 
   it('returns null for valid form', () => {
     expect(validateNetworkForm(validForm)).toBeNull()
+  })
+
+  it('rejects invalid port recovery ranges', () => {
+    expect(
+      validateNetworkForm({
+        ...validForm,
+        portConflictRecovery: { ...validForm.portConflictRecovery, rangeStart: 40000, rangeEnd: 30000 },
+      }),
+    ).toBe('preferences.port-conflict-recovery-invalid-range')
   })
 
   it('returns null for valid proxy URL when proxy enabled', () => {

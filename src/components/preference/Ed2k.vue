@@ -417,8 +417,10 @@ onMounted(() => {
 
       <NDivider title-placement="left">{{ t('preferences.ed2k-search') }}</NDivider>
       <NFormItem :label="t('preferences.ed2k-search-keyword')">
-        <NInputGroup>
-          <NInput v-model:value="searchKeyword" :disabled="searchActive" @keyup.enter="handleSearch" />
+        <NInput v-model:value="searchKeyword" :disabled="searchActive" @keyup.enter="handleSearch" />
+      </NFormItem>
+      <NFormItem :show-label="false">
+        <div class="ed2k-search-actions">
           <NButton
             class="ed2k-search-button"
             :class="{ 'ed2k-search-button--active': searchActive }"
@@ -427,14 +429,16 @@ onMounted(() => {
             @click="handleSearch"
           >
             <template #icon>
-              <div v-if="searchActive" class="ed2k-search-spinner" />
-              <NIcon v-else><SearchOutline /></NIcon>
+              <Transition name="ed2k-search-icon" mode="out-in">
+                <div v-if="searchActive" key="searching" class="ed2k-search-spinner" />
+                <NIcon v-else key="idle"><SearchOutline /></NIcon>
+              </Transition>
             </template>
             <Transition name="ed2k-search-label" mode="out-in">
               <span :key="searchButtonText">{{ searchButtonText }}</span>
             </Transition>
           </NButton>
-        </NInputGroup>
+        </div>
       </NFormItem>
       <NFormItem :label="t('preferences.ed2k-search-type')">
         <NSelect v-model:value="searchFileType" :options="fileTypeOptions" style="width: 220px" />
@@ -480,6 +484,11 @@ onMounted(() => {
   min-width: 104px;
   overflow: hidden;
 }
+.ed2k-search-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .ed2k-search-spinner {
   width: 14px;
   height: 14px;
@@ -489,6 +498,17 @@ onMounted(() => {
   animation: ed2k-search-spin 0.8s linear infinite;
   will-change: transform;
   contain: layout style paint;
+}
+.ed2k-search-icon-enter-active,
+.ed2k-search-icon-leave-active {
+  transition:
+    opacity 0.18s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
+.ed2k-search-icon-enter-from,
+.ed2k-search-icon-leave-to {
+  opacity: 0;
+  transform: scale(0.86);
 }
 .ed2k-search-label-enter-active,
 .ed2k-search-label-leave-active {

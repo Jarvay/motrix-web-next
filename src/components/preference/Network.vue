@@ -232,16 +232,66 @@ onMounted(() => {
         </div>
       </div>
 
+      <!-- Port conflict recovery -->
+      <NDivider title-placement="left">{{ t('preferences.port-conflict-recovery') }}</NDivider>
+      <NFormItem :label="t('preferences.port-conflict-recovery-enable')">
+        <NSwitch v-model:value="form.portConflictRecovery.enabled" />
+      </NFormItem>
+      <div
+        class="port-recovery-collapse"
+        :class="{ 'port-recovery-collapse--open': form.portConflictRecovery.enabled }"
+      >
+        <div class="port-recovery-collapse__inner collapse-indent">
+          <NFormItem :label="t('preferences.port-conflict-recovery-range')">
+            <NInputGroup>
+              <NInputNumber
+                v-model:value="form.portConflictRecovery.rangeStart"
+                :min="1024"
+                :max="65535"
+                style="width: 140px"
+              />
+              <NInputNumber
+                v-model:value="form.portConflictRecovery.rangeEnd"
+                :min="1024"
+                :max="65535"
+                style="width: 140px"
+              />
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem :show-label="false">
+            <div class="info-text">{{ t('preferences.port-conflict-recovery-range-hint') }}</div>
+          </NFormItem>
+          <NFormItem :label="t('preferences.port-conflict-recovery-apply-to')">
+            <div class="port-recovery-switches">
+              <div class="port-recovery-switch">
+                <span>{{ t('preferences.rpc-listen-port') }}</span>
+                <NSwitch v-model:value="form.portConflictRecovery.rpc" />
+              </div>
+              <div class="port-recovery-switch">
+                <span>{{ t('preferences.extension-api-port') }}</span>
+                <NSwitch v-model:value="form.portConflictRecovery.extensionApi" />
+              </div>
+              <div class="port-recovery-switch">
+                <span>{{ t('preferences.port-conflict-recovery-bt') }}</span>
+                <NSwitch v-model:value="form.portConflictRecovery.bt" />
+              </div>
+              <div class="port-recovery-switch">
+                <span>{{ t('preferences.port-conflict-recovery-dht') }}</span>
+                <NSwitch v-model:value="form.portConflictRecovery.dht" />
+              </div>
+              <div class="port-recovery-switch">
+                <span>{{ t('preferences.port-conflict-recovery-ed2k') }}</span>
+                <NSwitch v-model:value="form.portConflictRecovery.ed2k" />
+              </div>
+            </div>
+          </NFormItem>
+        </div>
+      </div>
+
       <!-- Ports -->
       <NDivider title-placement="left">{{ t('preferences.port') }}</NDivider>
       <NFormItem label="UPnP/NAT-PMP">
         <NSwitch v-model:value="form.enableUpnp" />
-      </NFormItem>
-      <NFormItem :label="t('preferences.auto-change-conflicting-ports')">
-        <NSwitch v-model:value="form.autoChangeConflictingPorts" />
-      </NFormItem>
-      <NFormItem :show-label="false">
-        <div class="info-text">{{ t('preferences.auto-change-conflicting-ports-hint') }}</div>
       </NFormItem>
       <NFormItem :label="t('preferences.bt-port')">
         <NInputGroup>
@@ -359,6 +409,32 @@ onMounted(() => {
 }
 .proxy-collapse__inner {
   overflow: hidden;
+}
+.port-recovery-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.2, 0, 0, 1);
+}
+.port-recovery-collapse--open {
+  grid-template-rows: 1fr;
+}
+.port-recovery-collapse__inner {
+  overflow: hidden;
+}
+.port-recovery-switches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 10px 18px;
+  max-width: 520px;
+}
+.port-recovery-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+  color: var(--m3-on-surface);
+  font-size: 13px;
 }
 
 /* ── UA preset row ───────────────────────────────────────────────── */
