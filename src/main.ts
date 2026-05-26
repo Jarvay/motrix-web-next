@@ -12,6 +12,7 @@ import aria2Api from './api/aria2'
 import { ENGINE_RPC_PORT, AUTO_SYNC_TRACKER_INTERVAL, DEFAULT_TRACKER_SOURCE } from '@shared/constants'
 import { convertTrackerDataToLine, convertTrackerDataToComma, reduceTrackerString } from '@shared/utils/tracker'
 import { logger } from '@shared/logger'
+import { getErrorMessage } from '@shared/utils/errorMessage'
 import type { AppConfig, TauriUpdate } from '@shared/types'
 import App from './App.vue'
 import 'virtual:uno.css'
@@ -385,7 +386,7 @@ window.addEventListener('unhandledrejection', (e) => {
             ed2kUdpPort: Number(config.ed2kUdpListenPort) > 0 ? Number(config.ed2kUdpListenPort) : null,
           }),
         )
-        .catch((e) => logger.warn('UPnP', 'startup mapping failed: ' + e))
+        .catch((e) => logger.warn('UPnP', `startup mapping failed: ${getErrorMessage(e)}`))
     }
 
     // ── Phase 2 completion: engine ready ───────────────────────────────────

@@ -9,6 +9,7 @@ import { useEngineRestart } from '@/composables/useEngineRestart'
 import { usePlatform } from '@/composables/usePlatform'
 import { useSystemProxyDetect } from '@/composables/useSystemProxyDetect'
 import { logger } from '@shared/logger'
+import { getErrorMessage } from '@shared/utils/errorMessage'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { PROXY_SCOPE_OPTIONS, FILE_ALLOCATION_OPTIONS, ENGINE_RPC_PORT } from '@shared/constants'
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
@@ -193,7 +194,7 @@ async function syncUpnpState(enabled: boolean, btPort: number, dhtPort: number, 
       await invoke('stop_upnp_mapping')
     }
   } catch (e) {
-    logger.warn('UPnP', `sync failed: ${e}`)
+    logger.warn('UPnP', `sync failed: ${getErrorMessage(e)}`)
     message.warning(t('preferences.upnp-mapping-failed'))
   }
 }

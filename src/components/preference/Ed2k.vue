@@ -38,6 +38,7 @@ import { cleanupEd2kSearch, ed2kSearch, getEd2kSearchResults } from '@/api/aria2
 import { ENGINE_RPC_PORT } from '@shared/constants'
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
 import { bytesToSize } from '@shared/utils'
+import { getErrorMessage } from '@shared/utils/errorMessage'
 import { logger } from '@shared/logger'
 import type { Ed2kSearchResult } from '@shared/types'
 import PreferenceActionBar from './PreferenceActionBar.vue'
@@ -121,13 +122,6 @@ const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceF
     return true
   },
   afterSave: async (f, prevConfig) => {
-    if (
-      preferenceStore.config.enableUpnp &&
-      (f.ed2kListenPort !== prevConfig.ed2kListenPort || f.ed2kUdpListenPort !== prevConfig.ed2kUdpListenPort)
-    ) {
-      await syncUpnpState(f.ed2kListenPort, f.ed2kUdpListenPort)
-    }
-
     if (needsRestart.value) {
       needsRestart.value = false
       const port = (preferenceStore.config.rpcListenPort as number) || ENGINE_RPC_PORT
@@ -136,6 +130,13 @@ const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceF
       await nextTick()
       await new Promise((r) => requestAnimationFrame(r))
       await restartEngine({ port, secret })
+    }
+
+    if (
+      preferenceStore.config.enableUpnp &&
+      (f.ed2kListenPort !== prevConfig.ed2kListenPort || f.ed2kUdpListenPort !== prevConfig.ed2kUdpListenPort)
+    ) {
+      await syncUpnpState(f.ed2kListenPort, f.ed2kUdpListenPort)
     }
   },
 })
@@ -157,7 +158,7 @@ async function syncUpnpState(ed2kPort: number, ed2kUdpPort: number) {
       ed2kUdpPort: ed2kUdpPort > 0 ? ed2kUdpPort : null,
     })
   } catch (e) {
-    logger.warn('UPnP', `ED2K sync failed: ${e}`)
+    logger.warn('UPnP', `ED2K sync failed: ${getErrorMessage(e)}`)
     message.warning(t('preferences.upnp-mapping-failed'))
   }
 }

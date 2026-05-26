@@ -19,6 +19,16 @@ import { defineComponent, nextTick } from 'vue'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 
+const mockMessage = vi.hoisted(() => {
+  const createMessageFn = () => vi.fn((_message?: string) => ({ destroy: vi.fn() }))
+  return {
+    success: createMessageFn(),
+    error: createMessageFn(),
+    warning: createMessageFn(),
+    info: createMessageFn(),
+  }
+})
+
 // ── Mock Tauri invoke ───────────────────────────────────────────────
 const mockInvoke = vi.fn().mockResolvedValue(undefined)
 vi.mock('@tauri-apps/api/core', () => ({
@@ -27,12 +37,7 @@ vi.mock('@tauri-apps/api/core', () => ({
 
 // ── Mock naive-ui (useMessage needed by useAppMessage) ──────────────
 vi.mock('naive-ui', () => ({
-  useMessage: () => ({
-    success: vi.fn(() => ({ destroy: vi.fn() })),
-    error: vi.fn(() => ({ destroy: vi.fn() })),
-    warning: vi.fn(() => ({ destroy: vi.fn() })),
-    info: vi.fn(() => ({ destroy: vi.fn() })),
-  }),
+  useMessage: () => mockMessage,
 }))
 
 // ── Mock vue-i18n ───────────────────────────────────────────────────
@@ -208,6 +213,27 @@ describe('usePreferenceForm', () => {
       expect.objectContaining({ locale: 'ja' }),
       expect.objectContaining({ locale: 'zh-CN' }),
     )
+
+    unmount()
+  })
+
+  it('runs afterSave before showing the save-success toast', async () => {
+    const store = usePreferenceStore()
+    store.updateAndSave = vi.fn().mockResolvedValue(true)
+    const events: string[] = []
+    mockMessage.success.mockImplementation((message?: string) => {
+      events.push(`success:${message}`)
+      return { destroy: vi.fn() }
+    })
+
+    const afterSave = vi.fn(async () => {
+      events.push('afterSave')
+    })
+    const { result, unmount } = withSetup(() => usePreferenceForm(makeOptions({ afterSave })))
+
+    await result.handleSave()
+
+    expect(events).toEqual(['afterSave', 'success:preferences.save-success-message'])
 
     unmount()
   })

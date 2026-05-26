@@ -116,9 +116,9 @@ export function usePreferenceForm<T extends Record<string, unknown>>(options: Us
     // causing route-leave guards to skip if an async save fails.
     savedSnapshot.value = JSON.parse(JSON.stringify(form.value)) as T
 
-    message.success(t('preferences.save-success-message'))
-
     await options.afterSave?.(form.value as T, prevConfig)
+
+    message.success(t('preferences.save-success-message'))
   }
 
   function handleReset(): void {
