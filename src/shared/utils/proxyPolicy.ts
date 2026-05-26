@@ -5,7 +5,7 @@ import { isValidAria2ProxyUrl } from '@shared/utils/aria2Proxy'
 export const ENGINE_PROXY_MODES = ['direct', 'auto', 'manual'] as const
 export type EngineProxyMode = (typeof ENGINE_PROXY_MODES)[number]
 
-export const TASK_PROXY_MODES = ['global', ...ENGINE_PROXY_MODES] as const
+export const TASK_PROXY_MODES = ['app', ...ENGINE_PROXY_MODES] as const
 export type TaskProxyMode = (typeof TASK_PROXY_MODES)[number]
 
 export function normalizeProxyMode(mode: unknown): EngineProxyMode {
@@ -45,9 +45,9 @@ export function buildDownloadProxyOptions(proxy: ProxyConfig): Aria2EngineOption
 export function buildTaskProxyOptions(
   mode: TaskProxyMode,
   customProxy: string,
-  globalProxy?: ProxyConfig,
+  appProxy?: ProxyConfig,
 ): Aria2EngineOptions {
-  if (mode === 'global') return {}
+  if (mode === 'app') return {}
   if (mode !== 'manual') return { 'proxy-mode': mode }
 
   const server = customProxy.trim()
@@ -58,7 +58,7 @@ export function buildTaskProxyOptions(
     'all-proxy': server,
   }
 
-  const bypass = globalProxy?.bypass?.trim()
+  const bypass = appProxy?.bypass?.trim()
   if (bypass) options['no-proxy'] = bypass
   return options
 }

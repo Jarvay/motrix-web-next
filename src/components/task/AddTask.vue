@@ -104,18 +104,13 @@ const form = ref<AddTaskForm>({
   saveHttpAuth: true,
   referer: '',
   cookie: '',
-  proxyMode: 'global' as const,
+  proxyMode: 'app' as const,
   customProxy: '',
-  globalProxy: preferenceStore.config.proxy,
+  appProxy: preferenceStore.config.proxy,
 })
 
-/**
- * Whether a usable global proxy is configured in Settings → Advanced.
- * Must read through preferenceStore.config (not a cached local) because
- * the store replaces the entire config ref on save, which would break
- * reactivity for any local alias.
- */
-const globalProxyAvailable = computed(() => true)
+/** Whether the app settings proxy option should be shown. */
+const appProxyAvailable = computed(() => true)
 
 const maxSplit = ENGINE_MAX_CONNECTION_PER_SERVER
 
@@ -399,9 +394,9 @@ function handleClose() {
     saveHttpAuth: true,
     referer: '',
     cookie: '',
-    proxyMode: 'global',
+    proxyMode: 'app',
     customProxy: '',
-    globalProxy: preferenceStore.config.proxy,
+    appProxy: preferenceStore.config.proxy,
   })
   submitting.value = false
   selectedBatchIndex.value = 0
@@ -426,7 +421,7 @@ async function handleSubmit() {
     const effectiveForm = {
       ...form.value,
       dir: form.value.dir.trim() || preferenceStore.config.dir,
-      globalProxy: preferenceStore.config.proxy,
+      appProxy: preferenceStore.config.proxy,
     }
     const options = buildEngineOptions(effectiveForm)
     let manualResult: ManualUriSubmitResult = { submittedTaskNames: [], magnetGids: [], magnetFailures: [] }
@@ -693,7 +688,7 @@ function kindTagType(kind: string): 'info' | 'success' | 'warning' {
             v-model:cookie="form.cookie"
             v-model:proxy-mode="form.proxyMode"
             v-model:custom-proxy="form.customProxy"
-            :global-proxy-available="globalProxyAvailable"
+            :app-proxy-available="appProxyAvailable"
           />
         </div>
       </NForm>

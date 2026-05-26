@@ -177,7 +177,7 @@ describe('useTaskDetailOptions', () => {
       const { form } = setup(mocks)
       await nextTick()
       expect(form.userAgent).toBe('')
-      expect(form.proxyMode).toBe('global')
+      expect(form.proxyMode).toBe('app')
     })
 
     it('parses header array with Cookie and Authorization', async () => {
@@ -212,16 +212,16 @@ describe('useTaskDetailOptions', () => {
       expect(form.proxyMode).toBe('auto')
     })
 
-    it('sets proxyMode to global when manual proxy matches global server', async () => {
+    it('sets proxyMode to app when manual proxy matches app settings', async () => {
       const mocks = createMocks({
         getTaskOption: vi.fn().mockResolvedValue({ proxyMode: 'manual', allProxy: 'http://127.0.0.1:7890' }),
       })
       const { form } = setup(mocks)
       await nextTick()
-      expect(form.proxyMode).toBe('global')
+      expect(form.proxyMode).toBe('app')
     })
 
-    it('sets proxyMode to manual when manual proxy differs from global server', async () => {
+    it('sets proxyMode to manual when manual proxy differs from app settings', async () => {
       const mocks = createMocks({
         getTaskOption: vi.fn().mockResolvedValue({ proxyMode: 'manual', allProxy: 'http://10.0.0.1:8080' }),
       })
@@ -233,12 +233,12 @@ describe('useTaskDetailOptions', () => {
   })
 
   describe('proxy computed', () => {
-    it('globalProxyAvailable is true when configured', () => {
-      expect(setup(createMocks()).globalProxyAvailable.value).toBe(true)
+    it('appProxyAvailable is true when configured', () => {
+      expect(setup(createMocks()).appProxyAvailable.value).toBe(true)
     })
 
-    it('proxyAddress reflects global config', () => {
-      expect(setup(createMocks()).proxyAddress.value).toBe('http://127.0.0.1:7890')
+    it('appProxyServer reflects app settings', () => {
+      expect(setup(createMocks()).appProxyServer.value).toBe('http://127.0.0.1:7890')
     })
   })
 
@@ -318,11 +318,11 @@ describe('useTaskDetailOptions', () => {
       })
     })
 
-    it('sends global proxy policy when proxyMode is global', async () => {
+    it('sends app proxy policy when proxyMode is app', async () => {
       const mocks = createMocks()
       const { form, applyOptions } = setup(mocks)
       await nextTick()
-      form.proxyMode = 'global'
+      form.proxyMode = 'app'
       await applyOptions()
       expect(mocks.changeTaskOption).toHaveBeenCalledWith({
         gid: 'abc123',

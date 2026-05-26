@@ -437,9 +437,9 @@ export const useAppStore = defineStore('app', () => {
       saveHttpAuth: true,
       referer,
       cookie,
-      proxyMode: 'global',
+      proxyMode: 'app',
       customProxy: '',
-      globalProxy: preferenceStore.config.proxy,
+      appProxy: preferenceStore.config.proxy,
     }
   }
 

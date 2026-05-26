@@ -117,7 +117,7 @@ function createEmptyForm(): TaskDetailOptionsForm {
     authorization: '',
     httpAuthUsername: '',
     httpAuthPassword: '',
-    proxyMode: 'global',
+    proxyMode: 'app',
     customProxy: '',
   }
 }
@@ -140,22 +140,22 @@ function normalizeProxyUrl(url: string): string {
  * reconstructs URLs via uri::construct(), which appends a trailing
  * slash (e.g. "http://host:port" → "http://host:port/").
  */
-function detectProxyMode(opts: Record<string, string>, globalServer: string): { mode: ProxyMode; custom: string } {
+function detectProxyMode(opts: Record<string, string>, appProxyServer: string): { mode: ProxyMode; custom: string } {
   const mode = normalizeProxyMode(opts.proxyMode)
   const allProxy = (opts.allProxy as string) ?? ''
   if (mode === 'direct' || mode === 'auto') return { mode, custom: '' }
   if (mode === 'manual') {
-    if (globalServer && normalizeProxyUrl(allProxy) === normalizeProxyUrl(globalServer)) {
-      return { mode: 'global', custom: '' }
+    if (appProxyServer && normalizeProxyUrl(allProxy) === normalizeProxyUrl(appProxyServer)) {
+      return { mode: 'app', custom: '' }
     }
     return { mode: 'manual', custom: allProxy }
   }
-  return { mode: 'global', custom: '' }
+  return { mode: 'app', custom: '' }
 }
 
 // ── Options loader ────────────────────────────────────────────────
 
-function populateFormFromResponse(opts: Record<string, string>, form: TaskDetailOptionsForm, globalServer: string) {
+function populateFormFromResponse(opts: Record<string, string>, form: TaskDetailOptionsForm, appProxyServer: string) {
   form.userAgent = (opts.userAgent as string) ?? ''
   form.referer = (opts.referer as string) ?? ''
 
@@ -166,7 +166,7 @@ function populateFormFromResponse(opts: Record<string, string>, form: TaskDetail
   form.httpAuthUsername = (opts.httpUser as string) ?? ''
   form.httpAuthPassword = (opts.httpPasswd as string) ?? ''
 
-  const detected = detectProxyMode(opts, globalServer)
+  const detected = detectProxyMode(opts, appProxyServer)
   form.proxyMode = detected.mode
   form.customProxy = detected.custom
 }
@@ -221,8 +221,8 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
     return MODIFIABLE_STATUSES.has(task.value.status)
   })
 
-  const globalProxyAvailable = computed(() => true)
-  const proxyAddress = computed(() => proxyConfig()?.server ?? '')
+  const appProxyAvailable = computed(() => true)
+  const appProxyServer = computed(() => proxyConfig()?.server ?? '')
 
   const dirty = computed(
     () =>
@@ -244,7 +244,7 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
   async function loadOptions(gid: string) {
     try {
       const opts = await getTaskOption(gid)
-      populateFormFromResponse(opts, form, proxyAddress.value)
+      populateFormFromResponse(opts, form, appProxyServer.value)
 
       snapshotForm(form, loaded)
     } catch (err) {
@@ -264,7 +264,7 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
     applying.value = true
     try {
       const proxyOptions =
-        form.proxyMode === 'global'
+        form.proxyMode === 'app'
           ? buildDownloadProxyOptions(proxyConfig())
           : buildTaskProxyOptions(form.proxyMode, form.customProxy, proxyConfig())
 
@@ -287,5 +287,5 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
     }
   }
 
-  return { form, canModify, globalProxyAvailable, proxyAddress, dirty, applying, applyOptions }
+  return { form, canModify, appProxyAvailable, appProxyServer, dirty, applying, applyOptions }
 }

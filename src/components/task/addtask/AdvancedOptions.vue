@@ -24,8 +24,8 @@ const props = defineProps<{
   proxyMode: TaskProxyMode
   /** Custom proxy address when proxyMode is 'manual'. */
   customProxy: string
-  /** Whether the app-level proxy option should be shown. */
-  globalProxyAvailable: boolean
+  /** Whether the app settings proxy option should be shown. */
+  appProxyAvailable: boolean
 }>()
 
 const emit = defineEmits<{
@@ -144,8 +144,8 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
             name="add-task-proxy-mode"
             @update:value="$emit('update:proxyMode', $event as TaskProxyMode)"
           >
-            <NRadio v-if="globalProxyAvailable" value="global">
-              {{ t('task.proxy-mode-global') }}
+            <NRadio v-if="appProxyAvailable" value="app">
+              {{ t('task.proxy-mode-app') }}
             </NRadio>
             <NRadio value="direct">{{ t('task.proxy-mode-direct') }}</NRadio>
             <NRadio value="auto">{{ t('task.proxy-mode-auto') }}</NRadio>

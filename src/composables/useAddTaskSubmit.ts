@@ -35,7 +35,6 @@ import {
   buildDownloadProxyOptions,
   buildTaskProxyOptions,
   getDownloadProxy,
-  isManualDownloadProxy,
   type TaskProxyMode,
 } from '@shared/utils/proxyPolicy'
 
@@ -57,8 +56,8 @@ export interface AddTaskForm {
   proxyMode: TaskProxyMode
   /** User-entered proxy address when proxyMode is 'manual'. */
   customProxy: string
-  /** Injected from the preference store; used when proxyMode is 'global'. */
-  globalProxy?: ProxyConfig
+  /** Injected from the preference store; used when proxyMode is 'app'. */
+  appProxy?: ProxyConfig
 }
 
 export interface UseAddTaskSubmitOptions {
@@ -114,30 +113,11 @@ export function buildEngineOptions(form: AddTaskForm): Aria2EngineOptions {
 
   Object.assign(
     options,
-    form.proxyMode === 'global' && form.globalProxy
-      ? buildDownloadProxyOptions(form.globalProxy)
-      : buildTaskProxyOptions(form.proxyMode, form.customProxy, form.globalProxy),
+    form.proxyMode === 'app' && form.appProxy
+      ? buildDownloadProxyOptions(form.appProxy)
+      : buildTaskProxyOptions(form.proxyMode, form.customProxy, form.appProxy),
   )
   return options
-}
-
-/**
- * Returns true if the global proxy is configured (enabled with a non-empty server).
- * Used by the AddTask UI to determine whether the proxy checkbox should be available.
- * Pure function — no side effects.
- */
-export function isGlobalProxyConfigured(proxy: ProxyConfig): boolean {
-  return isManualDownloadProxy(proxy)
-}
-
-/**
- * Returns true if the global proxy is active AND its scope includes downloads.
- * When true, aria2 already routes all downloads through the proxy at the engine
- * level, so the per-task checkbox defaults to checked.
- * Pure function — no side effects.
- */
-export function isGlobalDownloadProxyActive(proxy: ProxyConfig): boolean {
-  return isManualDownloadProxy(proxy)
 }
 
 /**
