@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Áp dụng tùy chọn thất bại',
   'proxy-mode-direct': 'Tắt proxy',
   'proxy-mode-auto': 'Môi trường',
-  'proxy-mode-app': 'Cài đặt ứng dụng',
   'proxy-mode-manual': 'Thủ công',
   'use-proxy': 'Bật proxy',
   'proxy-not-configured': 'Chưa cấu hình proxy',

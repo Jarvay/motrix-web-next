@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Не удалось применить параметры',
   'proxy-mode-direct': 'Прокси выключен',
   'proxy-mode-auto': 'Окружение',
-  'proxy-mode-app': 'Настройки приложения',
   'proxy-mode-manual': 'Вручную',
   'use-proxy': 'Включить прокси',
   'proxy-not-configured': 'Прокси не настроен',

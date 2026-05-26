@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'فشل تطبيق الخيارات',
   'proxy-mode-direct': 'إيقاف الوكيل',
   'proxy-mode-auto': 'البيئة',
-  'proxy-mode-app': 'إعدادات التطبيق',
   'proxy-mode-manual': 'يدوي',
   'use-proxy': 'تفعيل الوكيل',
   'proxy-not-configured': 'لم يتم إعداد الوكيل',

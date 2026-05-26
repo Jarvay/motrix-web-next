@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Seçenekler uygulanamadı',
   'proxy-mode-direct': 'Proxy kapalı',
   'proxy-mode-auto': 'Ortam proxy\'sini devral',
-  'proxy-mode-app': 'Uygulama ayarları',
   'proxy-mode-manual': 'Manuel',
   'use-proxy': 'Proxy’yi etkinleştir',
   'proxy-not-configured': 'Proxy yapılandırılmamış',

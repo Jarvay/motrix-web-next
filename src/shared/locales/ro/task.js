@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Aplicarea opțiunilor a eșuat',
   'proxy-mode-direct': 'Proxy oprit',
   'proxy-mode-auto': 'Mediu',
-  'proxy-mode-app': 'Setările aplicației',
   'proxy-mode-manual': 'Manual',
   'use-proxy': 'Activează proxy',
   'proxy-not-configured': 'Proxy neconfigurat',

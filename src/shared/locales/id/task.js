@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Gagal menerapkan opsi',
   'proxy-mode-direct': 'Proxy mati',
   'proxy-mode-auto': 'Lingkungan',
-  'proxy-mode-app': 'Pengaturan aplikasi',
   'proxy-mode-manual': 'Manual',
   'use-proxy': 'Aktifkan proxy',
   'proxy-not-configured': 'Proxy belum dikonfigurasi',

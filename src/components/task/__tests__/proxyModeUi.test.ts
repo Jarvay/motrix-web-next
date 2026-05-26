@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-const TASK_PROXY_ORDER = ['app', 'direct', 'auto', 'manual']
+const TASK_PROXY_ORDER = ['direct', 'auto', 'manual']
 
 function extractProxyOrder(source: string, marker: string): string[] {
   const start = source.indexOf(marker)
@@ -16,15 +16,17 @@ function extractProxyOrder(source: string, marker: string): string[] {
 }
 
 describe('task proxy mode UI', () => {
-  it('orders Add Task proxy modes as App settings, Proxy off, Environment, Manual', async () => {
+  it('orders Add Task proxy modes as Proxy off, Environment, Manual', async () => {
     const source = (await import('@/components/task/addtask/AdvancedOptions.vue?raw')).default
     expect(extractProxyOrder(source, 'name="add-task-proxy-mode"')).toEqual(TASK_PROXY_ORDER)
+    expect(source).not.toContain('proxy-mode-app')
     expect(source).not.toContain('proxy-mode-global')
   })
 
-  it('orders Task Detail proxy modes as App settings, Proxy off, Environment, Manual', async () => {
+  it('orders Task Detail proxy modes as Proxy off, Environment, Manual', async () => {
     const source = (await import('@/components/task/TaskDetail.vue?raw')).default
     expect(extractProxyOrder(source, 'name="task-proxy-mode"')).toEqual(TASK_PROXY_ORDER)
+    expect(source).not.toContain('proxy-mode-app')
     expect(source).not.toContain('proxy-mode-global')
   })
 })

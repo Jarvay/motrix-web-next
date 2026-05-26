@@ -26,6 +26,7 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog'
 import { downloadDir } from '@tauri-apps/api/path'
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
+import { normalizeProxyMode } from '@shared/utils/proxyPolicy'
 
 import { resolveUnresolvedItems, chooseTorrentFile as chooseTorrentFileImpl } from '@/composables/useAddTaskFileOps'
 import {
@@ -91,6 +92,7 @@ function switchTab(target: string): void {
 const showAdvanced = ref(false)
 const submitting = ref(false)
 const selectedBatchIndex = ref(0)
+const defaultTaskProxyMode = () => normalizeProxyMode(preferenceStore.config.proxy.mode)
 
 const form = ref<AddTaskForm>({
   uris: '',
@@ -104,13 +106,10 @@ const form = ref<AddTaskForm>({
   saveHttpAuth: true,
   referer: '',
   cookie: '',
-  proxyMode: 'app' as const,
+  proxyMode: defaultTaskProxyMode(),
   customProxy: '',
   appProxy: preferenceStore.config.proxy,
 })
-
-/** Whether the app settings proxy option should be shown. */
-const appProxyAvailable = computed(() => true)
 
 const maxSplit = ENGINE_MAX_CONNECTION_PER_SERVER
 
@@ -394,7 +393,7 @@ function handleClose() {
     saveHttpAuth: true,
     referer: '',
     cookie: '',
-    proxyMode: 'app',
+    proxyMode: defaultTaskProxyMode(),
     customProxy: '',
     appProxy: preferenceStore.config.proxy,
   })
@@ -688,7 +687,6 @@ function kindTagType(kind: string): 'info' | 'success' | 'warning' {
             v-model:cookie="form.cookie"
             v-model:proxy-mode="form.proxyMode"
             v-model:custom-proxy="form.customProxy"
-            :app-proxy-available="appProxyAvailable"
           />
         </div>
       </NForm>

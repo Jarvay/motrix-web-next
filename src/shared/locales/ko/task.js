@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': '옵션 적용 실패',
   'proxy-mode-direct': '프록시 끄기',
   'proxy-mode-auto': '환경',
-  'proxy-mode-app': '앱 설정',
   'proxy-mode-manual': '수동',
   'use-proxy': '프록시 활성화',
   'proxy-not-configured': '프록시 미설정',

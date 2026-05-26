@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Failed to apply options',
   'proxy-mode-direct': 'Proxy off',
   'proxy-mode-auto': 'Environment',
-  'proxy-mode-app': 'App settings',
   'proxy-mode-manual': 'Manual',
   'use-proxy': 'Enable proxy',
   'proxy-not-configured': 'Proxy not configured',

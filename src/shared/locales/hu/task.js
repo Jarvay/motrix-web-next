@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Beállítások alkalmazása sikertelen',
   'proxy-mode-direct': 'Proxy kikapcsolva',
   'proxy-mode-auto': 'Környezet',
-  'proxy-mode-app': 'Alkalmazásbeállítások',
   'proxy-mode-manual': 'Kézi',
   'use-proxy': 'Proxy engedélyezése',
   'proxy-not-configured': 'Proxy nincs beállítva',

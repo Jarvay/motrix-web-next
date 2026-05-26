@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': '選項套用失敗',
   'proxy-mode-direct': '關閉代理',
   'proxy-mode-auto': '繼承環境',
-  'proxy-mode-app': '軟體設定',
   'proxy-mode-manual': '手動代理',
   'use-proxy': '啟用代理',
   'proxy-not-configured': '未設定代理',

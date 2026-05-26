@@ -116,7 +116,7 @@ function createEmptyForm(): TaskDetailOptionsForm {
     authorization: '',
     httpAuthUsername: '',
     httpAuthPassword: '',
-    proxyMode: 'app',
+    proxyMode: 'direct',
     customProxy: '',
   }
 }
@@ -127,38 +127,16 @@ function snapshotForm(source: TaskDetailOptionsForm, target: TaskDetailOptionsFo
 
 // ── Proxy detection ───────────────────────────────────────────────
 
-/** Strips trailing slashes for URL comparison (aria2 normalizes proxy URLs). */
-function normalizeProxyUrl(url: string): string {
-  return url.replace(/\/+$/, '')
-}
-
-/**
- * Detects the proxy mode from aria2-next task options.
- *
- * Uses normalized comparison because aria2's HttpProxyOptionHandler
- * reconstructs URLs via uri::construct(), which appends a trailing
- * slash (e.g. "http://host:port" → "http://host:port/").
- */
-function detectProxyMode(opts: Record<string, string>, appProxy: ProxyConfig): { mode: ProxyMode; custom: string } {
+function detectProxyMode(opts: Record<string, string>): { mode: ProxyMode; custom: string } {
   const mode = normalizeProxyMode(opts.proxyMode)
   const allProxy = (opts.allProxy as string) ?? ''
-  const appMode = normalizeProxyMode(appProxy.mode)
-  if (mode === 'direct' || mode === 'auto') {
-    return mode === appMode ? { mode: 'app', custom: '' } : { mode, custom: '' }
-  }
-  if (mode === 'manual') {
-    const appProxyServer = appProxy.server ?? ''
-    if (appProxyServer && normalizeProxyUrl(allProxy) === normalizeProxyUrl(appProxyServer)) {
-      return { mode: 'app', custom: '' }
-    }
-    return { mode: 'manual', custom: allProxy }
-  }
-  return { mode: 'app', custom: '' }
+  if (mode !== 'manual') return { mode, custom: '' }
+  return { mode: 'manual', custom: allProxy }
 }
 
 // ── Options loader ────────────────────────────────────────────────
 
-function populateFormFromResponse(opts: Record<string, string>, form: TaskDetailOptionsForm, appProxy: ProxyConfig) {
+function populateFormFromResponse(opts: Record<string, string>, form: TaskDetailOptionsForm) {
   form.userAgent = (opts.userAgent as string) ?? ''
   form.referer = (opts.referer as string) ?? ''
 
@@ -169,7 +147,7 @@ function populateFormFromResponse(opts: Record<string, string>, form: TaskDetail
   form.httpAuthUsername = (opts.httpUser as string) ?? ''
   form.httpAuthPassword = (opts.httpPasswd as string) ?? ''
 
-  const detected = detectProxyMode(opts, appProxy)
+  const detected = detectProxyMode(opts)
   form.proxyMode = detected.mode
   form.customProxy = detected.custom
 }
@@ -224,9 +202,6 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
     return MODIFIABLE_STATUSES.has(task.value.status)
   })
 
-  const appProxyAvailable = computed(() => true)
-  const appProxyServer = computed(() => proxyConfig()?.server ?? '')
-
   const dirty = computed(
     () =>
       form.userAgent !== loaded.userAgent ||
@@ -247,7 +222,7 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
   async function loadOptions(gid: string) {
     try {
       const opts = await getTaskOption(gid)
-      populateFormFromResponse(opts, form, proxyConfig())
+      populateFormFromResponse(opts, form)
 
       snapshotForm(form, loaded)
     } catch (err) {
@@ -287,5 +262,5 @@ export function useTaskDetailOptions(config: UseTaskDetailOptionsConfig) {
     }
   }
 
-  return { form, canModify, appProxyAvailable, appProxyServer, dirty, applying, applyOptions }
+  return { form, canModify, dirty, applying, applyOptions }
 }

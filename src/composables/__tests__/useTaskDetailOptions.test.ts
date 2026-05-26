@@ -177,7 +177,7 @@ describe('useTaskDetailOptions', () => {
       const { form } = setup(mocks)
       await nextTick()
       expect(form.userAgent).toBe('')
-      expect(form.proxyMode).toBe('app')
+      expect(form.proxyMode).toBe('direct')
     })
 
     it('parses header array with Cookie and Authorization', async () => {
@@ -212,23 +212,13 @@ describe('useTaskDetailOptions', () => {
       expect(form.proxyMode).toBe('auto')
     })
 
-    it('sets proxyMode to app when auto matches app settings', async () => {
-      const mocks = createMocks({
-        proxyConfig: makeProxy({ mode: 'auto' }),
-        getTaskOption: vi.fn().mockResolvedValue({ proxyMode: 'auto' }),
-      })
-      const { form } = setup(mocks)
-      await nextTick()
-      expect(form.proxyMode).toBe('app')
-    })
-
-    it('sets proxyMode to app when manual proxy matches app settings', async () => {
+    it('sets proxyMode to manual when manual proxy matches app settings', async () => {
       const mocks = createMocks({
         getTaskOption: vi.fn().mockResolvedValue({ proxyMode: 'manual', allProxy: 'http://127.0.0.1:7890' }),
       })
       const { form } = setup(mocks)
       await nextTick()
-      expect(form.proxyMode).toBe('app')
+      expect(form.proxyMode).toBe('manual')
     })
 
     it('sets proxyMode to manual when manual proxy differs from app settings', async () => {
@@ -239,16 +229,6 @@ describe('useTaskDetailOptions', () => {
       await nextTick()
       expect(form.proxyMode).toBe('manual')
       expect(form.customProxy).toBe('http://10.0.0.1:8080')
-    })
-  })
-
-  describe('proxy computed', () => {
-    it('appProxyAvailable is true when configured', () => {
-      expect(setup(createMocks()).appProxyAvailable.value).toBe(true)
-    })
-
-    it('appProxyServer reflects app settings', () => {
-      expect(setup(createMocks()).appProxyServer.value).toBe('http://127.0.0.1:7890')
     })
   })
 
@@ -325,18 +305,6 @@ describe('useTaskDetailOptions', () => {
       expect(mocks.changeTaskOption).toHaveBeenCalledWith({
         gid: 'abc123',
         options: expect.objectContaining({ referer: 'https://example.com' }),
-      })
-    })
-
-    it('sends no task proxy options when proxyMode is app', async () => {
-      const mocks = createMocks()
-      const { form, applyOptions } = setup(mocks)
-      await nextTick()
-      form.proxyMode = 'app'
-      await applyOptions()
-      expect(mocks.changeTaskOption).toHaveBeenCalledWith({
-        gid: 'abc123',
-        options: {},
       })
     })
 

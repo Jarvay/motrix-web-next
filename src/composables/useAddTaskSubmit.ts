@@ -51,7 +51,7 @@ export interface AddTaskForm {
   proxyMode: TaskProxyMode
   /** User-entered proxy address when proxyMode is 'manual'. */
   customProxy: string
-  /** Injected from the preference store; used when proxyMode is 'app'. */
+  /** Injected from the preference store; used for manual proxy bypass inheritance. */
   appProxy?: ProxyConfig
 }
 

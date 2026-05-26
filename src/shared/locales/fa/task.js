@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'اعمال گزینه‌ها ناموفق بود',
   'proxy-mode-direct': 'پروکسی خاموش',
   'proxy-mode-auto': 'محیط',
-  'proxy-mode-app': 'تنظیمات برنامه',
   'proxy-mode-manual': 'دستی',
   'use-proxy': 'فعال‌سازی پروکسی',
   'proxy-not-configured': 'پروکسی پیکربندی نشده',

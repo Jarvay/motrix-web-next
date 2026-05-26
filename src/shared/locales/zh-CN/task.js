@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': '选项应用失败',
   'proxy-mode-direct': '关闭代理',
   'proxy-mode-auto': '继承环境',
-  'proxy-mode-app': '软件设置',
   'proxy-mode-manual': '手动代理',
   'use-proxy': '启用代理',
   'proxy-not-configured': '未配置代理',

@@ -25,6 +25,7 @@ import { usePreferenceStore } from '@/stores/preference'
 import { useTaskStore } from '@/stores/task'
 import type { Aria2RawGlobalStat, Aria2EngineOptions, TauriUpdate, AppConfig, BatchItem } from '@shared/types'
 import type { AddTaskForm } from '@/composables/useAddTaskSubmit'
+import { normalizeProxyMode } from '@shared/utils/proxyPolicy'
 
 /** Payload shape emitted by Rust stat_service via `stat:update`. */
 interface StatPayload {
@@ -437,7 +438,7 @@ export const useAppStore = defineStore('app', () => {
       saveHttpAuth: true,
       referer,
       cookie,
-      proxyMode: 'app',
+      proxyMode: normalizeProxyMode(preferenceStore.config.proxy.mode),
       customProxy: '',
       appProxy: preferenceStore.config.proxy,
     }

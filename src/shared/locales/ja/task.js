@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'オプションの適用に失敗しました',
   'proxy-mode-direct': 'プロキシ無効',
   'proxy-mode-auto': '環境',
-  'proxy-mode-app': 'アプリ設定',
   'proxy-mode-manual': '手動',
   'use-proxy': 'プロキシを有効化',
   'proxy-not-configured': 'プロキシ未設定',

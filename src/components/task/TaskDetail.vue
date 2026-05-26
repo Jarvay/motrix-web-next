@@ -79,7 +79,6 @@ const taskRef = computed(() => props.task)
 const {
   form: optForm,
   canModify: optCanModify,
-  appProxyAvailable: optAppProxyAvailable,
   dirty: optDirty,
   applying: optApplying,
   applyOptions: optApplyFn,
@@ -769,9 +768,6 @@ function handleClose() {
               <NFormItem :label="t('task.task-proxy-label') + ':'">
                 <div class="proxy-radio-group">
                   <NRadioGroup v-model:value="optForm.proxyMode" :disabled="!optCanModify" name="task-proxy-mode">
-                    <NRadio v-if="optAppProxyAvailable" value="app">
-                      {{ t('task.proxy-mode-app') }}
-                    </NRadio>
                     <NRadio value="direct">{{ t('task.proxy-mode-direct') }}</NRadio>
                     <NRadio value="auto">{{ t('task.proxy-mode-auto') }}</NRadio>
                     <NRadio value="manual">{{ t('task.proxy-mode-manual') }}</NRadio>

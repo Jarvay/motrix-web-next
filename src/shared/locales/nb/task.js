@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Kunne ikke bruke alternativer',
   'proxy-mode-direct': 'Proxy av',
   'proxy-mode-auto': 'Miljø',
-  'proxy-mode-app': 'Appinnstillinger',
   'proxy-mode-manual': 'Manuell',
   'use-proxy': 'Aktiver proxy',
   'proxy-not-configured': 'Proxy er ikke konfigurert',

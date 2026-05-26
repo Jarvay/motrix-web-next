@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Не вдалося застосувати параметри',
   'proxy-mode-direct': 'Проксі вимкнено',
   'proxy-mode-auto': 'Середовище',
-  'proxy-mode-app': 'Налаштування застосунку',
   'proxy-mode-manual': 'Вручну',
   'use-proxy': 'Увімкнути проксі',
   'proxy-not-configured': 'Проксі не налаштовано',

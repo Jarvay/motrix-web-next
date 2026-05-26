@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'ตั้งค่าตัวเลือกล้มเหลว',
   'proxy-mode-direct': 'ปิดพร็อกซี',
   'proxy-mode-auto': 'สภาพแวดล้อม',
-  'proxy-mode-app': 'การตั้งค่าแอป',
   'proxy-mode-manual': 'ด้วยตนเอง',
   'use-proxy': 'เปิดใช้พร็อกซี',
   'proxy-not-configured': 'ยังไม่ได้ตั้งค่าพร็อกซี',

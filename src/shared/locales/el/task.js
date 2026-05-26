@@ -70,7 +70,6 @@ export default {
   'options-apply-failed': 'Αποτυχία εφαρμογής επιλογών',
   'proxy-mode-direct': 'Proxy ανενεργό',
   'proxy-mode-auto': 'Περιβάλλον',
-  'proxy-mode-app': 'Ρυθμίσεις εφαρμογής',
   'proxy-mode-manual': 'Χειροκίνητο',
   'use-proxy': 'Ενεργοποίηση proxy',
   'proxy-not-configured': 'Δεν έχει ρυθμιστεί proxy',
