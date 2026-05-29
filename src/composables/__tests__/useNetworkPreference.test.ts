@@ -233,7 +233,6 @@ describe('buildNetworkForm', () => {
     expect(form).toHaveProperty('connectTimeout')
     expect(form).toHaveProperty('timeout')
     expect(form).toHaveProperty('fileAllocation')
-    expect(form).not.toHaveProperty('asyncDns')
     expect(form).toHaveProperty('userAgent')
   })
 

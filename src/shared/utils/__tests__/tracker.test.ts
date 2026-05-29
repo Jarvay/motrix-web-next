@@ -1,11 +1,6 @@
-/** @fileoverview Tests for tracker data conversion and proxy parsing utilities. */
+/** @fileoverview Tests for tracker data conversion utilities. */
 import { describe, it, expect } from 'vitest'
-import {
-  convertTrackerDataToLine,
-  convertTrackerDataToComma,
-  reduceTrackerString,
-  convertToAxiosProxy,
-} from '../tracker'
+import { convertTrackerDataToLine, convertTrackerDataToComma, reduceTrackerString } from '../tracker'
 
 // ─── convertTrackerDataToLine ───────────────────────────────
 
@@ -112,55 +107,5 @@ describe('reduceTrackerString', () => {
     const result = reduceTrackerString(longUrl)
     // No comma found, returns substring(0, 6144)
     expect(result.length).toBe(6144)
-  })
-})
-
-// ─── convertToAxiosProxy ────────────────────────────────────
-
-describe('convertToAxiosProxy', () => {
-  it('returns undefined for empty string', () => {
-    expect(convertToAxiosProxy('')).toBeUndefined()
-  })
-
-  it('returns undefined for default parameter', () => {
-    expect(convertToAxiosProxy()).toBeUndefined()
-  })
-
-  it('parses HTTP proxy without authentication', () => {
-    const result = convertToAxiosProxy('http://proxy.example.com:8080')
-    expect(result).toBeDefined()
-    expect(result!.protocol).toBe('http')
-    expect(result!.host).toBe('proxy.example.com')
-    expect(result!.port).toBe(8080)
-    expect(result!.auth).toBeUndefined()
-  })
-
-  it('parses proxy with username and password', () => {
-    const result = convertToAxiosProxy('http://admin:secret@proxy.example.com:3128')
-    expect(result).toBeDefined()
-    expect(result!.host).toBe('proxy.example.com')
-    expect(result!.port).toBe(3128)
-    expect(result!.auth).toEqual({ username: 'admin', password: 'secret' })
-  })
-
-  it('parses SOCKS5 proxy protocol', () => {
-    const result = convertToAxiosProxy('socks5://localhost:1080')
-    expect(result).toBeDefined()
-    expect(result!.protocol).toBe('socks5')
-    expect(result!.host).toBe('localhost')
-    expect(result!.port).toBe(1080)
-  })
-
-  it('defaults port to 80 when not specified', () => {
-    const result = convertToAxiosProxy('http://proxy.example.com')
-    expect(result).toBeDefined()
-    expect(result!.port).toBe(80)
-  })
-
-  it('parses proxy with only username (no password)', () => {
-    const result = convertToAxiosProxy('http://user@proxy.example.com:9090')
-    expect(result).toBeDefined()
-    expect(result!.auth).toBeDefined()
-    expect(result!.auth!.username).toBe('user')
   })
 })

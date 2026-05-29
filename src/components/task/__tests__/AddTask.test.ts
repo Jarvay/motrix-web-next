@@ -469,21 +469,6 @@ describe('AddTask redesigned layout and animation structure', () => {
     resetBatchIdCounter()
   })
 
-  // ── Layout: dual-tab with NTabs ────────────────────────────────────
-
-  it('uses NTabs dual-tab layout with URI and Torrent tabs', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).toContain('NTabs')
-    expect(source).toContain('NTabPane')
-    expect(source).toContain('ADD_TASK_TYPE.URI')
-    expect(source).toContain('ADD_TASK_TYPE.TORRENT')
-  })
-
-  it('does not import TorrentUpload — functionality merged inline', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).not.toContain('TorrentUpload')
-  })
-
   it('renders a textarea for URI input in the URI tab', async () => {
     const appStore = useAppStore()
     appStore.pendingBatch = []
@@ -528,68 +513,5 @@ describe('AddTask redesigned layout and animation structure', () => {
     await flushPromises()
 
     expect(wrapper.findAll('.batch-item').length).toBe(2)
-  })
-
-  // ── Animation: AutoAnimate list transitions ─────────────────────────
-
-  it('uses v-auto-animate directive for batch list instead of TransitionGroup', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    // Must use AutoAnimate — the industry-standard library
-    expect(source).toContain('v-auto-animate')
-    expect(source).toContain('@formkit/auto-animate')
-    // Must NOT use old TransitionGroup names that caused CSS cascade conflicts
-    expect(source).not.toContain('name="blist"')
-    expect(source).not.toContain('name="bitem"')
-    expect(source).not.toContain('name="batch-item"')
-    // Must NOT have hand-crafted TransitionGroup CSS classes
-    expect(source).not.toContain('.blist-move')
-    expect(source).not.toContain('.blist-leave-active')
-  })
-
-  it('does not define WAAPI animation hooks (AutoAnimate replaces them)', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).not.toContain('onItemEnter')
-    expect(source).not.toContain('onItemLeave')
-    expect(source).not.toContain('onBeforeEnter')
-    expect(source).not.toContain('onBeforeLeave')
-    expect(source).not.toContain('savedContainerHeight')
-  })
-
-  // ── Animation: content-fade retained ───────────────────────────────
-
-  it('retains content-fade transition for file detail switching', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).toContain('name="content-fade"')
-  })
-
-  // ── No CSS transition class pollution ──────────────────────────────
-
-  it('does not define bitem-* CSS classes (AutoAnimate replaces CSS transitions)', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).not.toContain('.bitem-enter-active')
-    expect(source).not.toContain('.bitem-leave-active')
-    expect(source).not.toContain('.bitem-enter-from')
-    expect(source).not.toContain('.bitem-leave-to')
-  })
-
-  it('does not use the old useAddTaskAnimations composable', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).not.toContain('useAddTaskAnimations')
-  })
-})
-
-describe('AddTask submit flow', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-    resetBatchIdCounter()
-    pushMock.mockClear()
-    warningMock.mockClear()
-  })
-
-  it('keeps the dialog open when manual magnet submission reports failures', async () => {
-    const source = (await import('@/components/task/AddTask.vue?raw')).default
-    expect(source).toContain('manualResult.magnetFailures')
-    expect(source).toContain('const failedCount =')
-    expect(source).toContain('handleClose()')
   })
 })

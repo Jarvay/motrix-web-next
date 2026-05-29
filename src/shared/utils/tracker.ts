@@ -31,29 +31,6 @@ export function computeTrackerProxyServer(proxyConfig: Partial<ProxyConfig>): st
   return enable && server && scope.includes(PROXY_SCOPES.UPDATE_TRACKERS) ? server : null
 }
 
-// ── Legacy axios proxy converter (retained for test coverage) ───
-
-export const convertToAxiosProxy = (proxyServer = '') => {
-  if (!proxyServer) {
-    return undefined
-  }
-
-  const url = new URL(proxyServer)
-  const { username, password, protocol = 'http:', hostname, port } = url
-
-  const result: { protocol: string; host: string; port: number; auth?: { username: string; password: string } } = {
-    protocol: protocol.replace(':', ''),
-    host: hostname,
-    port: Number(port) || 80,
-  }
-
-  if (username || password) {
-    result.auth = { username, password }
-  }
-
-  return result
-}
-
 // ── Core fetch ──────────────────────────────────────────────────
 
 /**

@@ -41,7 +41,6 @@ export async function findStaleRecords(records: StaleCheckItem[]): Promise<strin
       continue
     }
 
-    // Legacy single-file fallback (unchanged)
     if (!record.dir || !record.name) {
       staleGids.push(record.gid)
       continue
@@ -155,6 +154,3 @@ export async function cleanupAria2MetadataFiles(
     return false
   }
 }
-
-/** Backward-compatible alias for cleanupAria2MetadataFiles. */
-export const cleanupTorrentMetadataFiles = cleanupAria2MetadataFiles

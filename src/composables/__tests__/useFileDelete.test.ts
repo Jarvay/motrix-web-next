@@ -40,11 +40,11 @@ vi.mock('@shared/utils', () => ({
   resolveOpenTarget: (...args: unknown[]) => mockResolveOpenTarget(...args),
 }))
 
-// ── Mock cleanupTorrentMetadataFiles ────────────────────────────────
+// ── Mock cleanupAria2MetadataFiles ──────────────────────────────────
 const mockCleanupTorrentMetadata = vi.fn()
 
 vi.mock('@/composables/useDownloadCleanup', () => ({
-  cleanupTorrentMetadataFiles: (...args: unknown[]) => mockCleanupTorrentMetadata(...args),
+  cleanupAria2MetadataFiles: (...args: unknown[]) => mockCleanupTorrentMetadata(...args),
 }))
 
 // ── Mock Tauri path ─────────────────────────────────────────────────

@@ -1,14 +1,10 @@
-/** @fileoverview Compatibility wrapper for torrent metadata parsing. */
+/** @fileoverview Torrent metadata parsing adapter. */
 import { parseTorrentMeta, type TorrentMeta, type TorrentFile } from '@shared/utils/torrentMeta'
 
 export type { TorrentMeta, TorrentFile }
 
-/**
- * Parse a .torrent file (as Uint8Array) into a typed TorrentMeta.
- * Extracts the SHA-1 infoHash and file list. The second parameter is kept
- * for backward-compatible tests/imports from the former bencode adapter.
- */
-export async function parseTorrentBuffer(uint8: Uint8Array, _legacyBencode?: unknown): Promise<TorrentMeta | null> {
+/** Parse a .torrent file into typed metadata with SHA-1 infoHash and files. */
+export async function parseTorrentBuffer(uint8: Uint8Array): Promise<TorrentMeta | null> {
   return parseTorrentMeta(uint8)
 }
 

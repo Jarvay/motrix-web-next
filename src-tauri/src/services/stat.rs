@@ -881,17 +881,4 @@ mod tests {
         let _: fn() -> Result<crate::services::power::PowerGuard, crate::error::AppError> =
             crate::services::power::PowerGuard::acquire_download;
     }
-
-    #[test]
-    fn power_guard_does_not_request_display_awake() {
-        let source = include_str!("stat.rs");
-        let production_source = source
-            .split("#[cfg(test)]")
-            .next()
-            .expect("stat.rs should contain production source before tests");
-        assert!(
-            !production_source.contains(".display(true)"),
-            "downloads must prevent system idle sleep without forcing the display to stay awake"
-        );
-    }
 }

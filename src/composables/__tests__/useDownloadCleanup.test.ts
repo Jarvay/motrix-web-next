@@ -34,13 +34,8 @@ vi.mock('@tauri-apps/api/core', () => ({
   },
 }))
 
-const {
-  findStaleRecords,
-  trashTorrentFile,
-  shouldDeleteTorrent,
-  cleanupTorrentMetadataFiles,
-  cleanupAria2MetadataFiles,
-} = await import('../useDownloadCleanup')
+const { findStaleRecords, trashTorrentFile, shouldDeleteTorrent, cleanupAria2MetadataFiles } =
+  await import('../useDownloadCleanup')
 
 describe('useDownloadCleanup', () => {
   beforeEach(() => {
@@ -173,25 +168,25 @@ describe('useDownloadCleanup', () => {
     })
   })
 
-  // ── cleanupTorrentMetadataFiles ─────────────────────────────────
+  // ── cleanupAria2MetadataFiles ───────────────────────────────────
 
-  describe('cleanupTorrentMetadataFiles', () => {
+  describe('cleanupAria2MetadataFiles', () => {
     // Helper: build a DirEntry with isFile=true
     const fileEntry = (name: string) => ({ name, isFile: true, isDirectory: false, isSymlink: false })
     const dirEntry = (name: string) => ({ name, isFile: false, isDirectory: true, isSymlink: false })
 
     it('returns false when dir is empty', async () => {
-      expect(await cleanupTorrentMetadataFiles('', 'abc123')).toBe(false)
+      expect(await cleanupAria2MetadataFiles('', 'abc123')).toBe(false)
     })
 
     it('returns false when infoHash is empty', async () => {
-      expect(await cleanupTorrentMetadataFiles('/dl', '')).toBe(false)
+      expect(await cleanupAria2MetadataFiles('/dl', '')).toBe(false)
     })
 
     it('returns false when no .torrent files in dir', async () => {
       mockReadDir.mockResolvedValue([fileEntry('movie.mkv'), fileEntry('readme.txt')])
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'deadbeef')
+      const result = await cleanupAria2MetadataFiles('/dl', 'deadbeef')
       expect(result).toBe(false)
       expect(mockTrashFile).not.toHaveBeenCalled()
     })
@@ -199,7 +194,7 @@ describe('useDownloadCleanup', () => {
     it('ignores user-named .torrent files (non-hex40 names)', async () => {
       mockReadDir.mockResolvedValue([fileEntry('Ubuntu.torrent'), fileEntry('my-download.torrent')])
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'deadbeef')
+      const result = await cleanupAria2MetadataFiles('/dl', 'deadbeef')
       expect(result).toBe(false)
       expect(mockRemove).not.toHaveBeenCalled()
       expect(mockTrashFile).not.toHaveBeenCalled()
@@ -208,7 +203,7 @@ describe('useDownloadCleanup', () => {
     it('ignores directories even if named like hex40.torrent', async () => {
       mockReadDir.mockResolvedValue([dirEntry('a'.repeat(40) + '.torrent')])
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'deadbeef')
+      const result = await cleanupAria2MetadataFiles('/dl', 'deadbeef')
       expect(result).toBe(false)
       expect(mockReadFile).not.toHaveBeenCalled()
     })
@@ -228,7 +223,7 @@ describe('useDownloadCleanup', () => {
       mockCheckPathExists.mockResolvedValue(true)
       mockRemoveFile.mockResolvedValue(undefined)
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'e2345c99159456342ce6f4ec830ec08fc2e9fc7f', extractor)
+      const result = await cleanupAria2MetadataFiles('/dl', 'e2345c99159456342ce6f4ec830ec08fc2e9fc7f', extractor)
       expect(result).toBe(true)
       expect(extractor).toHaveBeenCalledWith('/dl/' + hexName + '.torrent')
       expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/dl/' + hexName + '.torrent' })
@@ -241,7 +236,7 @@ describe('useDownloadCleanup', () => {
       const extractor = vi.fn().mockResolvedValue('different_hash_value_that_does_not_match')
       mockRemove.mockResolvedValue(undefined)
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'e2345c99159456342ce6f4ec830ec08fc2e9fc7f', extractor)
+      const result = await cleanupAria2MetadataFiles('/dl', 'e2345c99159456342ce6f4ec830ec08fc2e9fc7f', extractor)
       expect(result).toBe(false)
       expect(mockRemoveFile).not.toHaveBeenCalled()
     })
@@ -266,7 +261,7 @@ describe('useDownloadCleanup', () => {
       mockCheckPathExists.mockResolvedValue(true)
       mockRemoveFile.mockResolvedValue(undefined)
 
-      const result = await cleanupTorrentMetadataFiles('/dl', targetHash, extractor)
+      const result = await cleanupAria2MetadataFiles('/dl', targetHash, extractor)
       expect(result).toBe(true)
       // Should have stopped after finding the match (second file)
       expect(extractor).toHaveBeenCalledTimes(2)
@@ -277,7 +272,7 @@ describe('useDownloadCleanup', () => {
     it('survives readDir failure gracefully', async () => {
       mockReadDir.mockRejectedValue(new Error('access denied'))
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'abc123')
+      const result = await cleanupAria2MetadataFiles('/dl', 'abc123')
       expect(result).toBe(false)
     })
 
@@ -295,7 +290,7 @@ describe('useDownloadCleanup', () => {
       mockCheckPathExists.mockResolvedValue(true)
       mockRemoveFile.mockResolvedValue(undefined)
 
-      const result = await cleanupTorrentMetadataFiles('/dl', targetHash, extractor)
+      const result = await cleanupAria2MetadataFiles('/dl', targetHash, extractor)
       expect(result).toBe(true)
       expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/dl/' + hex2 + '.torrent' })
     })
@@ -308,7 +303,7 @@ describe('useDownloadCleanup', () => {
       mockCheckPathExists.mockResolvedValue(true)
       mockRemoveFile.mockRejectedValue(new Error('perm denied'))
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'target', extractor)
+      const result = await cleanupAria2MetadataFiles('/dl', 'target', extractor)
       expect(result).toBe(false)
     })
 
@@ -325,7 +320,7 @@ describe('useDownloadCleanup', () => {
       mockCheckPathExists.mockResolvedValue(true)
       mockRemoveFile.mockResolvedValue(undefined)
 
-      const result = await cleanupTorrentMetadataFiles('/dl', 'matchhash', extractor)
+      const result = await cleanupAria2MetadataFiles('/dl', 'matchhash', extractor)
       expect(result).toBe(true)
       // Only the lowercase hex40 candidate should be processed
       expect(extractor).toHaveBeenCalledTimes(1)
@@ -362,11 +357,6 @@ describe('useDownloadCleanup', () => {
 
       expect(mockRemoveFile).not.toHaveBeenCalledWith({ path: '/dl/' + hex1 + '.meta4' })
       expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/dl/' + hex2 + '.torrent' })
-    })
-
-    it('is backward-compatible with cleanupTorrentMetadataFiles alias', () => {
-      // Verify both names point to the same function
-      expect(cleanupAria2MetadataFiles).toBe(cleanupTorrentMetadataFiles)
     })
 
     it('returns false for empty dir or infoHash', async () => {

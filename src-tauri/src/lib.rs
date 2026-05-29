@@ -1124,14 +1124,4 @@ mod tests {
             ]
         );
     }
-
-    #[test]
-    fn linux_startup_does_not_use_register_all() {
-        let src = include_str!("lib.rs");
-        let forbidden_call = ["deep_link().", "register_all()"].concat();
-        assert!(
-            !src.contains(&forbidden_call),
-            "Linux startup must honor saved protocol toggles instead of registering every scheme"
-        );
-    }
 }

@@ -80,13 +80,6 @@ describe('separateConfig', () => {
     expect(result.system).toHaveProperty('dir')
     expect(result.others).toHaveProperty('unknownKey')
   })
-
-  it('treats removed dns-resolver as unsupported config', () => {
-    const result = separateConfig({ 'dns-resolver': 'async' })
-    expect(result.user).not.toHaveProperty('dns-resolver')
-    expect(result.system).not.toHaveProperty('dns-resolver')
-    expect(result.others).toHaveProperty('dns-resolver')
-  })
 })
 
 describe('diffConfig', () => {

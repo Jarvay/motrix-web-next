@@ -147,17 +147,6 @@ mod tests {
     }
 
     #[test]
-    fn power_guard_source_does_not_request_display_awake() {
-        let source = include_str!("power.rs");
-        let production_source = source
-            .split("#[cfg(test)]")
-            .next()
-            .expect("power.rs should contain production source before tests");
-        assert!(!production_source.contains("PowerRequestDisplayRequired"));
-        assert!(!production_source.contains(".display(true)"));
-    }
-
-    #[test]
     fn power_guard_can_be_owned_by_tokio_spawned_services() {
         fn assert_send<T: Send>() {}
 

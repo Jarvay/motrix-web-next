@@ -17,7 +17,7 @@ import {
 } from '@/composables/useTaskLifecycle'
 import { setArchivedPath, resolveTaskFilePath, requestFileRecheck } from '@/composables/useArchivedPaths'
 import { handleTaskComplete, handleBtComplete, handleTaskError } from '@/composables/useTaskNotifyHandlers'
-import { shouldDeleteTorrent, trashTorrentFile, cleanupTorrentMetadataFiles } from '@/composables/useDownloadCleanup'
+import { shouldDeleteTorrent, trashTorrentFile, cleanupAria2MetadataFiles } from '@/composables/useDownloadCleanup'
 import { cleanupAria2ControlFile } from '@/composables/useFileDelete'
 import { getTaskDisplayName, resolveOpenTarget, checkTaskIsSeeder } from '@shared/utils'
 import type { Aria2Task } from '@shared/types'
@@ -738,7 +738,7 @@ onMounted(async () => {
         // where onBtComplete was suppressed by initialScanDone — the metadata
         // wasn't deleted at download-complete time, so we catch it here.
         if (task.dir && task.infoHash) {
-          cleanupTorrentMetadataFiles(task.dir, task.infoHash).catch((e) =>
+          cleanupAria2MetadataFiles(task.dir, task.infoHash).catch((e) =>
             logger.debug('Lifecycle.metadataCleanup.complete', e),
           )
         }
@@ -781,7 +781,7 @@ onMounted(async () => {
         }
       }
       if (task.dir && task.infoHash) {
-        cleanupTorrentMetadataFiles(task.dir, task.infoHash).catch((e) => logger.debug('Lifecycle.metadataCleanup', e))
+        cleanupAria2MetadataFiles(task.dir, task.infoHash).catch((e) => logger.debug('Lifecycle.metadataCleanup', e))
       }
     },
   })

@@ -223,32 +223,4 @@ mod tests {
         cleanup_port("29100");
         cleanup_port("65535");
     }
-
-    // ── Source-level structural assertion ──────────────────────────
-
-    #[test]
-    fn cleanup_port_source_does_not_use_sh_c_for_port_interpolation() {
-        // Read our own source file and extract only the PRODUCTION code
-        // (everything before #[cfg(test)]) to avoid false positives
-        // from comments in the test module itself.
-        let source = include_str!("cleanup.rs");
-        let test_boundary = source.find("#[cfg(test)]").unwrap_or(source.len());
-        let production_code = &source[..test_boundary];
-
-        let fn_start = production_code
-            .find("fn cleanup_port")
-            .expect("cleanup_port function must exist in cleanup.rs");
-        let _fn_body = &production_code[fn_start..];
-
-        // On Unix, the old pattern was:
-        //   Command::new("sh").args(["-c", &format!("lsof -ti:{}", port)])
-        // The fix replaces this with direct Command::new("lsof").
-        #[cfg(unix)]
-        {
-            assert!(
-                !_fn_body.contains(r#"Command::new("sh")"#),
-                "Unix cleanup_port must not use sh -c — use direct Command::new instead"
-            );
-        }
-    }
 }

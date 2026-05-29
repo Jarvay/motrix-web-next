@@ -24,7 +24,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { logger } from '@shared/logger'
 import { resolveOpenTarget } from '@shared/utils'
-import { cleanupTorrentMetadataFiles } from '@/composables/useDownloadCleanup'
+import { cleanupAria2MetadataFiles } from '@/composables/useDownloadCleanup'
 import type { Aria2Task } from '@shared/types'
 
 /**
@@ -154,7 +154,7 @@ export async function deleteTaskFiles(task: Aria2Task): Promise<void> {
   // BT tasks: clean up the hex40-named .torrent metadata file in the download dir
   if (task.dir && task.infoHash) {
     await trashPath(`${task.dir}/${task.infoHash}.aria2`)
-    await cleanupTorrentMetadataFiles(task.dir, task.infoHash)
+    await cleanupAria2MetadataFiles(task.dir, task.infoHash)
   }
 }
 
