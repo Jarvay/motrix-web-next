@@ -131,7 +131,6 @@ export const checkIsNeedRestart = (changed: Record<string, unknown> = {}): boole
  * - needRestartKeys: bound at process startup or intentionally engine-restarted
  *   so queued runtime work cannot keep stale behavior
  * - aria2 docs exclusions: not accepted by `changeGlobalOption`
- * - log-level: needs full app relaunch (tauri-plugin-log init), not engine restart
  */
 const NON_HOT_RELOADABLE = new Set([
   ...needRestartKeys,
@@ -141,7 +140,6 @@ const NON_HOT_RELOADABLE = new Set([
   'pause',
   'select-file',
   'rpc-save-upload-metadata',
-  'log-level',
 ])
 
 const SUPPORTED_ENGINE_KEYS = new Set(systemKeys)

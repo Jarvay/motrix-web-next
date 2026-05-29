@@ -7,12 +7,43 @@ use super::args::build_start_args;
 use super::cleanup::cleanup_port;
 use super::state::{log_engine_stdout, path_to_safe_string, EngineState};
 use crate::services::port_guard;
+use tauri_plugin_store::StoreExt;
 
 static BT_PORT_RECOVERY_IN_FLIGHT: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(false);
 
 const ENGINE_SIDECAR_NAME: &str = "motrix-next-engine";
 const DEFAULT_RPC_PORT_STR: &str = "29100";
+const DEFAULT_ENGINE_LOG_LEVEL: &str = "debug";
+const VALID_ENGINE_LOG_LEVELS: &[&str] = &["error", "warn", "info", "debug"];
+
+fn read_app_log_level(app: &tauri::AppHandle) -> String {
+    let Some(store) = app.store("config.json").ok() else {
+        return DEFAULT_ENGINE_LOG_LEVEL.to_string();
+    };
+    let Some(level) = store
+        .get("preferences")
+        .and_then(|p| p.get("logLevel")?.as_str().map(ToString::to_string))
+    else {
+        return DEFAULT_ENGINE_LOG_LEVEL.to_string();
+    };
+    if VALID_ENGINE_LOG_LEVELS.contains(&level.as_str()) {
+        level
+    } else {
+        DEFAULT_ENGINE_LOG_LEVEL.to_string()
+    }
+}
+
+fn engine_log_config(app: &tauri::AppHandle) -> Result<(String, String), String> {
+    let log_path = app
+        .path()
+        .app_log_dir()
+        .map_err(|e| format!("Failed to get app log dir: {e}"))?
+        .join("aria2-next.log");
+    let log_path = path_to_safe_string(&log_path);
+    let log_level = read_app_log_level(app);
+    Ok((log_path, log_level))
+}
 
 fn recover_runtime_port_conflict(app: &tauri::AppHandle, kind: port_guard::PortKind) {
     if BT_PORT_RECOVERY_IN_FLIGHT.swap(true, Ordering::SeqCst) {
@@ -147,6 +178,7 @@ pub fn start_engine(app: &tauri::AppHandle, config: &serde_json::Value) -> Resul
         let _ = std::fs::create_dir_all(parent);
     }
 
+    let (log_file_path, log_level) = engine_log_config(app)?;
     let args = build_start_args(
         &config,
         if conf_path.exists() {
@@ -161,6 +193,8 @@ pub fn start_engine(app: &tauri::AppHandle, config: &serde_json::Value) -> Resul
         },
         &session_str,
         session_path.exists(),
+        &log_file_path,
+        &log_level,
     );
 
     let sidecar = app
@@ -368,6 +402,7 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
         let _ = std::fs::create_dir_all(parent);
     }
 
+    let (log_file_path, log_level) = engine_log_config(app)?;
     let args = build_start_args(
         &config,
         if conf_path.exists() {
@@ -382,6 +417,8 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
         },
         &session_str,
         session_path.exists(),
+        &log_file_path,
+        &log_level,
     );
 
     let sidecar = app

@@ -43,7 +43,7 @@ export function detectKind(source: string): BatchItemKind {
   // ── 2. Remote URLs: isolate pathname from query params ────────────
   // Prevents false positives from tracker hostnames in magnet URI
   // query strings (e.g. `tracker.torrent.eu.org`).
-  if (/^(?:https?|ftp):\/\//i.test(lower)) {
+  if (/^https?:\/\//i.test(lower)) {
     try {
       const pathname = new URL(source).pathname.toLowerCase()
       if (pathname.endsWith('.torrent')) return 'torrent'
@@ -52,6 +52,8 @@ export function detectKind(source: string): BatchItemKind {
     }
     return 'uri'
   }
+
+  if (/^ftp:\/\//i.test(lower)) return 'uri'
 
   // ── 3. Local file paths: extension suffix match ───────────────────
   if (lower.endsWith('.torrent')) return 'torrent'

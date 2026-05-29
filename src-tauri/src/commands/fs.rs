@@ -94,19 +94,30 @@ pub fn is_autostart_launch(lifecycle: tauri::State<'_, crate::AppLifecycleState>
     result
 }
 
-/// Truncates the application log file to zero bytes.
-/// Uses `app_log_dir()` to locate the log — no frontend FS permission required.
+/// Truncates log files in the app log directory.
 #[tauri::command]
 pub fn clear_log_file(app: AppHandle) -> Result<(), AppError> {
     let log_dir = app
         .path()
         .app_log_dir()
         .map_err(|e| AppError::Io(e.to_string()))?;
-    let log_path = log_dir.join("motrix-next.log");
-    if log_path.exists() {
-        std::fs::write(&log_path, "")
-            .map_err(|e| AppError::Io(format!("Failed to clear log: {}", e)))?;
-        log::info!("log file cleared: {}", log_path.display());
+    if !log_dir.exists() {
+        return Ok(());
+    }
+    for entry in std::fs::read_dir(&log_dir)
+        .map_err(|e| AppError::Io(format!("Failed to read log dir: {e}")))?
+        .flatten()
+    {
+        let path = entry.path();
+        let is_log = path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("log"));
+        if path.is_file() && is_log {
+            std::fs::write(&path, "")
+                .map_err(|e| AppError::Io(format!("Failed to clear log: {e}")))?;
+            log::info!("log file cleared: {}", path.display());
+        }
     }
     Ok(())
 }

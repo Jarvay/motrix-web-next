@@ -64,8 +64,6 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "pause",
     "select-file",
     "rpc-save-upload-metadata",
-    // Needs full app relaunch (tauri-plugin-log init)
-    "log-level",
 ];
 
 /// Reads the `system.json` store and returns its key-value pairs as a
@@ -492,11 +490,6 @@ mod tests {
         assert!(NON_HOT_RELOADABLE.contains(&"dht-listen-port"));
         assert!(NON_HOT_RELOADABLE.contains(&"ed2k-listen-port"));
         assert!(NON_HOT_RELOADABLE.contains(&"ed2k-udp-listen-port"));
-    }
-
-    #[test]
-    fn non_hot_reloadable_contains_log_level() {
-        assert!(NON_HOT_RELOADABLE.contains(&"log-level"));
     }
 
     #[test]

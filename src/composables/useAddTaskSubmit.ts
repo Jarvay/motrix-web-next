@@ -23,6 +23,7 @@ import {
   extractMagnetDisplayName,
   hasExtension,
   sanitizeAria2OutHint,
+  detectKind,
 } from '@shared/utils/batchHelpers'
 import { buildOuts } from '@shared/utils/rename'
 import { invoke } from '@tauri-apps/api/core'
@@ -45,6 +46,7 @@ import {
 import { summarizeHeaderForwarding } from '@shared/utils/externalInputDiagnostics'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { buildTaskProxyOptions, getDownloadProxy, type TaskProxyMode } from '@shared/utils/proxyPolicy'
+import { resolveRemoteFileItem } from '@/composables/useAddTaskFileOps'
 
 export { getDownloadProxy } from '@shared/utils/proxyPolicy'
 
@@ -215,10 +217,30 @@ export async function submitManualUris(
     }),
   )
 
-  // Partition into magnet and regular URIs
   const magnetUris = allUris.filter(isMagnetUri)
-  const regularUris = allUris.filter((uri) => !isMagnetUri(uri))
+  const remoteTorrentUris = allUris.filter((uri) => !isMagnetUri(uri) && detectKind(uri) === 'torrent')
+  const regularUris = allUris.filter((uri) => !isMagnetUri(uri) && !remoteTorrentUris.includes(uri))
   const submittedTaskNames: string[] = []
+
+  for (const uri of remoteTorrentUris) {
+    const item: BatchItem = {
+      id: uri,
+      kind: 'torrent',
+      source: uri,
+      displayName: extractDecodedFilename(uri) || uri,
+      payload: uri,
+      status: 'pending',
+    }
+    await resolveRemoteFileItem(item, (key) => key, downloadProxy)
+    if (item.status === 'failed') {
+      throw new Error(item.error || 'Failed to load remote torrent')
+    }
+    const failures = await submitBatchItems([item], options, taskStore)
+    if (failures > 0) {
+      throw new Error(item.error || 'Failed to submit remote torrent')
+    }
+    submittedTaskNames.push(item.displayName)
+  }
 
   // Submit regular URIs using the existing path
   if (regularUris.length > 0) {

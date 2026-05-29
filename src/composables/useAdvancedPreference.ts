@@ -184,7 +184,6 @@ export function buildAdvancedSystemConfig(f: AdvancedForm): Record<string, strin
     'listen-port': String(f.listenPort),
     'dht-listen-port': String(f.dhtListenPort),
     'user-agent': f.userAgent || '',
-    'log-level': f.logLevel || 'debug',
     'bt-tracker': convertLineToComma(f.btTracker),
     ...buildDownloadProxyOptions(f.proxy),
   }

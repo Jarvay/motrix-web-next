@@ -215,8 +215,8 @@ describe('detectKind', () => {
     expect(detectKind('https://example.com/file.zip')).toBe('uri')
   })
 
-  it('classifies FTP URLs with .torrent as torrent', () => {
-    expect(detectKind('ftp://mirror.example.com/pub/file.torrent')).toBe('torrent')
+  it('classifies FTP URLs with .torrent as uri', () => {
+    expect(detectKind('ftp://mirror.example.com/pub/file.torrent')).toBe('uri')
   })
 
   // ── 3. Local file paths ───────────────────────────────────────────

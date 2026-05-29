@@ -303,10 +303,6 @@ describe('filterHotReloadableKeys', () => {
     expect(filterHotReloadableKeys(config)).toEqual({})
   })
 
-  it('strips log-level (needs app relaunch, not engine restart)', () => {
-    expect(filterHotReloadableKeys({ 'log-level': 'debug' })).toEqual({})
-  })
-
   it('strips dns-resolver because aria2 only reads it at startup', () => {
     expect(filterHotReloadableKeys({ 'dns-resolver': 'async' })).toEqual({})
   })

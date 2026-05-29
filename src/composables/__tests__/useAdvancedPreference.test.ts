@@ -287,7 +287,7 @@ describe('buildAdvancedSystemConfig', () => {
     expect(config).not.toHaveProperty('enable-peer-exchange')
     expect(config['listen-port']).toBe('29120')
     expect(config['dht-listen-port']).toBe('29130')
-    expect(config['log-level']).toBe('warn')
+    expect(config).not.toHaveProperty('log-level')
   })
 
   it('converts newline trackers to comma-separated', () => {

@@ -15,6 +15,12 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }))
 
+const mockParseTorrentBuffer = vi.hoisted(() => vi.fn())
+vi.mock('@/composables/useTorrentParser', () => ({
+  parseTorrentBuffer: (...args: unknown[]) => mockParseTorrentBuffer(...args),
+  uint8ToBase64: () => 'remote-torrent-base64',
+}))
+
 vi.mock('vue-i18n', () => ({
   useI18n: () => ({
     t: (key: string, params?: Record<string, unknown>) => (params?.taskName ? `${key}:${params.taskName}` : key),
@@ -456,6 +462,8 @@ describe('submitManualUris', () => {
   const mockTaskStore = {
     addUri: vi.fn().mockResolvedValue(['gid1']),
     addMagnetUri: vi.fn().mockResolvedValue('magnet-gid'),
+    addTorrent: vi.fn().mockResolvedValue('torrent-gid'),
+    registerTorrentSource: vi.fn(),
   } as unknown as ReturnType<typeof import('@/stores/task').useTaskStore>
 
   const baseForm: AddTaskForm = {
@@ -477,6 +485,10 @@ describe('submitManualUris', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    mockParseTorrentBuffer.mockResolvedValue({
+      infoHash: 'remote-info-hash',
+      files: [{ idx: 1, path: 'video.mkv', length: 100 }],
+    })
   })
 
   it('does nothing when uris is empty/whitespace', async () => {
@@ -492,6 +504,27 @@ describe('submitManualUris', () => {
     // Each URI produces an empty string (= let aria2 decide), not a flat []
     expect(call.outs).toEqual([''])
     expect(call.options).toEqual({ dir: '/dl' })
+  })
+
+  it('submits manual remote torrent URLs through addTorrent', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    ;(invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce([1, 2, 3])
+
+    await submitManualUris(
+      { ...baseForm, uris: 'https://example.com/linux.torrent?token=abc' },
+      { dir: '/dl' },
+      mockTaskStore,
+    )
+
+    expect(invoke).toHaveBeenCalledWith('fetch_remote_bytes', {
+      url: 'https://example.com/linux.torrent?token=abc',
+      proxy: null,
+    })
+    expect(mockTaskStore.addTorrent).toHaveBeenCalledWith({
+      torrent: 'remote-torrent-base64',
+      options: { dir: '/dl' },
+    })
+    expect(mockTaskStore.addUri).not.toHaveBeenCalled()
   })
 
   it('decodes Thunder links before submitting manual URI tasks', async () => {

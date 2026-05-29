@@ -27,32 +27,38 @@ pub(crate) fn strip_ansi(input: &str) -> String {
     strip_ansi_escapes::strip_str(input)
 }
 
-/// Logs aria2c stdout with semantic log levels based on aria2's own tags.
-///
-/// aria2 prefixes output with `[NOTICE]`, `[ERROR]`, or `[WARN]`.
-/// This function maps them to the correct `log` level so the global
-/// log-level filter works correctly — no `level_for` override needed.
-///
-/// | aria2 tag   | log level |
-/// |-------------|-----------|
-/// | `[NOTICE]`  | `info!`   |
-/// | `[ERROR]`   | `error!`  |
-/// | `[WARN]`    | `warn!`   |
-/// | (other)     | `debug!`  |
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum EngineLogSeverity {
+    Error,
+    Warn,
+    Info,
+    Debug,
+}
+
+pub(crate) fn engine_log_severity(line: &str) -> EngineLogSeverity {
+    if line.contains("[critical]") || line.contains("[error]") {
+        EngineLogSeverity::Error
+    } else if line.contains("[warning]") {
+        EngineLogSeverity::Warn
+    } else if line.contains("[info]") {
+        EngineLogSeverity::Info
+    } else {
+        EngineLogSeverity::Debug
+    }
+}
+
+/// Logs Aria2 Next stdout with semantic levels from the spdlog tag.
 pub(crate) fn log_engine_stdout(raw: &str) {
     let clean = strip_ansi(raw);
     let trimmed = clean.trim();
     if trimmed.is_empty() {
         return;
     }
-    if trimmed.contains("[ERROR]") {
-        log::error!("engine: {}", trimmed);
-    } else if trimmed.contains("[WARN]") {
-        log::warn!("engine: {}", trimmed);
-    } else if trimmed.contains("[NOTICE]") {
-        log::info!("engine: {}", trimmed);
-    } else {
-        log::debug!("engine: {}", trimmed);
+    match engine_log_severity(trimmed) {
+        EngineLogSeverity::Error => log::error!("engine: {}", trimmed),
+        EngineLogSeverity::Warn => log::warn!("engine: {}", trimmed),
+        EngineLogSeverity::Info => log::info!("engine: {}", trimmed),
+        EngineLogSeverity::Debug => log::debug!("engine: {}", trimmed),
     }
 }
 
@@ -118,18 +124,46 @@ mod tests {
     #[test]
     fn strip_ansi_handles_notice_tag() {
         let input =
-            "03/15 00:56:16 [\x1b[1;32mNOTICE\x1b[0m] IPv4 RPC: listening on TCP port 29100";
+            "2026-05-29 00:56:16.123 [\x1b[32minfo\x1b[0m] [RpcBeastServer.cc:241] IPv4 RPC: listening on TCP port 29100";
         let clean = strip_ansi(input);
-        assert!(clean.contains("[NOTICE]"));
+        assert!(clean.contains("[info]"));
         assert!(!clean.contains("\x1b"));
     }
 
     #[test]
     fn strip_ansi_handles_error_tag() {
-        let input = "03/15 00:23:41 [\x1b[1;31mERROR\x1b[0m] Unrecognized URI";
+        let input = "2026-05-29 00:23:41.123 [\x1b[31merror\x1b[0m] [Uri.cc:10] Unrecognized URI";
         let clean = strip_ansi(input);
-        assert!(clean.contains("[ERROR]"));
+        assert!(clean.contains("[error]"));
         assert!(!clean.contains("\x1b"));
+    }
+
+    #[test]
+    fn engine_log_severity_maps_spdlog_levels() {
+        assert_eq!(
+            engine_log_severity("2026-05-29 01:00:00.000 [critical] [main.cc:1] fatal"),
+            EngineLogSeverity::Error
+        );
+        assert_eq!(
+            engine_log_severity("2026-05-29 01:00:00.000 [error] [main.cc:1] failed"),
+            EngineLogSeverity::Error
+        );
+        assert_eq!(
+            engine_log_severity("2026-05-29 01:00:00.000 [warning] [main.cc:1] risky"),
+            EngineLogSeverity::Warn
+        );
+        assert_eq!(
+            engine_log_severity("2026-05-29 01:00:00.000 [info] [main.cc:1] ready"),
+            EngineLogSeverity::Info
+        );
+        assert_eq!(
+            engine_log_severity("2026-05-29 01:00:00.000 [debug] [main.cc:1] detail"),
+            EngineLogSeverity::Debug
+        );
+        assert_eq!(
+            engine_log_severity("2026-05-29 01:00:00.000 [trace] [main.cc:1] detail"),
+            EngineLogSeverity::Debug
+        );
     }
 
     #[test]
@@ -139,17 +173,20 @@ mod tests {
 
     #[test]
     fn strip_ansi_multiple_sequences_in_one_line() {
-        let input = "\x1b[32m[NOTICE]\x1b[0m downloading \x1b[1mfile.zip\x1b[0m (100%)";
+        let input = "2026-05-29 01:00:00.000 [\x1b[32minfo\x1b[0m] [main.cc:1] downloading \x1b[1mfile.zip\x1b[0m";
         let clean = strip_ansi(input);
-        assert_eq!(clean, "[NOTICE] downloading file.zip (100%)");
+        assert_eq!(
+            clean,
+            "2026-05-29 01:00:00.000 [info] [main.cc:1] downloading file.zip"
+        );
         assert!(!clean.contains('\x1b'));
     }
 
     #[test]
     fn strip_ansi_removes_osc_sequences() {
-        let input = "title\x1b]0;aria2c\x07 [NOTICE]";
+        let input = "title\x1b]0;aria2-next\x07 [info]";
         let clean = strip_ansi(input);
-        assert_eq!(clean, "title [NOTICE]");
+        assert_eq!(clean, "title [info]");
         assert!(!clean.contains('\x1b'));
     }
 

@@ -65,7 +65,6 @@ pub(crate) const SUPPORTED_ENGINE_KEYS: &[&str] = &[
     "https-proxy",
     "index-out",
     "listen-port",
-    "log-level",
     "lowest-speed-limit",
     "max-concurrent-downloads",
     "max-connection-per-server",
@@ -113,6 +112,8 @@ pub(crate) fn build_start_args(
     conf_path: Option<&str>,
     session_path: &str,
     session_exists: bool,
+    log_file_path: &str,
+    log_level: &str,
 ) -> Vec<String> {
     let mut args: Vec<String> = Vec::new();
 
@@ -126,6 +127,13 @@ pub(crate) fn build_start_args(
     if session_exists {
         args.push(format!("--input-file={}", session_path));
     }
+
+    args.push(format!("--log-file={log_file_path}"));
+    args.push(format!("--log-level={log_level}"));
+    args.push(format!("--console-level={log_level}"));
+    // Motrix owns torrent parsing and file selection. Remote .torrent URLs
+    // must not auto-follow into engine-created BitTorrent tasks via addUri.
+    args.push("--torrent-metadata=save".to_string());
 
     // Check keep-seeding flag (app-level logic, not an engine option).
     // Frontend sends String("true"/"false"), so handle both Bool and String
@@ -142,6 +150,10 @@ pub(crate) fn build_start_args(
         for (key, value) in obj {
             // Only pass whitelisted Aria2 Next keys.
             if !SUPPORTED_ENGINE_KEYS.contains(&key.as_str()) {
+                continue;
+            }
+
+            if key == "torrent-metadata" {
                 continue;
             }
 
@@ -201,15 +213,89 @@ mod tests {
     #[test]
     fn build_args_passes_whitelisted_keys() {
         let config = json!({ "dir": "/tmp", "split": 16 });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--dir=/tmp"));
         assert!(args.iter().any(|a| a == "--split=16"));
     }
 
     #[test]
+    fn build_args_injects_managed_new_engine_logging_options() {
+        let args = build_start_args(
+            &json!({}),
+            Some("/etc/aria2.conf"),
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "warn",
+        );
+
+        assert!(args.iter().any(|a| a == "--log-file=/tmp/aria2-next.log"));
+        assert!(args.iter().any(|a| a == "--log-level=warn"));
+        assert!(args.iter().any(|a| a == "--console-level=warn"));
+    }
+
+    #[test]
+    fn build_args_rejects_user_logging_overrides() {
+        let args = build_start_args(
+            &json!({
+                "log-file": "/tmp/user.log",
+                "log-level": "error",
+                "console-level": "off",
+                "log-max-size": "1M",
+                "log-max-files": "1"
+            }),
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/managed.log",
+            "debug",
+        );
+
+        assert!(args.iter().any(|a| a == "--log-file=/tmp/managed.log"));
+        assert!(args.iter().any(|a| a == "--log-level=debug"));
+        assert!(args.iter().any(|a| a == "--console-level=debug"));
+        assert!(!args.iter().any(|a| a == "--log-file=/tmp/user.log"));
+        assert!(!args.iter().any(|a| a == "--log-level=error"));
+        assert!(!args.iter().any(|a| a == "--console-level=off"));
+        assert!(!args.iter().any(|a| a.starts_with("--log-max-size=")));
+        assert!(!args.iter().any(|a| a.starts_with("--log-max-files=")));
+    }
+
+    #[test]
+    fn build_args_forces_remote_torrent_metadata_save_mode() {
+        let args = build_start_args(
+            &json!({
+                "torrent-metadata": "start"
+            }),
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
+
+        assert!(args.iter().any(|a| a == "--torrent-metadata=save"));
+        assert!(!args.iter().any(|a| a == "--torrent-metadata=start"));
+    }
+
+    #[test]
     fn build_args_rejects_non_whitelisted_keys() {
         let config = json!({ "dir": "/tmp", "not-a-real-key": "value", "keep-seeding": true });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("not-a-real-key")));
         assert!(!args.iter().any(|a| a.contains("keep-seeding")));
     }
@@ -221,7 +307,14 @@ mod tests {
             "stale-local-key": "false",
             "future-unknown-key": "203.0.113.1"
         });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("not-supported")));
         assert!(!args.iter().any(|a| a.contains("stale-local-key")));
         assert!(!args.iter().any(|a| a.contains("future-unknown-key")));
@@ -230,47 +323,96 @@ mod tests {
     #[test]
     fn build_args_keep_seeding_skips_seed_time() {
         let config = json!({ "keep-seeding": true, "seed-time": "60" });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("seed-time")));
     }
 
     #[test]
     fn build_args_keep_seeding_overrides_seed_ratio() {
         let config = json!({ "keep-seeding": true, "seed-ratio": "1.0" });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--seed-ratio=0"));
     }
 
     #[test]
     fn build_args_skips_empty_values() {
         let config = json!({ "dir": "" });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("--dir=")));
     }
 
     #[test]
     fn build_args_loads_session_on_exists() {
-        let args = build_start_args(&json!({}), None, "/tmp/s.session", true);
+        let args = build_start_args(
+            &json!({}),
+            None,
+            "/tmp/s.session",
+            true,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--input-file=/tmp/s.session"));
         assert!(args.iter().any(|a| a == "--save-session=/tmp/s.session"));
     }
 
     #[test]
     fn build_args_no_input_file_when_no_session() {
-        let args = build_start_args(&json!({}), None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &json!({}),
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("input-file")));
         assert!(args.iter().any(|a| a == "--save-session=/tmp/s.session"));
     }
 
     #[test]
     fn build_args_includes_conf_path() {
-        let args = build_start_args(&json!({}), Some("/etc/aria2.conf"), "/tmp/s.session", false);
+        let args = build_start_args(
+            &json!({}),
+            Some("/etc/aria2.conf"),
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--conf-path=/etc/aria2.conf"));
     }
 
     #[test]
     fn build_args_enables_rpc_without_conf() {
-        let args = build_start_args(&json!({}), None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &json!({}),
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--enable-rpc=true"));
         assert!(args.iter().any(|a| a == "--rpc-listen-all=true"));
         assert!(args.iter().any(|a| a == "--rpc-allow-origin-all=true"));
@@ -285,7 +427,14 @@ mod tests {
 
     #[test]
     fn build_args_no_rpc_enable_with_conf() {
-        let args = build_start_args(&json!({}), Some("/etc/aria2.conf"), "/tmp/s.session", false);
+        let args = build_start_args(
+            &json!({}),
+            Some("/etc/aria2.conf"),
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("enable-rpc")));
     }
 
@@ -293,7 +442,14 @@ mod tests {
     fn build_args_keep_seeding_string_true() {
         // Frontend sends String("true"), not Bool(true)
         let config = json!({ "keep-seeding": "true", "seed-time": "30", "seed-ratio": "1.5" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.starts_with("--seed-time")));
         assert!(args.iter().any(|a| a == "--seed-ratio=0"));
     }
@@ -301,7 +457,14 @@ mod tests {
     #[test]
     fn build_args_keep_seeding_string_false_passes_seed_values() {
         let config = json!({ "keep-seeding": "false", "seed-time": "30", "seed-ratio": "1.5" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--seed-time=30"));
         assert!(args.iter().any(|a| a == "--seed-ratio=1.5"));
     }
@@ -310,7 +473,14 @@ mod tests {
     fn build_args_no_keep_seeding_passes_seed_values() {
         // When keep-seeding is absent entirely, seed values should pass through
         let config = json!({ "seed-time": "60", "seed-ratio": "2.0" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--seed-time=60"));
         assert!(args.iter().any(|a| a == "--seed-ratio=2.0"));
     }
@@ -318,34 +488,69 @@ mod tests {
     #[test]
     fn build_args_boolean_true_value_coerced() {
         let config = json!({ "continue": true });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--continue=true"));
     }
 
     #[test]
     fn build_args_boolean_false_value_coerced() {
         let config = json!({ "continue": false });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--continue=false"));
     }
 
     #[test]
     fn build_args_numeric_value_coerced() {
         let config = json!({ "max-concurrent-downloads": 5 });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--max-concurrent-downloads=5"));
     }
 
     #[test]
     fn build_args_excludes_conf_path_when_none() {
-        let args = build_start_args(&json!({}), None, "/tmp/s", false);
+        let args = build_start_args(
+            &json!({}),
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.starts_with("--conf-path")));
     }
 
     #[test]
     fn build_args_null_and_array_values_skipped() {
         let config = json!({ "dir": null, "header": ["X-Custom: val"] });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("--dir=")));
         // Arrays are not handled by the match — skipped via `_ => continue`
         assert!(!args.iter().any(|a| a.contains("--header=")));
@@ -359,21 +564,42 @@ mod tests {
         // in the session file and re-download on restart.
         // See: aria2 SessionSerializer.cc:288
         let config = json!({ "force-save": true });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("force-save")));
     }
 
     #[test]
     fn build_args_force_save_string_also_rejected() {
         let config = json!({ "force-save": "true" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(!args.iter().any(|a| a.contains("force-save")));
     }
 
     #[test]
     fn build_args_skips_socks5_proxy() {
         let config = json!({ "all-proxy": "socks5://127.0.0.1:1080", "dir": "/tmp" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(
             !args.iter().any(|a| a.contains("all-proxy")),
             "socks5 proxy should be filtered out"
@@ -384,7 +610,14 @@ mod tests {
     #[test]
     fn build_args_skips_socks4_proxy() {
         let config = json!({ "all-proxy": "socks4://127.0.0.1:1080" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(
             !args.iter().any(|a| a.contains("all-proxy")),
             "socks4 proxy should be filtered out"
@@ -394,7 +627,14 @@ mod tests {
     #[test]
     fn build_args_skips_socks5h_proxy() {
         let config = json!({ "all-proxy": "SOCKS5://127.0.0.1:1080" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(
             !args.iter().any(|a| a.contains("all-proxy")),
             "SOCKS5 (uppercase) should be filtered out"
@@ -404,7 +644,14 @@ mod tests {
     #[test]
     fn build_args_passes_http_proxy() {
         let config = json!({ "all-proxy": "http://127.0.0.1:8080" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(
             args.iter()
                 .any(|a| a == "--all-proxy=http://127.0.0.1:8080"),
@@ -415,7 +662,14 @@ mod tests {
     #[test]
     fn build_args_passes_bare_host_port_proxy() {
         let config = json!({ "all-proxy": "127.0.0.1:8080" });
-        let args = build_start_args(&config, None, "/tmp/s", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(
             args.iter().any(|a| a == "--all-proxy=127.0.0.1:8080"),
             "Bare HOST:PORT proxy should pass through"
@@ -425,7 +679,14 @@ mod tests {
     #[test]
     fn build_args_passes_dns_resolver() {
         let config = json!({ "dns-resolver": "async" });
-        let args = build_start_args(&config, None, "/tmp/s.session", false);
+        let args = build_start_args(
+            &config,
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--dns-resolver=async"));
     }
 }

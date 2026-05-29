@@ -52,7 +52,7 @@ export async function resolveFileItem(item: BatchItem, t: (key: string) => strin
  * Resolves a remote file-based batch item: fetches bytes via Rust IPC
  * (bypasses CORS), converts to base64, and parses torrent metadata.
  *
- * Used when the browser extension sends a remote .torrent URL via deep link.
+ * Used when Motrix owns a remote .torrent URL before submitting it through addTorrent.
  * The Rust `fetch_remote_bytes` command uses reqwest with TLS, redirects,
  * and a 16 MiB size limit.
  */
@@ -81,20 +81,20 @@ export async function resolveRemoteFileItem(item: BatchItem, t: (key: string) =>
   }
 }
 
-/** Detect whether a source is a remote HTTP/HTTPS URL. */
-function isRemoteSource(source: string): boolean {
-  return /^https?:\/\//i.test(source)
+/** Detect whether a source is a remote HTTP(S) torrent URL. */
+export function isRemoteTorrentSource(source: string): boolean {
+  return /^https?:\/\//i.test(source) && detectKind(source) === 'torrent'
 }
 
 /**
  * Resolves all unresolved (pending, non-URI) batch items by reading their files.
- * Routes remote URLs (from deep links) through Rust IPC fetch, and local
- * file paths through Tauri FS plugin.
+ * Routes remote HTTP(S) torrent URLs through Rust IPC fetch, and local file paths
+ * through Tauri FS plugin.
  */
 export async function resolveUnresolvedItems(batch: BatchItem[], t: (key: string) => string, downloadProxy?: string) {
   for (const item of batch) {
     if (item.kind !== 'uri' && item.status === 'pending' && item.payload === item.source) {
-      if (isRemoteSource(item.source)) {
+      if (isRemoteTorrentSource(item.source)) {
         await resolveRemoteFileItem(item, t, downloadProxy)
       } else {
         await resolveFileItem(item, t)

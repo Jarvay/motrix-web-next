@@ -723,13 +723,13 @@ mod tests {
     fn aria2_runtime_bind_error_kind_classifies_runtime_port_failures() {
         assert_eq!(
             aria2_runtime_bind_error_kind(
-                "05/14 10:24:11 [ERROR] IPv4 BitTorrent: failed to bind TCP port 29120"
+                "2026-05-29 10:24:11.000 [error] [BtSetup.cc:212] IPv4 BitTorrent: failed to bind TCP port 29120"
             ),
             Some(PortKind::Bt)
         );
         assert_eq!(
             aria2_runtime_bind_error_kind(
-                "05/14 10:24:11 [ERROR] IPv4 DHT: failed to bind UDP port 29130"
+                "2026-05-29 10:24:11.000 [error] [DHTSetup.cc:42] IPv4 DHT: failed to bind UDP port 29130"
             ),
             Some(PortKind::Dht)
         );
@@ -741,13 +741,13 @@ mod tests {
         );
         assert_eq!(
             aria2_runtime_bind_error_kind(
-                "05/14 10:24:11 [NOTICE] IPv4 RPC: listening on TCP port 29100"
+                "2026-05-29 10:24:11.000 [info] [RpcBeastServer.cc:241] IPv4 RPC: listening on TCP port 29100"
             ),
             None
         );
         assert_eq!(
             aria2_runtime_bind_error_kind(
-                "05/26 22:14:21 [ERROR] IPv6 RPC: failed to bind TCP port 29100: Address already in use"
+                "2026-05-29 22:14:21.000 [error] [RpcBeastServer.cc:228] IPv6 RPC: failed to bind TCP port 29100: Address already in use"
             ),
             None
         );
