@@ -355,8 +355,8 @@ export default {
     'Unbekannte Dateitypen werden im Standard-Pfad gespeichert und nach dem Download automatisch archiviert',
   'auto-submit-from-extension': 'Bestätigung für Erweiterungsdownloads überspringen',
   'silent-auto-submit-from-extension': 'Hauptfenster beim Empfangen eines Downloads nicht aktivieren',
-  'auto-select-all-files-from-extension': 'Alle Torrent- und Magnet-Dateien standardmäßig laden',
-  'auto-select-all-files-from-extension-hint': 'Wenn aktiviert, starten alle Aufgaben still',
+  'auto-select-all-magnet-files-from-extension': 'Alle Magnet-Dateien standardmäßig laden',
+  'auto-select-all-magnet-files-from-extension-hint': 'Wenn aktiviert, starten Magnet-Aufgaben still',
   'extension-api-port': 'Erweiterungs-API-Port',
   'extension-api-secret-tip':
     'Geben Sie diesen Schlüssel in den Einstellungen der Browser-Erweiterung zur Authentifizierung ein',

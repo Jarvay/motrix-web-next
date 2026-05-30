@@ -317,9 +317,8 @@ export interface AppConfig {
   clipboard: ClipboardConfig
   /** When true, extension-intercepted URI downloads bypass the AddTask dialog. */
   autoSubmitFromExtension: boolean
-  /** When true, extension-intercepted torrent and magnet tasks
-   *  skip file selection and download every file. */
-  autoSelectAllFilesFromExtension: boolean
+  /** When true, extension-intercepted magnet tasks skip file selection and download every file. */
+  autoSelectAllMagnetFilesFromExtension: boolean
   /** When true, auto-submitted extension downloads are handled in the
    *  background without raising the main window. Only applies when
    *  autoSubmitFromExtension is enabled. */

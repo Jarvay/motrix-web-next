@@ -132,8 +132,8 @@ pub(crate) fn build_start_args(
     args.push("--quiet=true".to_string());
     args.push("--log-max-size=10M".to_string());
     args.push("--log-max-files=2".to_string());
-    // Motrix owns torrent parsing and file selection. Remote .torrent URLs
-    // must not auto-follow into engine-created BitTorrent tasks via addUri.
+    // Remote .torrent URLs are ordinary downloads in Motrix. Keep aria2-next
+    // from auto-following them into BitTorrent tasks.
     args.push("--torrent-metadata=save".to_string());
 
     // Check keep-seeding flag (app-level logic, not an engine option).
@@ -298,7 +298,7 @@ mod tests {
     }
 
     #[test]
-    fn build_args_forces_remote_torrent_metadata_save_mode() {
+    fn build_args_forces_remote_torrent_urls_to_save_mode() {
         let args = build_start_args(
             &json!({
                 "torrent-metadata": "start"

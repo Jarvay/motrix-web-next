@@ -168,8 +168,7 @@ describe('mergeRawUriLines', () => {
 })
 
 // ── detectKind ────────────────────────────────────────────────────────
-// Follows aria2's ProtocolDetector classification order:
-// scheme-first → URL pathname → local path suffix → fallback.
+// Scheme-first → remote URI download → local path suffix → fallback.
 
 describe('detectKind', () => {
   // ── 1. Scheme-first: magnet / thunder ──────────────────────────────
@@ -193,14 +192,14 @@ describe('detectKind', () => {
     expect(detectKind('ed2k://|file|Ubuntu%2026.04.iso|123456789|0123456789abcdef0123456789abcdef|/')).toBe('uri')
   })
 
-  // ── 2. Remote URLs: pathname-only extension match ──────────────────
+  // ── 2. Remote URLs are ordinary URI downloads ──────────────────────
 
-  it('classifies remote .torrent URLs as torrent', () => {
-    expect(detectKind('https://example.com/files/download.torrent')).toBe('torrent')
+  it('classifies remote .torrent URLs as uri', () => {
+    expect(detectKind('https://example.com/files/download.torrent')).toBe('uri')
   })
 
-  it('classifies remote .torrent URLs with query params as torrent', () => {
-    expect(detectKind('https://example.com/file.torrent?token=abc&v=2')).toBe('torrent')
+  it('classifies remote .torrent URLs with query params as uri', () => {
+    expect(detectKind('https://example.com/file.torrent?token=abc&v=2')).toBe('uri')
   })
 
   it('classifies remote URLs with .torrent in hostname but not pathname as uri', () => {

@@ -1,8 +1,5 @@
 /// Network utility commands: remote file fetching and filename resolution.
 ///
-/// `fetch_remote_bytes` — Downloads raw bytes (e.g. `.torrent` files) for
-/// the browser extension deep-link flow.
-///
 /// `resolve_filename` — Resolves trustworthy filenames for extensionless HTTP
 /// URLs before forwarding them to aria2.
 ///
@@ -32,8 +29,6 @@ fn apply_optional_proxy(
     }
     builder
 }
-
-const MAX_TORRENT_SIZE: usize = 16 * 1024 * 1024; // 16 MiB — generous for any .torrent
 
 /// Timeout for HEAD requests in `resolve_filename`.  Short enough to avoid
 /// blocking the UI, long enough for CDN edge nodes to respond.
@@ -479,54 +474,6 @@ fn decode_rfc2047_filename(filename: String) -> String {
     }
 }
 
-// ── Remote byte fetching ────────────────────────────────────────────────
-
-#[tauri::command]
-pub async fn fetch_remote_bytes(url: String, proxy: Option<String>) -> Result<Vec<u8>, AppError> {
-    log::info!("fetch_remote_bytes: url={}", summarize_url_for_log(&url));
-
-    let builder = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(30))
-        .redirect(reqwest::redirect::Policy::limited(5));
-    let client = apply_optional_proxy(builder, &proxy)
-        .build()
-        .map_err(|e| AppError::Io(format!("HTTP client init failed: {e}")))?;
-
-    let resp = client
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| AppError::Io(format!("HTTP request failed: {e}")))?;
-
-    if !resp.status().is_success() {
-        return Err(AppError::Io(format!("HTTP {}", resp.status())));
-    }
-
-    // Check Content-Length header upfront to reject oversized responses early
-    if let Some(len) = resp.content_length() {
-        if len as usize > MAX_TORRENT_SIZE {
-            return Err(AppError::Io(format!(
-                "Response too large: {len} bytes (max {MAX_TORRENT_SIZE})"
-            )));
-        }
-    }
-
-    let bytes = resp
-        .bytes()
-        .await
-        .map_err(|e| AppError::Io(format!("Failed to read response body: {e}")))?;
-
-    if bytes.len() > MAX_TORRENT_SIZE {
-        return Err(AppError::Io(format!(
-            "Response too large: {} bytes (max {MAX_TORRENT_SIZE})",
-            bytes.len()
-        )));
-    }
-
-    log::info!("fetch_remote_bytes: downloaded {} bytes", bytes.len());
-    Ok(bytes.to_vec())
-}
-
 fn summarize_url_for_log(value: &str) -> String {
     let lower = value.to_lowercase();
     if lower.starts_with("magnet:") {
@@ -563,11 +510,6 @@ fn summarize_url_for_log(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn max_torrent_size_is_16_mib() {
-        assert_eq!(MAX_TORRENT_SIZE, 16 * 1024 * 1024);
-    }
 
     // ── extract_basename ────────────────────────────────────────────
 

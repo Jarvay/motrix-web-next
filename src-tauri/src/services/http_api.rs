@@ -208,7 +208,7 @@ async fn handle_add(
     // or auto-submit silently (autoSubmit=ON) based on the user's preference.
     // Rust's only job: ensure the window exists, then emit.
     //
-    // This unified path handles supported URL types (HTTP, magnet, torrent)
+    // This unified path handles supported URL types (HTTP, magnet, local torrent)
     // and all window states (normal, hidden, destroyed in lightweight mode).
     route_to_frontend(&ctx.app, &body);
     Ok(Json(AddResponse {
@@ -380,7 +380,7 @@ fn should_silent_route_extension_input(app: &AppHandle, req: &AddRequest) -> boo
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(true);
             let auto_select_all = p
-                .get("autoSelectAllFilesFromExtension")
+                .get("autoSelectAllMagnetFilesFromExtension")
                 .and_then(serde_json::Value::as_bool)
                 .unwrap_or(false);
             let pause_metadata = p
@@ -409,22 +409,14 @@ fn should_silent_route_url(
     if !(auto_submit && silent) {
         return false;
     }
-    if auto_select_all {
-        return true;
-    }
-
     let lower = raw_url.to_ascii_lowercase();
     if lower.starts_with("magnet:") {
+        if auto_select_all {
+            return true;
+        }
         return !pause_metadata;
     }
-    !is_file_selection_url(raw_url)
-}
-
-fn is_file_selection_url(raw_url: &str) -> bool {
-    let path = url::Url::parse(raw_url)
-        .map(|url| url.path().to_ascii_lowercase())
-        .unwrap_or_else(|_| raw_url.to_ascii_lowercase());
-    path.ends_with(".torrent")
+    true
 }
 
 /// Build a `motrixnext://new?url=X&referer=Y&cookie=Z` deep-link URL.

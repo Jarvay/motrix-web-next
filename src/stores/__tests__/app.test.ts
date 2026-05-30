@@ -417,11 +417,11 @@ describe('useAppStore', () => {
       usePreferenceStore().config.autoSubmitFromExtension = false
     })
 
-    it('detects remote .torrent URLs with correct kind', () => {
+    it('treats remote .torrent URLs as ordinary URI downloads', () => {
       const store = useAppStore()
       store.handleDeepLinkUrls(['https://example.com/linux.torrent'])
       expect(store.pendingBatch.map((i) => ({ kind: i.kind, source: i.source }))).toEqual([
-        { kind: 'torrent', source: 'https://example.com/linux.torrent' },
+        { kind: 'uri', source: 'https://example.com/linux.torrent' },
       ])
     })
 
@@ -746,34 +746,20 @@ describe('useAppStore', () => {
       expect(store.addTaskVisible).toBe(true)
     })
 
-    it('shows dialog for .torrent URLs when file auto-select is disabled', async () => {
+    it('auto-submits remote .torrent URLs as ordinary downloads', async () => {
       const store = useAppStore()
       const { usePreferenceStore } = await import('@/stores/preference')
       const prefStore = usePreferenceStore()
       prefStore.config.autoSubmitFromExtension = true
-      prefStore.config.autoSelectAllFilesFromExtension = false
-
-      store.handleDeepLinkUrls([buildDeepLink('https://example.com/linux.torrent')])
-
-      expect(store.pendingBatch).toHaveLength(1)
-      expect(store.pendingBatch[0].kind).toBe('torrent')
-      expect(store.addTaskVisible).toBe(true)
-    })
-
-    it('auto-submits torrent URLs when file auto-select is enabled', async () => {
-      const store = useAppStore()
-      const { usePreferenceStore } = await import('@/stores/preference')
-      const prefStore = usePreferenceStore()
-      prefStore.config.autoSubmitFromExtension = true
-      prefStore.config.autoSelectAllFilesFromExtension = true
 
       store.handleDeepLinkUrls([buildDeepLink('https://example.com/linux.torrent')])
       await new Promise((resolve) => setTimeout(resolve, 0))
 
       expect(store.pendingBatch).toHaveLength(0)
       expect(store.addTaskVisible).toBe(false)
-      expect(resolveUnresolvedItemsMock).toHaveBeenCalledTimes(1)
-      expect(submitBatchItemsMock).toHaveBeenCalledTimes(1)
+      expect(submitManualUrisMock).toHaveBeenCalledTimes(1)
+      expect(resolveUnresolvedItemsMock).not.toHaveBeenCalled()
+      expect(submitBatchItemsMock).not.toHaveBeenCalled()
     })
 
     it('auto-submits magnet URLs with metadata pause disabled when file auto-select is enabled', async () => {
@@ -781,7 +767,7 @@ describe('useAppStore', () => {
       const { usePreferenceStore } = await import('@/stores/preference')
       const prefStore = usePreferenceStore()
       prefStore.config.autoSubmitFromExtension = true
-      prefStore.config.autoSelectAllFilesFromExtension = true
+      prefStore.config.autoSelectAllMagnetFilesFromExtension = true
 
       store.handleDeepLinkUrls([buildDeepLink('magnet:?xt=urn:btih:abc123')])
       await new Promise((resolve) => setTimeout(resolve, 0))
@@ -802,10 +788,9 @@ describe('useAppStore', () => {
         buildDeepLink('https://example.com/linux.torrent'),
       ])
 
-      // file.zip auto-submitted, linux.torrent goes to dialog
-      expect(store.pendingBatch).toHaveLength(1)
-      expect(store.pendingBatch[0].source).toBe('https://example.com/linux.torrent')
-      expect(store.addTaskVisible).toBe(true)
+      expect(store.pendingBatch).toHaveLength(0)
+      expect(store.addTaskVisible).toBe(false)
+      expect(submitManualUrisMock).toHaveBeenCalledTimes(2)
     })
 
     it('does not open dialog when all items are auto-submitted', async () => {

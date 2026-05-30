@@ -58,7 +58,7 @@ export interface AdvancedForm {
   extensionApiPort: number
   extensionApiSecret: string
   autoSubmitFromExtension: boolean
-  autoSelectAllFilesFromExtension: boolean
+  autoSelectAllMagnetFilesFromExtension: boolean
   silentAutoSubmitFromExtension: boolean
   autoChangeConflictingPorts: boolean
   enableUpnp: boolean
@@ -148,7 +148,8 @@ export function buildAdvancedForm(config: AppConfig): {
       extensionApiPort: config.extensionApiPort ?? D.extensionApiPort,
       extensionApiSecret,
       autoSubmitFromExtension: config.autoSubmitFromExtension ?? D.autoSubmitFromExtension,
-      autoSelectAllFilesFromExtension: config.autoSelectAllFilesFromExtension ?? D.autoSelectAllFilesFromExtension,
+      autoSelectAllMagnetFilesFromExtension:
+        config.autoSelectAllMagnetFilesFromExtension ?? D.autoSelectAllMagnetFilesFromExtension,
       silentAutoSubmitFromExtension: config.silentAutoSubmitFromExtension ?? D.silentAutoSubmitFromExtension,
       autoChangeConflictingPorts: config.autoChangeConflictingPorts ?? D.autoChangeConflictingPorts,
       enableUpnp: config.enableUpnp ?? D.enableUpnp,

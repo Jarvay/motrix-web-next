@@ -18,9 +18,8 @@ import { STAT_BASE_INTERVAL, STAT_PER_TASK_INTERVAL, STAT_MIN_INTERVAL, STAT_MAX
 import { detectKind, createBatchItem, resolveExternalFilenameHint } from '@shared/utils/batchHelpers'
 import { summarizeExternalInput } from '@shared/utils/externalInputDiagnostics'
 import { parseMotrixDeepLink } from '@shared/utils/motrixDeepLink'
-import { buildEngineOptions, submitBatchItems, submitManualUris } from '@/composables/useAddTaskSubmit'
+import { buildEngineOptions, submitManualUris } from '@/composables/useAddTaskSubmit'
 import { getDownloadProxy } from '@/composables/useAddTaskSubmit'
-import { resolveUnresolvedItems } from '@/composables/useAddTaskFileOps'
 import { usePreferenceStore } from '@/stores/preference'
 import { useTaskStore } from '@/stores/task'
 import type {
@@ -352,9 +351,6 @@ export const useAppStore = defineStore('app', () => {
         items.push(createBatchItem('uri', url))
       } else if (lower.startsWith('thunder://')) {
         items.push(createBatchItem('uri', decodeThunderLink(url)))
-      } else if (isRemoteUri && hasFileExt) {
-        // Remote .torrent URLs — detect kind for proper handling
-        items.push(createBatchItem(detectKind(url), url))
       } else if (isRemoteUri) {
         items.push(createBatchItem('uri', url))
       }
@@ -417,7 +413,7 @@ export const useAppStore = defineStore('app', () => {
 
     const preferenceStore = usePreferenceStore()
     const autoSubmit = preferenceStore.config.autoSubmitFromExtension
-    const autoSelectAll = preferenceStore.config.autoSelectAllFilesFromExtension === true
+    const autoSelectAllMagnet = preferenceStore.config.autoSelectAllMagnetFilesFromExtension === true
     logger.info(
       'ExternalInput.new',
       formatLogFields({
@@ -434,16 +430,12 @@ export const useAppStore = defineStore('app', () => {
       }),
     )
 
-    if (autoSubmit && autoSelectAll && kind === 'uri' && downloadUrl.toLowerCase().startsWith('magnet:')) {
+    if (autoSubmit && autoSelectAllMagnet && kind === 'uri' && downloadUrl.toLowerCase().startsWith('magnet:')) {
       void autoSubmitExtensionUrl(downloadUrl, context, resolvedHint, true)
       return { autoSubmitted: 1, ignored: 0 }
     }
     if (autoSubmit && kind === 'uri') {
       void autoSubmitExtensionUrl(downloadUrl, context, resolvedHint)
-      return { autoSubmitted: 1, ignored: 0 }
-    }
-    if (autoSubmit && autoSelectAll && kind === 'torrent') {
-      void autoSubmitExtensionFile(downloadUrl, kind, context)
       return { autoSubmitted: 1, ignored: 0 }
     }
 
@@ -531,43 +523,6 @@ export const useAppStore = defineStore('app', () => {
       uriRequestContexts: {
         [url]: context,
       },
-    }
-  }
-
-  async function autoSubmitExtensionFile(
-    url: string,
-    kind: 'torrent',
-    context: ExternalDownloadContext,
-  ): Promise<void> {
-    const preferenceStore = usePreferenceStore()
-    const taskStore = useTaskStore()
-    const form = buildExtensionSubmitForm(url, preferenceStore, context, '')
-    const options = buildEngineOptions(form)
-    const source = url.toLowerCase().startsWith('file://') ? normalizeFileUriPath(url) : url
-    const item = createBatchItem(kind, source)
-    externalInputSubmitCount += 1
-    externalInputSubmitting.value = true
-    try {
-      await resolveUnresolvedItems([item], (key) => key, getDownloadProxy(preferenceStore.config.proxy))
-      if (item.status === 'failed') throw new Error(item.error || 'Failed to load file')
-      const failures = await submitBatchItems([item], options, taskStore)
-      if (failures > 0) throw new Error(item.error || 'Failed to submit file')
-      externalInputStartHandler?.([item.displayName])
-      preferenceStore.recordHistoryDirectory(form.dir || preferenceStore.config.dir)
-      logger.info(
-        'autoSubmit',
-        formatLogFields({
-          traceId: context.traceId ?? 'none',
-          url: summarizeExternalInput(url),
-          result: 'submitted-file',
-        }),
-      )
-    } catch (e) {
-      logger.error('autoSubmit', e)
-      externalInputErrorHandler?.(e)
-    } finally {
-      externalInputSubmitCount = Math.max(0, externalInputSubmitCount - 1)
-      externalInputSubmitting.value = externalInputSubmitCount > 0
     }
   }
 

@@ -481,11 +481,11 @@ onMounted(async () => {
         <NFormItem>
           <template #label>
             <PreferenceHintLabel
-              :label="t('preferences.auto-select-all-files-from-extension')"
-              :hint="t('preferences.auto-select-all-files-from-extension-hint')"
+              :label="t('preferences.auto-select-all-magnet-files-from-extension')"
+              :hint="t('preferences.auto-select-all-magnet-files-from-extension-hint')"
             />
           </template>
-          <NSwitch v-model:value="form.autoSelectAllFilesFromExtension" />
+          <NSwitch v-model:value="form.autoSelectAllMagnetFilesFromExtension" />
         </NFormItem>
       </NCollapseTransition>
       <NFormItem :label="t('preferences.extension-api-port')">

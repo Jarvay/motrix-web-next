@@ -363,7 +363,7 @@ watch(
 // ── File resolution (delegated to useAddTaskFileOps) ────────────────
 
 async function localResolveUnresolvedItems() {
-  await resolveUnresolvedItems(batch.value, t, getDownloadProxy(preferenceStore.config.proxy))
+  await resolveUnresolvedItems(batch.value, t)
 }
 
 async function chooseTorrentFile() {

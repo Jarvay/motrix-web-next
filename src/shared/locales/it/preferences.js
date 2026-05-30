@@ -357,8 +357,8 @@ export default {
     'I tipi non riconosciuti vengono salvati nel percorso predefinito e archiviati automaticamente dopo il download',
   'auto-submit-from-extension': "Salta la conferma per i download dell'estensione",
   'silent-auto-submit-from-extension': 'Non attivare la finestra principale alla ricezione dei download',
-  'auto-select-all-files-from-extension': 'Scarica tutti i file torrent e magnet per impostazione predefinita',
-  'auto-select-all-files-from-extension-hint': 'Se attivo, tutte le attività si avviano in silenzio',
+  'auto-select-all-magnet-files-from-extension': 'Scarica tutti i file magnet per impostazione predefinita',
+  'auto-select-all-magnet-files-from-extension-hint': 'Se attivo, le attività magnet si avviano in silenzio',
   'extension-api-port': 'Porta API estensione',
   'extension-api-secret-tip':
     "Inserisci questa chiave nelle impostazioni dell'estensione del browser per l'autenticazione.",
