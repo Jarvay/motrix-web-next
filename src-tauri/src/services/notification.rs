@@ -516,7 +516,7 @@ mod tests {
         let content = build_task_notification(events::SHARING_COMPLETE, &ev, &cfg()).unwrap();
         assert_eq!(content.kind, TaskNotificationKind::SharingComplete);
         assert_eq!(content.title, "BT Download Complete");
-        assert_eq!(content.body, "Seeding started: file.zip");
+        assert_eq!(content.body, "Seeding: file.zip");
     }
 
     #[test]
@@ -527,7 +527,7 @@ mod tests {
         let content = build_task_notification(events::SHARING_COMPLETE, &ev, &cfg()).unwrap();
         assert_eq!(content.kind, TaskNotificationKind::SharingComplete);
         assert_eq!(content.title, "ED2K Download Complete");
-        assert_eq!(content.body, "Sharing started: file.zip");
+        assert_eq!(content.body, "Sharing: file.zip");
     }
 
     #[test]
@@ -542,7 +542,7 @@ mod tests {
 
         assert_eq!(content.kind, TaskNotificationKind::SharingComplete);
         assert_eq!(content.title, "ED2K 下载完成");
-        assert_eq!(content.body, "已开始共享：file.zip");
+        assert_eq!(content.body, "共享中：file.zip");
         assert_eq!(content.locale, "zh-CN");
     }
 
@@ -578,7 +578,7 @@ mod tests {
         let content = build_task_start_notification(&["file.zip".to_string()], &cfg()).unwrap();
         assert_eq!(content.kind, TaskNotificationKind::Start);
         assert_eq!(content.title, "Download Started");
-        assert_eq!(content.body, "Started downloading \"file.zip\"");
+        assert_eq!(content.body, "Downloading: file.zip");
         assert_eq!(content.locale, "en-US");
     }
 
@@ -595,10 +595,7 @@ mod tests {
         .unwrap();
         assert_eq!(content.kind, TaskNotificationKind::Start);
         assert_eq!(content.title, "Download Started");
-        assert_eq!(
-            content.body,
-            "Started downloading \"file.zip\" and 2 other task(s)"
-        );
+        assert_eq!(content.body, "Downloading: file.zip and 2 other task(s)");
     }
 
     #[test]

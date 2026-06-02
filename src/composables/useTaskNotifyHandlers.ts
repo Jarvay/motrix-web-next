@@ -98,8 +98,8 @@ export interface StartNotifyDeps {
 /**
  * Handle download submission success — send start notification.
  *
- * For single tasks:  "Started downloading movie.mp4"
- * For batch tasks:   "Started downloading movie.mp4 and 2 other task(s)"
+ * For single tasks:  "Downloading: movie.mp4"
+ * For batch tasks:   "Downloading: movie.mp4 and 2 other task(s)"
  *
  * Toast always fires; OS notification is delegated to Rust so lightweight mode
  * uses the same backend-owned native path as completion/error notifications.
