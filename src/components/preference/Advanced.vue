@@ -43,7 +43,15 @@ import {
   useDialog,
 } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
-import { DiceOutline, DownloadOutline, FolderOpenOutline, TrashOutline, CopyOutline } from '@vicons/ionicons5'
+import {
+  CloudDownloadOutline,
+  CloudUploadOutline,
+  DiceOutline,
+  DownloadOutline,
+  FolderOpenOutline,
+  TrashOutline,
+  CopyOutline,
+} from '@vicons/ionicons5'
 import { logger } from '@shared/logger'
 import PreferenceActionBar from './PreferenceActionBar.vue'
 import PreferenceCheckboxGrid from './PreferenceCheckboxGrid.vue'
@@ -314,6 +322,8 @@ const {
   dbRecordsLoading,
   dbBrowseColumns,
   exportingLogs,
+  exportingSettings,
+  importingSettings,
   handleManualRestart: handleManualRestartAction,
   handleSessionReset,
   handleRestoreDefaults,
@@ -322,6 +332,8 @@ const {
   handleDbBrowse,
   handleDbReset,
   handleExportLogs,
+  handleExportSettings,
+  handleImportSettings,
   handleClearLog,
   handleRevealPath,
   handleOpenConfigFolder,
@@ -580,8 +592,8 @@ watch(protocolHandlers.lastError, (error) => {
         </div>
       </NFormItem>
 
-      <NDivider title-placement="left">{{ t('preferences.history-section') }}</NDivider>
-      <NFormItem :show-label="false">
+      <NDivider title-placement="left">{{ t('preferences.maintenance-section') }}</NDivider>
+      <NFormItem :label="t('preferences.history-section')">
         <NSpace>
           <NButton class="db-integrity-check-btn" @click="handleDbIntegrityCheck">
             {{ t('preferences.db-integrity-check') }}
@@ -595,17 +607,7 @@ watch(protocolHandlers.lastError, (error) => {
         </NSpace>
       </NFormItem>
 
-      <NDivider title-placement="left">{{ t('preferences.diagnostics-section') }}</NDivider>
-      <NFormItem v-if="isLinux">
-        <template #label>
-          <PreferenceHintLabel
-            :label="t('preferences.hardware-rendering')"
-            :hint="t('preferences.hardware-rendering-hint')"
-          />
-        </template>
-        <NSwitch v-model:value="form.hardwareRendering" />
-      </NFormItem>
-      <NFormItem :show-label="false">
+      <NFormItem :label="t('preferences.configuration-section')">
         <NSpace>
           <NButton class="open-config-folder-btn" @click="handleOpenConfigFolder">
             <template #icon>
@@ -620,6 +622,35 @@ watch(protocolHandlers.lastError, (error) => {
             {{ t('preferences.factory-reset') }}
           </NButton>
         </NSpace>
+      </NFormItem>
+      <NFormItem :label="t('preferences.settings-backup')">
+        <div class="settings-backup-row">
+          <NSpace>
+            <NButton class="ghost-btn--primary" ghost :loading="exportingSettings" @click="handleExportSettings">
+              <template #icon>
+                <NIcon><CloudDownloadOutline /></NIcon>
+              </template>
+              {{ t('preferences.export-settings') }}
+            </NButton>
+            <NButton class="ghost-btn--warning" ghost :loading="importingSettings" @click="handleImportSettings">
+              <template #icon>
+                <NIcon><CloudUploadOutline /></NIcon>
+              </template>
+              {{ t('preferences.import-settings') }}
+            </NButton>
+          </NSpace>
+        </div>
+      </NFormItem>
+
+      <NDivider title-placement="left">{{ t('preferences.diagnostics-section') }}</NDivider>
+      <NFormItem v-if="isLinux">
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.hardware-rendering')"
+            :hint="t('preferences.hardware-rendering-hint')"
+          />
+        </template>
+        <NSwitch v-model:value="form.hardwareRendering" />
       </NFormItem>
 
       <!-- Clipboard Detection (migrated from Basic) -->
@@ -746,6 +777,14 @@ watch(protocolHandlers.lastError, (error) => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.settings-backup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
   gap: 12px;
   width: 100%;
 }

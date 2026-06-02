@@ -814,6 +814,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::get_system_config,
             commands::save_system_config,
+            commands::read_settings_backup_file,
+            commands::write_settings_backup_file,
             commands::start_engine_command,
             commands::stop_engine_command,
             commands::restart_engine_command,

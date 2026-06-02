@@ -164,6 +164,20 @@ export const usePreferenceStore = defineStore('preference', () => {
     }
   }
 
+  async function replaceAndSave(nextConfig: Partial<AppConfig>): Promise<boolean> {
+    try {
+      const store = await getStore()
+      const hydrated = hydrateAppConfig(nextConfig)
+      config.value = hydrated.config
+      await persistConfig(store, config.value)
+      invoke('refresh_runtime_config').catch((e: unknown) => logger.debug('PreferenceStore.refreshRuntimeConfig', e))
+      return true
+    } catch (e) {
+      logger.error('PreferenceStore.replaceAndSave', e)
+      return false
+    }
+  }
+
   function updatePreference(cfg: Partial<AppConfig>) {
     config.value = hydrateAppConfig({ ...config.value, ...cfg }).config
   }
@@ -288,6 +302,7 @@ export const usePreferenceStore = defineStore('preference', () => {
     direction,
     updatePreference,
     updateAndSave,
+    replaceAndSave,
     loadPreference,
     reloadPreferenceFromDisk,
     savePreference,

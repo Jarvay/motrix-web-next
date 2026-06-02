@@ -10,16 +10,19 @@ import { ref, h, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { appDataDir, join } from '@tauri-apps/api/path'
-import { save as saveDialog } from '@tauri-apps/plugin-dialog'
+import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog'
+import { getVersion } from '@tauri-apps/api/app'
 import { NTag, useDialog, type DataTableColumns } from 'naive-ui'
 import { logger } from '@shared/logger'
 import { bytesToSize } from '@shared/utils/format'
 import { calcColumnWidth } from '@shared/utils/calcColumnWidth'
 import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirectory'
+import { buildSettingsBackup, parseSettingsBackup } from '@shared/utils/settingsBackup'
+import { buildSystemConfigFromAppConfig } from '@shared/utils/systemConfig'
 import { useIpc } from '@/composables/useIpc'
 import { useEngineRestart } from '@/composables/useEngineRestart'
 import { ENGINE_RPC_PORT } from '@shared/constants'
-import type { HistoryRecord } from '@shared/types'
+import type { AppConfig, HistoryRecord } from '@shared/types'
 
 interface AdvancedActionsDeps {
   t: (key: string, params?: Record<string, unknown>) => string
@@ -39,9 +42,8 @@ interface AdvancedActionsDeps {
     clearRecords: () => Promise<void>
   }
   preferenceStore: {
-    config: {
-      dir?: string
-    }
+    config: AppConfig
+    replaceAndSave: (nextConfig: Partial<AppConfig>) => Promise<boolean>
     resetToDefaults: () => Promise<boolean>
   }
   form: { value: Record<string, unknown> }
@@ -140,6 +142,8 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
 
   // ── Export logs state ────────────────────────────────────────────────
   const exportingLogs = ref(false)
+  const exportingSettings = ref(false)
+  const importingSettings = ref(false)
 
   // ── Handlers ─────────────────────────────────────────────────────────
 
@@ -314,6 +318,88 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
     }
   }
 
+  async function handleExportSettings() {
+    try {
+      const resolvedDir = await resolveUserVisibleDownloadDir({ configuredDir: preferenceStore.config.dir })
+      const date = new Date().toISOString().slice(0, 10)
+      const defaultPath = await join(resolvedDir.path, `motrix-next-settings-backup-${date}.json`)
+      const savePath = await saveDialog({
+        title: t('preferences.export-settings'),
+        defaultPath,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      })
+      if (!savePath) return
+
+      exportingSettings.value = true
+      const appVersion = await getVersion()
+      const backup = buildSettingsBackup(preferenceStore.config, appVersion)
+      await invoke('write_settings_backup_file', { path: savePath, content: `${JSON.stringify(backup, null, 2)}\n` })
+      message.success(t('preferences.export-settings-success', { path: savePath }))
+    } catch (e) {
+      logger.error('Advanced.exportSettings', e)
+      message.error(t('preferences.export-settings-failed'))
+    } finally {
+      exportingSettings.value = false
+    }
+  }
+
+  async function handleImportSettings() {
+    const selected = await openDialog({
+      title: t('preferences.import-settings'),
+      multiple: false,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    })
+    if (typeof selected !== 'string') return
+
+    let imported: AppConfig
+    try {
+      imported = parseSettingsBackup(await invoke<string>('read_settings_backup_file', { path: selected }))
+    } catch (e) {
+      logger.warn('Advanced.importSettings', e instanceof Error ? e.message : String(e))
+      message.error(t('preferences.import-settings-invalid'))
+      return
+    }
+
+    dialog.warning({
+      title: t('preferences.import-settings'),
+      content: t('preferences.import-settings-confirm'),
+      positiveText: t('preferences.import-settings'),
+      negativeText: t('app.cancel'),
+      maskClosable: false,
+      onPositiveClick: async () => {
+        importingSettings.value = true
+        try {
+          const ok = await preferenceStore.replaceAndSave(imported)
+          if (!ok) {
+            message.error(t('preferences.import-settings-failed'))
+            return
+          }
+          await invoke('save_system_config', { config: buildSystemConfigFromAppConfig(imported, imported.dir) })
+          Object.assign(form.value, buildForm())
+          resetSnapshot()
+          message.success(t('preferences.import-settings-success'))
+          dialog.info({
+            title: t('preferences.settings-imported'),
+            content: t('preferences.import-settings-restart-confirm'),
+            positiveText: t('preferences.restart-now'),
+            negativeText: t('preferences.engine-restart-later'),
+            maskClosable: false,
+            onPositiveClick: async () => {
+              const { stopEngine } = useIpc()
+              await stopEngine()
+              await relaunch()
+            },
+          })
+        } catch (e) {
+          logger.error('Advanced.importSettings', e)
+          message.error(t('preferences.import-settings-failed'))
+        } finally {
+          importingSettings.value = false
+        }
+      },
+    })
+  }
+
   function handleClearLog() {
     dialog.warning({
       title: t('preferences.clear-log'),
@@ -366,6 +452,8 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
     dbRecordsLoading,
     dbBrowseColumns,
     exportingLogs,
+    exportingSettings,
+    importingSettings,
     // Handlers
     handleManualRestart,
     handleSessionReset,
@@ -375,6 +463,8 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
     handleDbBrowse,
     handleDbReset,
     handleExportLogs,
+    handleExportSettings,
+    handleImportSettings,
     handleClearLog,
     handleRevealPath,
     handleOpenConfigFolder,

@@ -241,23 +241,11 @@ if (import.meta.env.PROD) {
       // --user-agent, etc. even before the user opens the preference page.
       // On subsequent launches, saved values from Downloads/BT/Network/Advanced
       // preferences already exist in system.json and will be merged (not overwritten).
-      const { buildDownloadsSystemConfig, buildDownloadsForm } = await import('@/composables/useDownloadsPreference')
-      const { buildBtSystemConfig, buildBtForm } = await import('@/composables/useBtPreference')
-      const { buildNetworkSystemConfig, buildNetworkForm } = await import('@/composables/useNetworkPreference')
-      const { buildAdvancedSystemConfig, buildAdvancedForm } = await import('@/composables/useAdvancedPreference')
-
-      const downloadsSystem = buildDownloadsSystemConfig(buildDownloadsForm(config, defaultDir))
-      const btSystem = buildBtSystemConfig(buildBtForm(config))
-      const networkSystem = buildNetworkSystemConfig(buildNetworkForm(config))
-      const { form: advForm } = buildAdvancedForm(config)
-      const advancedSystem = buildAdvancedSystemConfig(advForm)
+      const { buildSystemConfigFromAppConfig } = await import('@shared/utils/systemConfig')
 
       await invoke('save_system_config', {
         config: {
-          ...downloadsSystem,
-          ...btSystem,
-          ...networkSystem,
-          ...advancedSystem,
+          ...buildSystemConfigFromAppConfig(config, defaultDir),
           // Override with runtime values — secret may have been auto-generated
           'rpc-secret': secret,
           'rpc-listen-port': String(port),

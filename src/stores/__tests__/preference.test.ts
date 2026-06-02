@@ -42,6 +42,23 @@ describe('PreferenceStore', () => {
     expect(mockStoreData.get('preferences')).toBeDefined()
   })
 
+  it('replaceAndSave replaces config instead of merging with current state', async () => {
+    await store.updateAndSave({ theme: 'dark', locale: 'zh-CN' })
+    await store.replaceAndSave({
+      configVersion: CONFIG_VERSION,
+      theme: 'light',
+      rpcSecret: 'replacement-rpc',
+      extensionApiSecret: 'replacement-api',
+    })
+
+    const saved = mockStoreData.get('preferences') as AppConfig
+    expect(store.config.theme).toBe('light')
+    expect(store.config.locale).toBe(DEFAULT_APP_CONFIG.locale)
+    expect(store.config.rpcSecret).toBe('replacement-rpc')
+    expect(store.config.extensionApiSecret).toBe('replacement-api')
+    expect(saved.locale).toBe(DEFAULT_APP_CONFIG.locale)
+  })
+
   it('persists the current DB schema version on first save', async () => {
     await store.updateAndSave({ locale: 'zh-CN' })
 
