@@ -59,7 +59,7 @@ function selectProfile(profile: UserAgentProfile) {
     content-class="ua-popover-content"
   >
     <template #trigger>
-      <NButton :disabled="disabled">
+      <NButton :disabled="disabled" class="ua-popover-trigger">
         <template #icon>
           <NIcon><TimeOutline /></NIcon>
         </template>
@@ -93,11 +93,17 @@ function selectProfile(profile: UserAgentProfile) {
         </div>
       </template>
     </div>
-    <NEmpty v-else size="small" :description="t('task.ua-no-saved')" />
+    <NEmpty v-else class="ua-popover-empty" size="small" :description="t('task.ua-no-saved')" />
   </NPopover>
 </template>
 
 <style scoped>
+.ua-popover-trigger {
+  height: auto;
+  min-height: 34px;
+  align-self: stretch;
+}
+
 .ua-popover {
   display: flex;
   flex-direction: column;
@@ -128,5 +134,9 @@ function selectProfile(profile: UserAgentProfile) {
 }
 .ua-popover-label {
   min-width: 0;
+}
+.ua-popover-empty {
+  transform: scale(0.9);
+  transform-origin: center;
 }
 </style>

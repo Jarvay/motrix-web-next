@@ -65,7 +65,7 @@ export function renderCompletionToast(options: CompletionToastOptions): string |
               WebkitLineClamp: '2',
               WebkitBoxOrient: 'vertical',
               whiteSpace: 'normal',
-              wordBreak: 'break-word',
+              wordBreak: 'break-all',
             },
           },
           body,

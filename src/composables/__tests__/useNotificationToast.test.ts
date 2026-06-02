@@ -93,6 +93,7 @@ describe('renderCompletionToast', () => {
       WebkitLineClamp: '2',
       WebkitBoxOrient: 'vertical',
       whiteSpace: 'normal',
+      wordBreak: 'break-all',
     })
     expect(actions.props?.style).toMatchObject({
       display: 'inline-flex',

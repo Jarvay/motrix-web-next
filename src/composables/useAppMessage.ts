@@ -1,5 +1,5 @@
 /** @fileoverview Composable providing application-level message notifications. */
-import type { VNodeChild } from 'vue'
+import { h, type VNodeChild } from 'vue'
 import { useMessage, type MessageOptions } from 'naive-ui'
 import { MESSAGE_DURATION } from '@shared/timing'
 import { ellipsis } from '@shared/utils/format'
@@ -20,6 +20,22 @@ const activeMessages = new Map<
   string,
   { el: ReturnType<ReturnType<typeof useMessage>['error']>; timer: ReturnType<typeof setTimeout> }
 >()
+
+function renderTextToast(content: string): () => VNodeChild {
+  return () =>
+    h(
+      'span',
+      {
+        style: {
+          display: 'inline-block',
+          maxWidth: 'min(560px, calc(100vw - 96px))',
+          whiteSpace: 'normal',
+          wordBreak: 'break-all',
+        },
+      },
+      content,
+    )
+}
 
 /**
  * Dedup-aware message dispatcher.
@@ -49,14 +65,14 @@ function dedupShow(
     clearTimeout(existing.timer)
     activeMessages.delete(key)
     setTimeout(() => {
-      const el = fn(display, { ...DEFAULTS, ...options })
+      const el = fn(renderTextToast(display), { ...DEFAULTS, ...options })
       const timer = setTimeout(() => activeMessages.delete(key), duration)
       activeMessages.set(key, { el, timer })
     }, 80)
     return existing.el
   }
 
-  const el = fn(display, { ...DEFAULTS, ...options })
+  const el = fn(renderTextToast(display), { ...DEFAULTS, ...options })
   const timer = setTimeout(() => activeMessages.delete(key), duration)
   activeMessages.set(key, { el, timer })
   return el

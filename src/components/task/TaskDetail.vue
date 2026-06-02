@@ -37,6 +37,7 @@ import {
   NSwitch,
   NForm,
   NInput,
+  NInputGroup,
   NFormItem,
   NCollapseTransition,
   NEllipsis,
@@ -890,7 +891,7 @@ function handleClose() {
           <div v-else-if="activeTab === 'options'" key="options" class="tab-content">
             <NForm label-placement="left" label-width="110px" class="options-form">
               <NFormItem :label="t('task.task-user-agent') + ':'">
-                <div class="detail-ua-row">
+                <NInputGroup class="detail-ua-row">
                   <NInput
                     v-model:value="optForm.userAgent"
                     type="textarea"
@@ -906,7 +907,7 @@ function handleClose() {
                     :disabled="!optCanModify"
                     @select="selectTaskUserAgentProfile"
                   />
-                </div>
+                </NInputGroup>
               </NFormItem>
               <NFormItem :label="t('task.task-authorization') + ':'">
                 <NInput

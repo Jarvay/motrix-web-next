@@ -105,7 +105,7 @@ function shortLabel(dir: string): string {
         </div>
       </div>
     </template>
-    <NEmpty v-else size="small" :description="t('task.dir-no-saved')" />
+    <NEmpty v-else class="dir-popover-empty" size="small" :description="t('task.dir-no-saved')" />
   </NPopover>
 </template>
 
@@ -157,5 +157,10 @@ function shortLabel(dir: string): string {
 
 .dir-popover-action {
   padding: 2px !important;
+}
+
+.dir-popover-empty {
+  transform: scale(0.9);
+  transform-origin: center;
 }
 </style>

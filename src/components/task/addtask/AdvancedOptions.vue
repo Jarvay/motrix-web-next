@@ -2,7 +2,7 @@
 /** @fileoverview Advanced task options panel (UA, auth, referer, cookie, proxy checkbox). */
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NFormItem, NInput, NCheckbox, NCollapseTransition, NButton, NSwitch, NIcon } from 'naive-ui'
+import { NFormItem, NInput, NInputGroup, NCheckbox, NCollapseTransition, NButton, NSwitch, NIcon } from 'naive-ui'
 import { hasUnsafeHeaderChars, sanitizeHeaderValue } from '@shared/utils/headerSanitize'
 import { useSystemProxyDetect } from '@/composables/useSystemProxyDetect'
 import { useAppMessage } from '@/composables/useAppMessage'
@@ -86,7 +86,7 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
     <div>
       <NFormItem :label="t('task.task-user-agent') + ':'">
         <div class="ua-field-wrapper">
-          <div class="ua-input-row">
+          <NInputGroup class="ua-input-row">
             <NInput
               :value="userAgent"
               type="textarea"
@@ -102,8 +102,12 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
               :recent-profile-ids="recentUserAgentProfileIds"
               @select="$emit('selectUserAgentProfile', $event)"
             />
+          </NInputGroup>
+          <div class="ua-source-collapse" :class="{ 'ua-source-collapse--open': userAgentSource }">
+            <div class="ua-source-collapse__inner">
+              <div class="ua-source">{{ userAgentSource }}</div>
+            </div>
           </div>
-          <div v-if="userAgentSource" class="ua-source">{{ userAgentSource }}</div>
           <!-- UA sanitization hint — slides in via CSS Grid 0fr→1fr -->
           <div class="ua-warn-collapse" :class="{ 'ua-warn-collapse--open': uaHasIssue }">
             <div class="ua-warn-collapse__inner">
@@ -217,9 +221,29 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
   flex: 1;
 }
 .ua-source {
-  margin-top: 4px;
+  margin-top: 5px;
   color: var(--n-text-color-3, var(--m3-on-surface-variant));
   font-size: var(--font-size-sm);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.25s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+.ua-source-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.2, 0, 0, 1);
+}
+.ua-source-collapse--open {
+  grid-template-rows: 1fr;
+}
+.ua-source-collapse__inner {
+  overflow: hidden;
+}
+.ua-source-collapse--open .ua-source {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* ── UA warning — CSS Grid 0fr→1fr slide-in ──────────────────────── */

@@ -25,6 +25,12 @@ vi.mock('naive-ui', () => ({
 
 import { useAppMessage } from '../useAppMessage'
 
+function renderMessageCallContent(method: keyof typeof mockMessageApi, index = 0) {
+  const content = (mockMessageApi[method].mock.calls[index] as unknown as [() => unknown])[0]
+  expect(typeof content).toBe('function')
+  return content as () => { props?: { style?: Record<string, string> }; children?: string }
+}
+
 describe('useAppMessage', () => {
   beforeEach(() => {
     vi.useFakeTimers()
@@ -57,9 +63,25 @@ describe('useAppMessage', () => {
 
     msg.info(longContent)
 
-    const displayedContent = (mockMessageApi.info.mock.calls[0] as unknown as [string])[0]
+    const vnode = renderMessageCallContent('info')()
+    const displayedContent = vnode.children ?? ''
     expect(displayedContent.length).toBeLessThanOrEqual(131) // 128 chars + "..."
     expect(displayedContent).toContain('...')
+  })
+
+  it('renders plain toast text with break-all wrapping', () => {
+    const msg = useAppMessage()
+
+    msg.success('Deleted "amd-software-adrenalin-edition-26.5.2-minimalsetup.exe"')
+
+    const vnode = renderMessageCallContent('success')()
+    expect(vnode.children).toContain('amd-software-adrenalin-edition')
+    expect(vnode.props?.style).toMatchObject({
+      display: 'inline-block',
+      maxWidth: 'min(560px, calc(100vw - 96px))',
+      whiteSpace: 'normal',
+      wordBreak: 'break-all',
+    })
   })
 
   it('destroys and reschedules duplicate messages within the dedup window', () => {
@@ -75,6 +97,7 @@ describe('useAppMessage', () => {
     // After 80ms debounce, the replacement message is shown
     vi.advanceTimersByTime(80)
     expect(mockMessageApi.error).toHaveBeenCalledTimes(2)
+    expect(typeof (mockMessageApi.error.mock.calls[1] as unknown as [unknown])[0]).toBe('function')
   })
 
   it('does not interfere between different message contents', () => {
@@ -108,7 +131,7 @@ describe('useAppMessage', () => {
 
     msg.success('fast', { duration: 1000 })
 
-    const options = (mockMessageApi.success.mock.calls[0] as unknown as [string, Record<string, unknown>])[1]
+    const options = (mockMessageApi.success.mock.calls[0] as unknown as [unknown, Record<string, unknown>])[1]
     expect(options.duration).toBe(1000)
     expect(options.closable).toBe(true)
     expect(options.keepAliveOnHover).toBe(true)
