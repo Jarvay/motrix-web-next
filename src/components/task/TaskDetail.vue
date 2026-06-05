@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /** @fileoverview Detailed task view with file list, peers, and BT info. */
-import { ref, computed, watch, h } from 'vue'
+import { ref, computed, watch, h, defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
 import { logger } from '@shared/logger'
@@ -44,6 +44,7 @@ import {
   NTooltip,
 } from 'naive-ui'
 import {
+  CopyOutline,
   InformationCircleOutline,
   PulseOutline,
   DocumentOutline,
@@ -70,6 +71,7 @@ import { useSystemProxyDetect } from '@/composables/useSystemProxyDetect'
 import { getAddedAt } from '@/composables/useTaskOrder'
 import type { Aria2Task, Aria2File, Aria2Peer, UserAgentProfile } from '@shared/types'
 import UserAgentPopover from '@/components/common/UserAgentPopover.vue'
+import MTooltip from '@/components/common/MTooltip.vue'
 
 const props = defineProps<{
   show: boolean
@@ -122,6 +124,66 @@ function selectTaskUserAgentProfile(profile: UserAgentProfile) {
   optForm.userAgent = profile.value
   preferenceStore.recordRecentUserAgentProfile(profile.id)
 }
+
+function copyLabel(label: string, fallback: string): string {
+  return label || fallback
+}
+
+async function copyDetailValue(value: string | number | null | undefined, label: string) {
+  const text = value === null || value === undefined ? '' : String(value)
+  if (!text || text === '-') return
+  try {
+    await navigator.clipboard.writeText(text)
+    message.success(t('preferences.copied-to-clipboard', { label }))
+  } catch (e) {
+    logger.debug('TaskDetail.clipboard', `writeText failed: ${e}`)
+  }
+}
+
+function renderCopyableValue(value: string | number, label: string) {
+  const text = String(value || '-')
+  return h('span', { class: 'detail-copyable-value' }, [
+    h('span', { class: 'detail-copyable-text' }, text),
+    h(
+      MTooltip,
+      { placement: 'top' },
+      {
+        trigger: () =>
+          h(
+            NButton,
+            {
+              class: 'detail-copy-button',
+              size: 'tiny',
+              quaternary: true,
+              focusable: false,
+              onClick: () => copyDetailValue(text, label),
+            },
+            {
+              icon: () => h(NIcon, { size: 13 }, { default: () => h(CopyOutline) }),
+            },
+          ),
+        default: () => t('about.click-to-copy'),
+      },
+    ),
+  ])
+}
+
+const CopyableValue = defineComponent({
+  name: 'CopyableValue',
+  props: {
+    value: {
+      type: [String, Number],
+      required: true,
+    },
+    label: {
+      type: String,
+      required: true,
+    },
+  },
+  setup(componentProps) {
+    return () => renderCopyableValue(componentProps.value, componentProps.label)
+  },
+})
 
 const activeTab = ref('general')
 const slideDirection = ref<'left' | 'right'>('left')
@@ -315,7 +377,11 @@ const fileColumns = computed(() => {
       }),
       sorter: (a: { idx: number }, b: { idx: number }) => a.idx - b.idx,
     },
-    { title: t('task.file-name') || 'Name', key: 'name', ellipsis: { tooltip: true } },
+    {
+      title: t('task.file-name') || 'Name',
+      key: 'name',
+      ellipsis: { tooltip: true },
+    },
     {
       title: t('task.file-extension') || 'Ext',
       key: 'extension',
@@ -401,7 +467,12 @@ const sourceColumns = computed(() => {
       align: 'center' as const,
       sorter: (a: SourceRow, b: SourceRow) => a.fileIndex - b.fileIndex,
     },
-    { title: 'URL', key: 'uri', ellipsis: { tooltip: true } },
+    {
+      title: 'URL',
+      key: 'uri',
+      ellipsis: { tooltip: true },
+      render: (row: SourceRow) => renderCopyableValue(row.uri, 'URL'),
+    },
     {
       title: t('task.task-source-status'),
       key: 'status',
@@ -491,7 +562,11 @@ const peerColumns = computed(() => {
         )
       },
     },
-    { title: t('task.task-peer-host'), key: 'host', minWidth: 140 },
+    {
+      title: t('task.task-peer-host'),
+      key: 'host',
+      minWidth: 140,
+    },
     {
       title: t('task.task-peer-client'),
       key: 'client',
@@ -594,7 +669,12 @@ const trackerColumns = computed(() => {
       align: 'center' as const,
       sorter: (a: TrackerRow, b: TrackerRow) => a.tier - b.tier,
     },
-    { title: 'URL', key: 'url', ellipsis: { tooltip: true } },
+    {
+      title: 'URL',
+      key: 'url',
+      ellipsis: { tooltip: true },
+      render: (row: TrackerRow) => renderCopyableValue(row.url, 'URL'),
+    },
     {
       title: t('task.task-tracker-protocol'),
       key: 'protocol',
@@ -684,9 +764,15 @@ function handleClose() {
                 size="small"
                 :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
               >
-                <NDescriptionsItem :label="t('task.task-gid') || 'GID'">{{ task.gid }}</NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-name') || 'Name'">{{ taskFullName }}</NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-dir') || 'Directory'">{{ task.dir }}</NDescriptionsItem>
+                <NDescriptionsItem :label="t('task.task-gid') || 'GID'">
+                  <CopyableValue :value="task.gid" :label="copyLabel(t('task.task-gid'), 'GID')" />
+                </NDescriptionsItem>
+                <NDescriptionsItem :label="t('task.task-name') || 'Name'">
+                  <CopyableValue :value="taskFullName" :label="copyLabel(t('task.task-name'), 'Name')" />
+                </NDescriptionsItem>
+                <NDescriptionsItem :label="t('task.task-dir') || 'Directory'">
+                  <CopyableValue :value="task.dir" :label="copyLabel(t('task.task-dir'), 'Directory')" />
+                </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-status') || 'Status'">
                   <NTag :type="statusTagType" size="small">{{ taskStatus }}</NTag>
                 </NDescriptionsItem>
@@ -715,7 +801,9 @@ function handleClose() {
                   size="small"
                   :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
                 >
-                  <NDescriptionsItem :label="t('task.task-info-hash') || 'Hash'">{{ task.infoHash }}</NDescriptionsItem>
+                  <NDescriptionsItem :label="t('task.task-info-hash') || 'Hash'">
+                    <CopyableValue :value="task.infoHash || '-'" :label="copyLabel(t('task.task-info-hash'), 'Hash')" />
+                  </NDescriptionsItem>
                   <NDescriptionsItem :label="t('task.task-piece-length') || 'Piece Size'">
                     {{ bytesToSize(String(task.pieceLength)) }}
                   </NDescriptionsItem>
@@ -742,7 +830,9 @@ function handleClose() {
                   size="small"
                   :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
                 >
-                  <NDescriptionsItem :label="t('task.task-ed2k-hash')">{{ ed2kInfo.hash || '-' }}</NDescriptionsItem>
+                  <NDescriptionsItem :label="t('task.task-ed2k-hash')">
+                    <CopyableValue :value="ed2kInfo.hash || '-'" :label="t('task.task-ed2k-hash')" />
+                  </NDescriptionsItem>
                 </NDescriptions>
               </template>
             </template>
@@ -859,7 +949,7 @@ function handleClose() {
                 :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
               >
                 <NDescriptionsItem :label="t('task.task-primary-uri')">
-                  <NEllipsis>{{ uriSummary.primaryUri || '-' }}</NEllipsis>
+                  <CopyableValue :value="uriSummary.primaryUri || '-'" :label="t('task.task-primary-uri')" />
                 </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-source-files')">
                   {{ uriSummary.selectedFileCount }} / {{ uriSummary.fileCount }}
@@ -1013,8 +1103,12 @@ function handleClose() {
                 size="small"
                 :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
               >
-                <NDescriptionsItem :label="t('task.task-ed2k-hash')">{{ ed2kInfo.hash || '-' }}</NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-name')">{{ ed2kInfo.name || taskFullName }}</NDescriptionsItem>
+                <NDescriptionsItem :label="t('task.task-ed2k-hash')">
+                  <CopyableValue :value="ed2kInfo.hash || '-'" :label="t('task.task-ed2k-hash')" />
+                </NDescriptionsItem>
+                <NDescriptionsItem :label="t('task.task-name')">
+                  <CopyableValue :value="ed2kInfo.name || taskFullName" :label="t('task.task-name')" />
+                </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-file-size')">
                   {{ ed2kInfo.length ? bytesToSize(ed2kInfo.length) : bytesToSize(task?.totalLength || '0') }}
                 </NDescriptionsItem>
@@ -1022,7 +1116,7 @@ function handleClose() {
                   {{ ed2kInfo.partHashCount || 0 }}
                 </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-ed2k-aich-root')">
-                  {{ ed2kInfo.aichRoot || '-' }}
+                  <CopyableValue :value="ed2kInfo.aichRoot || '-'" :label="t('task.task-ed2k-aich-root')" />
                 </NDescriptionsItem>
                 <NDescriptionsItem :label="t('task.task-ed2k-server-count')">
                   {{ ed2kSummary.connectedServerCount }} / {{ ed2kSummary.serverCount }}
@@ -1163,6 +1257,36 @@ function handleClose() {
 
 .tab-content {
   padding: 16px 0;
+}
+
+.detail-copyable-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+.detail-copyable-text {
+  min-width: 0;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.detail-copy-button {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  opacity: 0.58;
+  transition:
+    opacity 0.16s cubic-bezier(0.2, 0, 0, 1),
+    color 0.16s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.detail-copy-button:hover {
+  opacity: 1;
+  color: var(--color-primary);
 }
 
 .section-divider {
