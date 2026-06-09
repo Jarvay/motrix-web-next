@@ -32,7 +32,7 @@ body:
     id: source
     attributes:
       label: Issue Source
-      description: Where does the problem mainly happen?
+      description: Select Motrix Next app only for desktop-app bugs. Browser extension and Aria2 Next engine issues must be filed in their own repositories and may be closed here.
       options:
         - Motrix Next app
         - Browser extension
@@ -105,13 +105,9 @@ body:
     attributes:
       label: Validations
       options:
-        - label: I have searched the [existing issues](https://github.com/AnInsomniacy/motrix-next/issues) and this bug has not been reported before.
-          required: true
-        - label: I have tested with the latest beta release when possible.
+        - label: I have searched existing issues and tested with the latest beta release when possible.
           required: true
         - label: I have uploaded the exported diagnostic `.zip` directly, or kept the same ZIP structure after redaction.
           required: true
-        - label: I have read the [Code of Conduct](https://github.com/AnInsomniacy/motrix-next/blob/main/docs/CODE_OF_CONDUCT.md).
-          required: true
-        - label: This is a reproducible Motrix Next bug. Questions belong in [GitHub Discussions](https://github.com/AnInsomniacy/motrix-next/discussions), browser-extension-only issues belong in [motrix-next-extension](https://github.com/AnInsomniacy/motrix-next-extension), and engine-only issues belong in [aria2-next](https://github.com/AnInsomniacy/aria2-next).
+        - label: This is a reproducible Motrix Next desktop-app bug. Questions belong in [GitHub Discussions](https://github.com/AnInsomniacy/motrix-next/discussions), browser-extension-only issues belong in [motrix-next-extension](https://github.com/AnInsomniacy/motrix-next-extension), and engine-only issues belong in [aria2-next](https://github.com/AnInsomniacy/aria2-next).
           required: true

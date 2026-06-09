@@ -34,15 +34,11 @@ PR title MUST follow Conventional Commits format.
 
 ## How has this been tested?
 
-<!-- Check every command that passed. Leave unchecked only if it failed or does not apply, and explain why below. -->
+<!-- Check what passed. Leave unchecked items explained below. -->
 
-- [ ] `pnpm format:check`
-- [ ] `npx vue-tsc --noEmit`
-- [ ] `pnpm test`
-- [ ] `cd src-tauri && cargo fmt -- --check`
-- [ ] `cd src-tauri && cargo clippy --all-targets -- -D warnings`
-- [ ] `cd src-tauri && cargo check --all-targets`
-- [ ] `cd src-tauri && cargo test --all-targets`
+- [ ] Frontend checks passed: `pnpm format:check`, `npx vue-tsc --noEmit`, `pnpm test`
+- [ ] Rust checks passed: `cargo fmt -- --check`, `cargo clippy --all-targets -- -D warnings`, `cargo check --all-targets`, `cargo test --all-targets`
+- [ ] Manual testing completed, or not needed for this change
 
 Unchecked checks:
 
@@ -62,24 +58,10 @@ AI model:
 
 ## Checklist
 
-### Required — PR will not be reviewed without these
-
-- [ ] I kept this PR template complete and did not delete required sections
-- [ ] I understand incomplete PRs may be closed without review
+- [ ] I kept this PR template complete and understand incomplete PRs may be closed without review
 - [ ] I have read [CONTRIBUTING.md](https://github.com/AnInsomniacy/motrix-next/blob/main/docs/CONTRIBUTING.md)
-- [ ] PR changes **fewer than 300 lines** of code (excluding tests and generated files)
-- [ ] PR touches **fewer than 10 files**
-- [ ] PR addresses **one concern only** — no mixed features, config tweaks, or unrelated fixes
-- [ ] Required GitHub Actions checks pass or are expected to pass with the same commands listed above
+- [ ] This PR is focused, under the documented size limits, and uses Conventional Commits
 - [ ] Tests were added or updated for risky logic changes, or this PR explains why tests are not needed
-- [ ] Commits follow [Conventional Commits](https://www.conventionalcommits.org/) format
-
-### If applicable
-
-- [ ] New feature was discussed and approved in an issue before implementation
-- [ ] i18n keys updated in **all 27 locales** via batch Python script (see AGENTS.md §D)
-- [ ] New config key follows the full checklist in AGENTS.md §C
-- [ ] Rust changes compile with `cargo clippy` (zero warnings)
 
 ## Release notes
 
