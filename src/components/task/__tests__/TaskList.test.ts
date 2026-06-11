@@ -98,8 +98,10 @@ describe('TaskList', () => {
     })
     const taskStore = useTaskStore()
     taskStore.setTaskPageSize(2)
-    taskStore.setTaskPage('active', 2)
     taskStore.taskList = ['a', 'b', 'c', 'd', 'e'].map(createTaskWithGid)
+    taskStore.taskPagination.active.total = 5
+    taskStore.taskPagination.active.loaded = true
+    taskStore.setTaskPage('active', 2)
 
     await wrapper.vm.$nextTick()
 
@@ -116,8 +118,10 @@ describe('TaskList', () => {
     const taskStore = useTaskStore()
     const saveSpy = vi.spyOn(taskStore, 'saveVisiblePageManualOrder').mockResolvedValue(undefined)
     taskStore.setTaskPageSize(2)
-    taskStore.setTaskPage('active', 2)
     taskStore.taskList = ['a', 'b', 'c', 'd'].map(createTaskWithGid)
+    taskStore.taskPagination.active.total = 4
+    taskStore.taskPagination.active.loaded = true
+    taskStore.setTaskPage('active', 2)
     await wrapper.vm.$nextTick()
 
     const sortableOptions = useSortableMock.mock.calls[0]?.[2] as { onEnd?: () => Promise<void> }

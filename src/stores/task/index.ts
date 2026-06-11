@@ -55,11 +55,12 @@ export const useTaskStore = defineStore('task', () => {
   const taskList = ref<Aria2Task[]>([])
   const selectedGidList = ref<string[]>([])
   const taskPagination = reactive({
-    active: { page: 1 },
-    stopped: { page: 1 },
-    all: { page: 1 },
+    active: { page: 1, total: 0, loaded: false },
+    stopped: { page: 1, total: 0, loaded: false },
+    all: { page: 1, total: 0, loaded: false },
     pageSize: DEFAULT_TASK_PAGE_SIZE,
   })
+  const visibleTaskPageCount = ref(1)
 
   let api: TaskApi
 
@@ -86,9 +87,14 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function changeCurrentList(list: string) {
+    const sameList = currentList.value === list
     currentList.value = list
-    taskList.value = []
-    selectedGidList.value = []
+    if (!sameList) {
+      taskList.value = []
+      selectedGidList.value = []
+      const tab = currentTaskTab()
+      if (taskPagination[tab].loaded) refreshCurrentTaskPageCount()
+    }
     await fetchList()
   }
 
@@ -104,13 +110,27 @@ export const useTaskStore = defineStore('task', () => {
     return Math.min(Math.max(1, Math.floor(Number.isFinite(size) ? size : DEFAULT_TASK_PAGE_SIZE)), 100)
   }
 
-  function maxTaskPage(): number {
-    return Math.max(1, Math.ceil(taskList.value.length / taskPagination.pageSize))
+  function maxTaskPage(tab = currentTaskTab()): number {
+    return Math.max(1, Math.ceil(taskPagination[tab].total / taskPagination.pageSize))
+  }
+
+  function currentTaskPageCount(): number {
+    return visibleTaskPageCount.value
+  }
+
+  function refreshCurrentTaskPageCount() {
+    visibleTaskPageCount.value = maxTaskPage()
   }
 
   function clampCurrentTaskPage() {
     const tab = currentTaskTab()
-    taskPagination[tab].page = Math.min(clampPage(taskPagination[tab].page), maxTaskPage())
+    taskPagination[tab].page = Math.min(clampPage(taskPagination[tab].page), maxTaskPage(tab))
+  }
+
+  function updateCurrentTaskTotal(total: number) {
+    const tab = currentTaskTab()
+    taskPagination[tab].total = Math.max(0, Math.floor(Number.isFinite(total) ? total : 0))
+    taskPagination[tab].loaded = true
   }
 
   function setTaskPage(tab: TaskTabKey, page: number) {
@@ -124,6 +144,7 @@ export const useTaskStore = defineStore('task', () => {
   function setTaskPageSize(size: number) {
     taskPagination.pageSize = clampPageSize(size)
     clampCurrentTaskPage()
+    refreshCurrentTaskPageCount()
   }
 
   async function fetchList() {
@@ -203,7 +224,9 @@ export const useTaskStore = defineStore('task', () => {
       }
 
       taskList.value = data
+      updateCurrentTaskTotal(data.length)
       clampCurrentTaskPage()
+      refreshCurrentTaskPageCount()
       const gids = data.map((task: Aria2Task) => task.gid)
       selectedGidList.value = intersection(selectedGidList.value, gids)
       if (taskDetailVisible.value && currentTaskGid.value) {
@@ -492,6 +515,7 @@ export const useTaskStore = defineStore('task', () => {
     taskList,
     selectedGidList,
     taskPagination,
+    currentTaskPageCount,
     setApi,
     changeCurrentList,
     fetchList,

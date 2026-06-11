@@ -83,10 +83,8 @@ const taskPaginationTab = computed(() =>
 )
 const taskPaginationPage = computed(() => taskStore.taskPagination[taskPaginationTab.value].page)
 const taskPaginationPageSize = computed(() => taskStore.taskPagination.pageSize)
-const taskPaginationPageCount = computed(() =>
-  Math.max(1, Math.ceil(taskStore.taskList.length / taskPaginationPageSize.value)),
-)
-const taskPaginationPageSizes = [20, 40, 80, 100]
+const taskPaginationPageCount = computed(() => taskStore.currentTaskPageCount())
+const taskPaginationPageSizes = [5, 20, 40, 80, 100]
 const showTaskPaginationControl = ref(isTaskPage.value)
 
 watch(

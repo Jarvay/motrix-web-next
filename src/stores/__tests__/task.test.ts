@@ -450,13 +450,36 @@ describe('TaskStore', () => {
     store.setTaskPage('active', 3)
     store.setTaskPage('stopped', 2)
     store.setTaskPageSize(2)
-    store.taskList = [makeMockTask('a1')]
+    await store.fetchList()
 
     store.clampCurrentTaskPage()
 
     expect(store.taskPagination.active.page).toBe(1)
     expect(store.taskPagination.stopped.page).toBe(2)
     expect(store.taskPagination.pageSize).toBe(2)
+  })
+
+  it('keeps the previous page count while a different tab is loading', async () => {
+    mockApi.fetchTaskList.mockResolvedValueOnce([
+      makeMockTask('a1'),
+      makeMockTask('a2'),
+      makeMockTask('a3'),
+      makeMockTask('a4'),
+      makeMockTask('a5'),
+    ])
+    store.setTaskPageSize(2)
+    await store.fetchList()
+    expect(store.currentTaskPageCount()).toBe(3)
+
+    mockApi.fetchTaskList.mockImplementationOnce(async () => {
+      expect(store.taskList).toEqual([])
+      expect(store.currentTaskPageCount()).toBe(3)
+      return [makeMockTask('b1'), makeMockTask('b2')]
+    })
+
+    await store.changeCurrentList('waiting')
+
+    expect(store.currentTaskPageCount()).toBe(1)
   })
 
   it('writes a reordered visible page back into the full task list before saving manual order', async () => {
@@ -582,11 +605,21 @@ describe('TaskStore', () => {
 
   // ─── changeCurrentList ──────────────────────────────────
 
-  it('changeCurrentList resets list and fetches new type', async () => {
+  it('changeCurrentList clears list only when switching to a different tab', async () => {
     store.taskList = [makeMockTask('old')]
     await store.changeCurrentList('completed')
     expect(store.currentList).toBe('completed')
     expect(mockApi.fetchTaskList).toHaveBeenCalledWith({ type: 'completed' })
+
+    store.taskList = [makeMockTask('cached')]
+    mockApi.fetchTaskList.mockImplementationOnce(async () => {
+      expect(store.taskList.map((task) => task.gid)).toEqual(['cached'])
+      return [makeMockTask('fresh')]
+    })
+
+    await store.changeCurrentList('completed')
+
+    expect(store.taskList.map((task) => task.gid)).toEqual(['fresh'])
   })
 
   it('changeCurrentList clears selectedGidList', async () => {
