@@ -498,12 +498,18 @@ pub struct HttpApiHandle {
     shutdown_tx: tokio::sync::oneshot::Sender<()>,
     join_handle: tokio::task::JoinHandle<()>,
     port: u16,
+    allow_remote_access: bool,
 }
 
 impl HttpApiHandle {
     /// The port this server is currently bound to.
     pub fn port(&self) -> u16 {
         self.port
+    }
+
+    /// Whether this server is bound to all network interfaces.
+    pub fn allow_remote_access(&self) -> bool {
+        self.allow_remote_access
     }
 
     /// Signal the server to shut down and wait for it to finish.
@@ -524,13 +530,22 @@ impl HttpApiState {
 
 /// Spawn the HTTP API server on the given port.
 ///
-/// The server binds to all interfaces and runs until the returned
+/// The server binds locally by default and runs until the returned
 /// handle is stopped or the application exits.
-pub async fn spawn_http_api(app: AppHandle, port: u16) -> Result<HttpApiHandle, AppError> {
+pub async fn spawn_http_api(
+    app: AppHandle,
+    port: u16,
+    allow_remote_access: bool,
+) -> Result<HttpApiHandle, AppError> {
     let ctx = Arc::new(ApiContext { app });
     let router = build_router(ctx);
 
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], port));
+    let host = if allow_remote_access {
+        [0, 0, 0, 0]
+    } else {
+        [127, 0, 0, 1]
+    };
+    let addr = std::net::SocketAddr::from((host, port));
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .map_err(|e| AppError::Io(format!("Failed to bind HTTP API on port {port}: {e}")))?;
@@ -546,12 +561,13 @@ pub async fn spawn_http_api(app: AppHandle, port: u16) -> Result<HttpApiHandle, 
         }
     });
 
-    log::info!("http_api: listening on 0.0.0.0:{port}");
+    log::info!("http_api: listening on {addr}");
 
     Ok(HttpApiHandle {
         shutdown_tx,
         join_handle,
         port,
+        allow_remote_access,
     })
 }
 
@@ -581,13 +597,15 @@ pub async fn restart_on_port(app: &AppHandle, new_port: u16) -> Result<u16, AppE
         handle.stop().await;
     }
 
+    let allow_remote_access = read_extension_api_allow_remote_access(app).await;
+
     // Spawn on the new port, then recover once if the chosen port is busy.
-    let handle = match spawn_http_api(app.clone(), new_port).await {
+    let handle = match spawn_http_api(app.clone(), new_port, allow_remote_access).await {
         Ok(handle) => handle,
         Err(e) => {
             log::warn!("http_api: bind failed on port {new_port}: {e}");
             let fallback = port_guard::recover_extension_api_port(app, new_port).await?;
-            match spawn_http_api(app.clone(), fallback).await {
+            match spawn_http_api(app.clone(), fallback, allow_remote_access).await {
                 Ok(handle) => handle,
                 Err(e) => {
                     port_guard::emit_bind_failed(
@@ -619,6 +637,13 @@ pub async fn read_extension_api_port(app: &AppHandle) -> u16 {
     read_extension_api_port_from_store(app)
 }
 
+pub async fn read_extension_api_allow_remote_access(app: &AppHandle) -> bool {
+    if let Some(rc_state) = app.try_state::<RuntimeConfigState>() {
+        return rc_state.0.read().await.allow_remote_access;
+    }
+    read_extension_api_allow_remote_access_from_store(app)
+}
+
 /// Direct store read — used only as a fallback during early startup.
 fn read_extension_api_port_from_store(app: &AppHandle) -> u16 {
     app.store("config.json")
@@ -632,6 +657,17 @@ fn read_extension_api_port_from_store(app: &AppHandle) -> u16 {
             })
         })
         .unwrap_or(DEFAULT_EXTENSION_API_PORT)
+}
+
+fn read_extension_api_allow_remote_access_from_store(app: &AppHandle) -> bool {
+    app.store("config.json")
+        .ok()
+        .and_then(|s| s.get("preferences"))
+        .and_then(|p| {
+            p.get("allowRemoteAccess")
+                .and_then(serde_json::Value::as_bool)
+        })
+        .unwrap_or(false)
 }
 
 #[cfg(test)]

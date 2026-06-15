@@ -332,6 +332,7 @@ export const DEFAULT_APP_CONFIG = {
   theme: 'auto' as const,
   colorScheme: 'amber',
   taskCardMode: 'full' as const,
+  taskPageSize: 20,
   locale: 'auto',
 
   // ── Download Core ─────────────────────────────────────────────────
@@ -399,6 +400,7 @@ export const DEFAULT_APP_CONFIG = {
   enableUpnp: true, // old Motrix=true; required for BitTorrent behind NAT
   rpcListenPort: ENGINE_RPC_PORT,
   extensionApiPort: EXTENSION_API_PORT,
+  allowRemoteAccess: false,
   autoChangeConflictingPorts: true,
   portConflictRecovery: {
     enabled: true,

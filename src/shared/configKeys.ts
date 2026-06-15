@@ -51,6 +51,7 @@ const userKeys = [
   'locale',
   'log-level',
   'aria2-log-level',
+  'allow-remote-access',
   'lightweight-mode',
   'max-tries',
 
@@ -74,6 +75,7 @@ const userKeys = [
   'speed-schedule-days',
   'task-notification',
   'task-card-mode',
+  'task-page-size',
   'notify-on-start',
   'notify-on-complete',
   'task-sort',
@@ -208,6 +210,7 @@ const needRestartKeys = [
   'enable-peer-exchange',
   'listen-port',
   'rpc-listen-port',
+  'allow-remote-access',
   'rpc-secret',
 ]
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-/** @fileoverview ED2K preference tab: engine options, server discovery, and search. */
+/** @fileoverview ED2K preference tab: search, engine options, and server discovery. */
 import { ref, computed, nextTick, onMounted, h } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useI18n } from 'vue-i18n'
@@ -27,14 +27,11 @@ import { useAppMessage } from '@/composables/useAppMessage'
 import {
   buildEd2kForm,
   buildEd2kSystemConfig,
-  ED2K_SEARCH_POLL_INTERVAL_MS,
-  getEd2kSearchToastKey,
   randomEd2kPort,
-  shouldFinishEd2kSearchPoll,
   transformEd2kForStore,
   validateEd2kForm,
 } from '@/composables/useEd2kPreference'
-import { cleanupEd2kSearch, ed2kSearch, getEd2kSearchResults } from '@/api/aria2'
+import { useEd2kSearchSession } from '@/composables/useEd2kSearchSession'
 import { BT_LISTEN_PORT, DHT_LISTEN_PORT, ENGINE_RPC_PORT, PROXY_SCOPES } from '@shared/constants'
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
 import { bytesToSize } from '@shared/utils'
@@ -53,17 +50,6 @@ const message = useAppMessage()
 const { restartEngine } = useEngineRestart()
 
 const needsRestart = ref(false)
-const searchKeyword = ref('')
-const searchFileType = ref('')
-const searchMinSources = ref<number | null>(null)
-type SearchState = 'idle' | 'searching' | 'cancelling'
-
-const searchState = ref<SearchState>('idle')
-const currentSearchGid = ref('')
-const searchCancelled = ref(false)
-const searchCleanupDone = ref(false)
-const searchResults = ref<Ed2kSearchResult[]>([])
-const searchElapsedMs = ref(0)
 const bootstrapSyncing = ref(false)
 const bootstrapStatus = ref<Ed2kBootstrapStatus>({
   serverMetSize: null,
@@ -83,7 +69,16 @@ interface Ed2kBootstrapSyncResult {
   status: Ed2kBootstrapStatus
 }
 
-const searchActive = computed(() => searchState.value !== 'idle')
+const {
+  searchKeyword,
+  searchFileType,
+  searchMinSources,
+  searchState,
+  searchResults,
+  searchElapsedMs,
+  searchActive,
+  runSearch,
+} = useEd2kSearchSession({ t, message })
 const searchButtonText = computed(() =>
   searchActive.value ? t('preferences.ed2k-search-cancel') : t('preferences.ed2k-search-submit'),
 )
@@ -194,120 +189,8 @@ async function syncUpnpState(ed2kPort: number, ed2kUdpPort: number) {
   }
 }
 
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-async function pollSearchResults(gid: string): Promise<Ed2kSearchResult[]> {
-  let elapsedMs = 0
-  let previousResultCount = -1
-  let stablePolls = 0
-  let latestResults: Ed2kSearchResult[] = []
-  const maxDurationMs = searchMaxDurationMs.value
-
-  while (searchState.value === 'searching') {
-    await wait(ED2K_SEARCH_POLL_INTERVAL_MS)
-    if (searchState.value !== 'searching') break
-    elapsedMs += ED2K_SEARCH_POLL_INTERVAL_MS
-    searchElapsedMs.value = Math.min(elapsedMs, maxDurationMs)
-
-    const payload = await getEd2kSearchResults({ gid })
-    latestResults = payload.results ?? []
-    searchResults.value = latestResults
-
-    const resultCount = latestResults.length
-    stablePolls = resultCount === previousResultCount ? stablePolls + 1 : 0
-
-    if (
-      shouldFinishEd2kSearchPoll({
-        elapsedMs,
-        resultCount,
-        previousResultCount,
-        stablePolls,
-        moreResults: typeof payload.moreResults === 'boolean' ? payload.moreResults : undefined,
-        maxDurationMs,
-      })
-    ) {
-      break
-    }
-
-    previousResultCount = resultCount
-  }
-
-  return latestResults
-}
-
 async function handleSearch() {
-  const keyword = searchKeyword.value.trim()
-  if (searchState.value === 'searching') {
-    await handleCancelSearch()
-    return
-  }
-  if (!keyword) {
-    message.warning(t('preferences.ed2k-search-keyword-required'))
-    return
-  }
-  if (searchState.value !== 'idle') return
-  searchState.value = 'searching'
-  searchCancelled.value = false
-  searchCleanupDone.value = false
-  searchResults.value = []
-  searchElapsedMs.value = 0
-  message.info(t('preferences.ed2k-search-started'))
-  let gid = ''
-  let outcome: 'completed' | 'cancelled' | 'failed' = 'completed'
-  let resultCount = 0
-  try {
-    gid = await ed2kSearch({
-      keyword,
-      options: {
-        ...(searchFileType.value ? { fileType: searchFileType.value } : {}),
-        ...(searchMinSources.value ? { minSourceCount: String(searchMinSources.value) } : {}),
-      },
-    })
-    currentSearchGid.value = gid
-    searchResults.value = await pollSearchResults(gid)
-    resultCount = searchResults.value.length
-    if (searchCancelled.value) outcome = 'cancelled'
-  } catch (e) {
-    logger.debug('ED2K.search', e)
-    if (!searchCancelled.value) outcome = 'failed'
-    else outcome = 'cancelled'
-  } finally {
-    if (gid && currentSearchGid.value === gid && !searchCleanupDone.value) {
-      try {
-        await cleanupEd2kSearch({ gid })
-        searchCleanupDone.value = true
-      } catch (e) {
-        logger.debug('ED2K.searchCleanup', e)
-        message.warning(t('preferences.ed2k-search-cleanup-failed'))
-      }
-    }
-    const toastKey = getEd2kSearchToastKey(outcome, resultCount)
-    if (outcome === 'failed') message.error(t(toastKey))
-    else if (outcome === 'cancelled' && resultCount > 0) message.success(t(toastKey, { count: resultCount }))
-    else if (outcome === 'cancelled' || resultCount === 0) message.warning(t(toastKey, { count: resultCount }))
-    else message.success(t(toastKey, { count: resultCount }))
-    searchState.value = 'idle'
-    currentSearchGid.value = ''
-    searchCancelled.value = false
-    searchCleanupDone.value = false
-    searchElapsedMs.value = 0
-  }
-}
-
-async function handleCancelSearch() {
-  const gid = currentSearchGid.value
-  if (searchState.value === 'cancelling') return
-  searchState.value = 'cancelling'
-  searchCancelled.value = true
-  if (!gid) return
-  try {
-    await cleanupEd2kSearch({ gid })
-    searchCleanupDone.value = true
-  } catch (e) {
-    logger.debug('ED2K.searchCancel', e)
-  }
+  await runSearch(searchMaxDurationMs.value)
 }
 
 async function handleDownload(row: Ed2kSearchResult) {
@@ -431,6 +314,63 @@ onMounted(() => {
 <template>
   <div class="preference-form-wrapper">
     <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NDivider title-placement="left">{{ t('preferences.ed2k-search') }}</NDivider>
+      <NFormItem :label="t('preferences.ed2k-search-keyword')">
+        <NInput v-model:value="searchKeyword" :disabled="searchActive" @keyup.enter="handleSearch" />
+      </NFormItem>
+      <NFormItem label=" ">
+        <div class="ed2k-search-actions">
+          <NButton
+            class="ed2k-search-button"
+            :class="{ 'ed2k-search-button--active': searchActive }"
+            type="primary"
+            :disabled="searchState === 'cancelling'"
+            @click="handleSearch"
+          >
+            <template #icon>
+              <span class="ed2k-search-icon-stack" aria-hidden="true">
+                <Transition name="ed2k-search-icon">
+                  <span v-if="searchActive" class="ed2k-search-icon-layer">
+                    <span class="ed2k-search-spinner" />
+                  </span>
+                </Transition>
+                <Transition name="ed2k-search-icon">
+                  <span v-if="!searchActive" class="ed2k-search-icon-layer">
+                    <NIcon><SearchOutline /></NIcon>
+                  </span>
+                </Transition>
+              </span>
+            </template>
+            <Transition name="ed2k-search-label" mode="out-in">
+              <span :key="searchButtonText">{{ searchButtonText }}</span>
+            </Transition>
+          </NButton>
+          <Transition name="ed2k-search-status" mode="out-in">
+            <NText :key="searchState" depth="3" class="ed2k-search-status">{{ searchStatusText }}</NText>
+          </Transition>
+        </div>
+      </NFormItem>
+      <NFormItem :label="t('preferences.ed2k-search-type')">
+        <NSelect v-model:value="searchFileType" :options="fileTypeOptions" class="pref-control-auto" />
+      </NFormItem>
+      <NFormItem :label="t('preferences.ed2k-search-min-sources')">
+        <NInputNumber v-model:value="searchMinSources" :min="1" :max="9999" class="pref-port" />
+      </NFormItem>
+      <NFormItem :label="t('preferences.ed2k-search-timeout')">
+        <NInputNumber v-model:value="form.ed2kSearchTimeout" :min="10" :max="600" class="pref-port" />
+        <NText depth="3" class="pref-inline-note">{{ t('preferences.unit-seconds') }}</NText>
+      </NFormItem>
+      <NFormItem :show-label="false">
+        <NDataTable
+          class="search-results"
+          size="small"
+          :columns="resultColumns"
+          :data="searchResults"
+          :bordered="true"
+          :pagination="{ pageSize: 8 }"
+        />
+      </NFormItem>
+
       <NDivider title-placement="left">{{ t('preferences.ed2k-settings') }}</NDivider>
       <NFormItem :label="t('preferences.ed2k-listen-port')">
         <NInputGroup>
@@ -513,63 +453,6 @@ onMounted(() => {
             {{ t('preferences.last-sync-time') }} {{ bootstrapLastSyncText }}
           </NText>
         </div>
-      </NFormItem>
-
-      <NDivider title-placement="left">{{ t('preferences.ed2k-search') }}</NDivider>
-      <NFormItem :label="t('preferences.ed2k-search-keyword')">
-        <NInput v-model:value="searchKeyword" :disabled="searchActive" @keyup.enter="handleSearch" />
-      </NFormItem>
-      <NFormItem label=" ">
-        <div class="ed2k-search-actions">
-          <NButton
-            class="ed2k-search-button"
-            :class="{ 'ed2k-search-button--active': searchActive }"
-            type="primary"
-            :disabled="searchState === 'cancelling'"
-            @click="handleSearch"
-          >
-            <template #icon>
-              <span class="ed2k-search-icon-stack" aria-hidden="true">
-                <Transition name="ed2k-search-icon">
-                  <span v-if="searchActive" class="ed2k-search-icon-layer">
-                    <span class="ed2k-search-spinner" />
-                  </span>
-                </Transition>
-                <Transition name="ed2k-search-icon">
-                  <span v-if="!searchActive" class="ed2k-search-icon-layer">
-                    <NIcon><SearchOutline /></NIcon>
-                  </span>
-                </Transition>
-              </span>
-            </template>
-            <Transition name="ed2k-search-label" mode="out-in">
-              <span :key="searchButtonText">{{ searchButtonText }}</span>
-            </Transition>
-          </NButton>
-          <Transition name="ed2k-search-status" mode="out-in">
-            <NText :key="searchState" depth="3" class="ed2k-search-status">{{ searchStatusText }}</NText>
-          </Transition>
-        </div>
-      </NFormItem>
-      <NFormItem :label="t('preferences.ed2k-search-type')">
-        <NSelect v-model:value="searchFileType" :options="fileTypeOptions" class="pref-control-auto" />
-      </NFormItem>
-      <NFormItem :label="t('preferences.ed2k-search-min-sources')">
-        <NInputNumber v-model:value="searchMinSources" :min="1" :max="9999" class="pref-port" />
-      </NFormItem>
-      <NFormItem :label="t('preferences.ed2k-search-timeout')">
-        <NInputNumber v-model:value="form.ed2kSearchTimeout" :min="10" :max="600" class="pref-port" />
-        <NText depth="3" class="pref-inline-note">{{ t('preferences.unit-seconds') }}</NText>
-      </NFormItem>
-      <NFormItem :show-label="false">
-        <NDataTable
-          class="search-results"
-          size="small"
-          :columns="resultColumns"
-          :data="searchResults"
-          :bordered="true"
-          :pagination="{ pageSize: 8 }"
-        />
       </NFormItem>
     </NForm>
     <PreferenceActionBar :is-dirty="isDirty" @save="handleSave" @discard="handleReset" @restart="handleManualRestart" />

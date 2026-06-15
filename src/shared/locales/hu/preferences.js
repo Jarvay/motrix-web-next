@@ -26,7 +26,8 @@ export default {
   'sharing-mode-scope-hint': 'BT seedelésre és ED2K megosztásra vonatkozik',
   'sharing-mode-stop-by-condition': 'Leállítás feltételek után',
   'sharing-mode-manual-stop': 'Kézi leállítás',
-  'sharing-mode-manual-stop-tips': 'A befejezett letöltések addig megosztva maradnak, amíg kézzel le nem állítod a feladatot',
+  'sharing-mode-manual-stop-tips':
+    'A befejezett letöltések addig megosztva maradnak, amíg kézzel le nem állítod a feladatot',
   'share-ratio': 'Megosztási arány',
   'share-time': 'Megosztási idő',
   'share-time-unit': 'perc',
@@ -178,6 +179,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Motor konfiguráció',
+  'allow-remote-access': 'Távoli hozzáférés engedélyezése',
+  'remote-access-secret-required': 'A távoli hozzáféréshez RPC kulcs és bővítmény API kulcs is szükséges',
   'temp-files-dir': 'Ideiglenes fájlok mappája',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Visszaállítja a gyári beállításokat?',
@@ -298,7 +301,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Konfigurációs mappa megnyitása',

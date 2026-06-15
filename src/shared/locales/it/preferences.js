@@ -27,7 +27,8 @@ export default {
   'sharing-mode-scope-hint': 'Si applica al seeding BT e alla condivisione ED2K',
   'sharing-mode-stop-by-condition': 'Interrompi dopo condizioni',
   'sharing-mode-manual-stop': 'Interruzione manuale',
-  'sharing-mode-manual-stop-tips': 'I download completati continuano a condividere finché non interrompi manualmente l\'attività',
+  'sharing-mode-manual-stop-tips':
+    "I download completati continuano a condividere finché non interrompi manualmente l'attività",
   'share-ratio': 'Rapporto condivisione',
   'share-time': 'Tempo condivisione',
   'share-time-unit': 'minuti',
@@ -179,6 +180,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Configurazione motore',
+  'allow-remote-access': 'Consenti accesso remoto',
+  'remote-access-secret-required': "L'accesso remoto richiede sia il segreto RPC sia il segreto API estensione",
   'temp-files-dir': 'Cartella file temporanei',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Ripristinare le impostazioni di fabbrica?',
@@ -301,7 +304,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Apri cartella configurazione',

@@ -45,6 +45,7 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "ed2k-udp-listen-port",
     "ed2k-upload-slots",
     "listen-port",
+    "allow-remote-access",
     "rpc-listen-port",
     "rpc-secret",
     "bt-enable-lpd",
@@ -238,17 +239,20 @@ async fn spawn_background_services(app: &tauri::AppHandle) {
     }
 
     // HTTP API — keep running across engine restarts.  Idempotent: skips
-    // if already bound to the correct port.  On port mismatch (config change
-    // between engine cycles) the old server is stopped and a new one spawned.
+    // if already bound to the correct port and interface. On mismatch the old
+    // server is stopped and a new one spawned.
     let desired_port = http_api::read_extension_api_port(app).await;
+    let desired_remote_access = http_api::read_extension_api_allow_remote_access(app).await;
     if let Some(api_state) = app.try_state::<http_api::HttpApiState>() {
-        let current_port = api_state
-            .0
-            .lock()
-            .await
+        let guard = api_state.0.lock().await;
+        let current_port = guard.as_ref().map(http_api::HttpApiHandle::port);
+        let current_remote_access = guard
             .as_ref()
-            .map(http_api::HttpApiHandle::port);
-        if current_port != Some(desired_port) {
+            .map(http_api::HttpApiHandle::allow_remote_access);
+        drop(guard);
+        if current_port != Some(desired_port)
+            || current_remote_access != Some(desired_remote_access)
+        {
             match http_api::restart_on_port(app, desired_port).await {
                 Ok(active_port) => {
                     log::info!("runtime_services: HTTP API listening on port {active_port}");
@@ -481,6 +485,7 @@ mod tests {
     #[test]
     fn non_hot_reloadable_contains_restart_keys() {
         assert!(NON_HOT_RELOADABLE.contains(&"rpc-listen-port"));
+        assert!(NON_HOT_RELOADABLE.contains(&"allow-remote-access"));
         assert!(NON_HOT_RELOADABLE.contains(&"rpc-secret"));
         assert!(NON_HOT_RELOADABLE.contains(&"listen-port"));
         assert!(NON_HOT_RELOADABLE.contains(&"dht-listen-port"));

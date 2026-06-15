@@ -175,6 +175,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Cấu hình công cụ',
+  'allow-remote-access': 'Cho phép truy cập từ xa',
+  'remote-access-secret-required': 'Truy cập từ xa yêu cầu cả RPC Secret và Extension API Secret',
   'temp-files-dir': 'Thư mục tệp tạm',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Khôi phục cài đặt gốc?',
@@ -295,7 +297,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Mở thư mục cấu hình',

@@ -744,9 +744,6 @@ function handleClose() {
 :deep(.detail-copyable-text) {
   min-width: 0;
   max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  word-break: normal;
   line-height: 1.45;
 }
 
@@ -914,7 +911,9 @@ function handleClose() {
    when the column is too narrow for the translated label. */
 :deep(.n-data-table-th__title) {
   white-space: normal;
-  word-break: break-word;
+  overflow-wrap: normal;
+  word-break: break-all;
+  hyphens: none;
 }
 
 :deep(.n-data-table-td) {

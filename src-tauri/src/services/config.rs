@@ -66,6 +66,9 @@ pub struct RuntimeConfig {
     /// Port for the embedded HTTP API (browser extension communication).
     #[serde(default = "default_extension_api_port")]
     pub extension_api_port: u16,
+    /// Whether local control endpoints may listen on LAN interfaces.
+    #[serde(default)]
+    pub allow_remote_access: bool,
 }
 
 fn default_true() -> bool {
@@ -110,6 +113,7 @@ impl Default for RuntimeConfig {
             notify_on_complete: true,
             notify_on_start: true,
             extension_api_port: default_extension_api_port(),
+            allow_remote_access: false,
         }
     }
 }
@@ -167,6 +171,7 @@ mod tests {
         assert!(cfg.task_notification); // default ON
         assert!(cfg.notify_on_complete); // default ON
         assert!(cfg.notify_on_start); // default ON
+        assert!(!cfg.allow_remote_access); // default OFF
     }
 
     // ── Deserialization from AppConfig-shaped JSON ───────────────────
@@ -190,6 +195,7 @@ mod tests {
             "showProgressBar": true,
             "shutdownWhenComplete": true,
             "keepAwake": true,
+            "allowRemoteAccess": true,
             // Extra fields from AppConfig that RuntimeConfig ignores:
             "theme": "dark",
             "dir": "/downloads",
@@ -214,6 +220,7 @@ mod tests {
         assert!(cfg.show_progress_bar);
         assert!(cfg.shutdown_when_complete);
         assert!(cfg.keep_awake);
+        assert!(cfg.allow_remote_access);
         assert!(!cfg.task_notification);
         assert!(!cfg.notify_on_complete);
         assert!(!cfg.notify_on_start);

@@ -90,6 +90,7 @@ pub(crate) const SUPPORTED_ENGINE_KEYS: &[&str] = &[
     "remove-control-file",
     "retry-wait",
     "reuse-uri",
+    "allow-remote-access",
     "rpc-listen-port",
     "rpc-save-upload-metadata",
     "rpc-secret",
@@ -201,6 +202,15 @@ fn build_start_args_impl(
         })
         .unwrap_or(false);
 
+    let allow_remote_access = config
+        .get("allow-remote-access")
+        .map(|v| match v {
+            serde_json::Value::Bool(b) => *b,
+            serde_json::Value::String(s) => s == "true",
+            _ => false,
+        })
+        .unwrap_or(false);
+
     if let Some(obj) = config.as_object() {
         for (key, value) in obj {
             // Only pass whitelisted Aria2 Next keys.
@@ -209,6 +219,10 @@ fn build_start_args_impl(
             }
 
             if matches!(key.as_str(), "log" | "log-file" | "log-level") {
+                continue;
+            }
+
+            if key == "allow-remote-access" {
                 continue;
             }
 
@@ -252,6 +266,9 @@ fn build_start_args_impl(
         }
     }
 
+    args.push(format!("--rpc-listen-all={allow_remote_access}"));
+    args.push(format!("--rpc-allow-origin-all={allow_remote_access}"));
+
     if let Some((server_met_path, nodes_dat_path)) = ed2k_bootstrap_paths {
         args.push(format!("--ed2k-server-list={server_met_path}"));
         args.push(format!("--ed2k-node-list={nodes_dat_path}"));
@@ -260,8 +277,6 @@ fn build_start_args_impl(
     // If no conf file, ensure RPC is enabled
     if conf_path.is_none() {
         args.push("--enable-rpc=true".to_string());
-        args.push("--rpc-listen-all=true".to_string());
-        args.push("--rpc-allow-origin-all=true".to_string());
     }
 
     args
@@ -638,15 +653,29 @@ mod tests {
             "debug",
         );
         assert!(args.iter().any(|a| a == "--enable-rpc=true"));
+        assert!(args.iter().any(|a| a == "--rpc-listen-all=false"));
+        assert!(args.iter().any(|a| a == "--rpc-allow-origin-all=false"));
+    }
+
+    #[test]
+    fn build_args_allows_remote_rpc_only_when_enabled() {
+        let args = build_start_args(
+            &json!({ "allow-remote-access": "true" }),
+            None,
+            "/tmp/s.session",
+            false,
+            "/tmp/aria2-next.log",
+            "debug",
+        );
         assert!(args.iter().any(|a| a == "--rpc-listen-all=true"));
         assert!(args.iter().any(|a| a == "--rpc-allow-origin-all=true"));
     }
 
     #[test]
-    fn bundled_conf_allows_remote_rpc_by_default() {
+    fn bundled_conf_uses_local_rpc_by_default() {
         const BUNDLED_CONF: &str = include_str!("../../binaries/aria2.conf");
-        assert!(BUNDLED_CONF.contains("rpc-listen-all=true"));
-        assert!(BUNDLED_CONF.contains("rpc-allow-origin-all=true"));
+        assert!(BUNDLED_CONF.contains("rpc-listen-all=false"));
+        assert!(BUNDLED_CONF.contains("rpc-allow-origin-all=false"));
     }
 
     #[test]

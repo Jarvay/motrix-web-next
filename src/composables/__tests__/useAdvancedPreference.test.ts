@@ -65,6 +65,7 @@ describe('buildAdvancedForm', () => {
     expect(form.proxy.scope).toEqual(expect.arrayContaining([PROXY_SCOPES.DOWNLOAD]))
     expect(form.proxy.scope).toHaveLength(PROXY_SCOPE_OPTIONS.length)
     expect(form.rpcListenPort).toBe(ENGINE_RPC_PORT)
+    expect(form.allowRemoteAccess).toBe(false)
     expect(form.listenPort).toBe(29120)
     expect(form.dhtListenPort).toBe(29130)
     expect(form.logLevel).toBe('debug')
@@ -138,6 +139,7 @@ describe('buildAdvancedSystemConfig', () => {
     hardwareRendering: false,
     extensionApiPort: 29110,
     extensionApiSecret: 'test-api-secret',
+    allowRemoteAccess: false,
     autoSubmitFromExtension: false,
     autoSelectAllBtFilesFromExtension: false,
     silentAutoSubmitFromExtension: true,
@@ -157,12 +159,18 @@ describe('buildAdvancedSystemConfig', () => {
   it('maps all required aria2 config keys', () => {
     const config = buildAdvancedSystemConfig(baseForm)
     expect(config['rpc-listen-port']).toBe('29100')
+    expect(config['allow-remote-access']).toBe('false')
     expect(config['rpc-secret']).toBe('testSecret')
     expect(config).not.toHaveProperty('enable-dht')
     expect(config).not.toHaveProperty('enable-peer-exchange')
     expect(config['listen-port']).toBe('29120')
     expect(config['dht-listen-port']).toBe('29130')
     expect(config).not.toHaveProperty('log-level')
+  })
+
+  it('enables remote access only when requested', () => {
+    const config = buildAdvancedSystemConfig({ ...baseForm, allowRemoteAccess: true })
+    expect(config['allow-remote-access']).toBe('true')
   })
 
   it('sets manual proxy options when enabled for downloads', () => {
@@ -221,6 +229,7 @@ describe('transformAdvancedForStore', () => {
       hardwareRendering: false,
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
+      allowRemoteAccess: false,
       autoSubmitFromExtension: false,
       autoSelectAllBtFilesFromExtension: false,
       silentAutoSubmitFromExtension: true,
@@ -257,6 +266,7 @@ describe('transformAdvancedForStore', () => {
       hardwareRendering: false,
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
+      allowRemoteAccess: false,
       autoSubmitFromExtension: false,
       autoSelectAllBtFilesFromExtension: false,
       silentAutoSubmitFromExtension: true,
@@ -283,6 +293,12 @@ describe('transformAdvancedForStore', () => {
     const form = buildAdvancedForm({ ...createDefaultAppConfig(), autoChangeConflictingPorts: false } as AppConfig).form
     const result = transformAdvancedForStore(form)
     expect(result.autoChangeConflictingPorts).toBe(false)
+  })
+
+  it('preserves remote access preference', () => {
+    const form = buildAdvancedForm({ ...createDefaultAppConfig(), allowRemoteAccess: true } as AppConfig).form
+    const result = transformAdvancedForStore(form)
+    expect(result.allowRemoteAccess).toBe(true)
   })
 
   it('round-trip: buildAdvancedForm → transformAdvancedForStore produces no phantom diff', () => {
@@ -395,6 +411,7 @@ describe('validateAdvancedForm', () => {
     hardwareRendering: false,
     extensionApiPort: 29110,
     extensionApiSecret: 'test-api-secret',
+    allowRemoteAccess: false,
     autoSubmitFromExtension: false,
     autoSelectAllBtFilesFromExtension: false,
     silentAutoSubmitFromExtension: true,
@@ -417,6 +434,15 @@ describe('validateAdvancedForm', () => {
 
   it('returns null when rpcSecret is empty (security warning handled by UI dialog)', () => {
     expect(validateAdvancedForm({ ...validForm, rpcSecret: '' })).toBeNull()
+  })
+
+  it('requires both secrets when remote access is enabled', () => {
+    expect(validateAdvancedForm({ ...validForm, allowRemoteAccess: true, rpcSecret: '' })).toBe(
+      'preferences.remote-access-secret-required',
+    )
+    expect(validateAdvancedForm({ ...validForm, allowRemoteAccess: true, extensionApiSecret: '' })).toBe(
+      'preferences.remote-access-secret-required',
+    )
   })
 
   it('returns null for valid proxy URL in manual mode', () => {
@@ -559,6 +585,7 @@ describe('proxy configuration invariants', () => {
       hardwareRendering: false,
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
+      allowRemoteAccess: false,
       autoSubmitFromExtension: false,
       autoSelectAllBtFilesFromExtension: false,
       silentAutoSubmitFromExtension: true,
@@ -600,6 +627,7 @@ describe('proxy configuration invariants', () => {
       hardwareRendering: false,
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
+      allowRemoteAccess: false,
       autoSubmitFromExtension: false,
       autoSelectAllBtFilesFromExtension: false,
       silentAutoSubmitFromExtension: true,
@@ -640,6 +668,7 @@ describe('proxy configuration invariants', () => {
       hardwareRendering: false,
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
+      allowRemoteAccess: false,
       autoSubmitFromExtension: false,
       autoSelectAllBtFilesFromExtension: false,
       silentAutoSubmitFromExtension: true,
@@ -699,6 +728,7 @@ describe('transformAdvancedForStore — hardwareRendering', () => {
       hardwareRendering: true,
       extensionApiPort: 29110,
       extensionApiSecret: 'test-api-secret',
+      allowRemoteAccess: false,
       autoSubmitFromExtension: false,
       autoSelectAllBtFilesFromExtension: false,
       silentAutoSubmitFromExtension: true,

@@ -49,7 +49,7 @@ import MagnetFileSelect from '@/components/task/MagnetFileSelect.vue'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppMessage } from '@/composables/useAppMessage'
-import { NModal, NButton, NCheckbox, NProgress, useDialog } from 'naive-ui'
+import { NModal, NButton, NCheckbox, NProgress, NPagination, useDialog } from 'naive-ui'
 
 import { useAppEvents } from '@/composables/useAppEvents'
 import { loadAddedAtFromRecords } from '@/composables/useTaskOrder'
@@ -78,6 +78,37 @@ const pendingTrayHide = ref(false)
 const isMaximized = ref(false)
 const { platform: currentPlatform, isMac } = usePlatform()
 const showEngineOverlay = ref(false)
+const taskPaginationTab = computed(() =>
+  taskStore.currentList === 'stopped' ? 'stopped' : taskStore.currentList === 'all' ? 'all' : 'active',
+)
+const taskPaginationPage = computed(() => taskStore.taskPagination[taskPaginationTab.value].page)
+const taskPaginationPageSize = computed(() => taskStore.taskPagination.pageSize)
+const taskPaginationPageCount = computed(() => taskStore.currentTaskPageCount())
+const taskPaginationPageSizes = [5, 20, 40, 80, 100]
+const showTaskPaginationControl = ref(isTaskPage.value)
+
+watch(
+  () => route.path,
+  (path, oldPath) => {
+    const nextIsTaskPage = path.startsWith('/task')
+    const previousIsTaskPage = oldPath?.startsWith('/task') ?? nextIsTaskPage
+    if (!nextIsTaskPage) {
+      showTaskPaginationControl.value = false
+      return
+    }
+    if (previousIsTaskPage) {
+      showTaskPaginationControl.value = true
+    } else {
+      showTaskPaginationControl.value = false
+    }
+  },
+)
+
+function handleMainContentBeforeEnter() {
+  if (isTaskPage.value) {
+    showTaskPaginationControl.value = true
+  }
+}
 
 // ── Auto-shutdown countdown state ──────────────────────────────────
 const showShutdownCountdown = ref(false)
@@ -938,7 +969,7 @@ onUnmounted(() => {
     </div>
     <main class="content">
       <router-view v-slot="{ Component, route: viewRoute }">
-        <Transition name="fade" mode="out-in" appear>
+        <Transition name="fade" mode="out-in" appear @before-enter="handleMainContentBeforeEnter">
           <component :is="Component" :key="viewRoute.path" />
         </Transition>
       </router-view>
@@ -951,6 +982,20 @@ onUnmounted(() => {
       @maximize-toggled="onMaximizeToggled"
     />
     <Speedometer />
+    <Transition name="bottom-accessory">
+      <div v-if="showTaskPaginationControl" class="task-pagination-control">
+        <NPagination
+          :page="taskPaginationPage"
+          :page-size="taskPaginationPageSize"
+          :page-count="taskPaginationPageCount"
+          :page-sizes="taskPaginationPageSizes"
+          size="small"
+          show-size-picker
+          @update:page="taskStore.setCurrentTaskPage"
+          @update:page-size="taskStore.setTaskPageSize"
+        />
+      </div>
+    </Transition>
     <AboutPanel :show="showAbout" @close="showAbout = false" />
     <AddTask :show="appStore.addTaskVisible" @close="appStore.hideAddTaskDialog()" />
     <UpdateDialog ref="updateDialogRef" />
@@ -1050,6 +1095,38 @@ onUnmounted(() => {
 .window-controls {
   z-index: 100;
 }
+.task-pagination-control {
+  position: fixed;
+  left: calc(var(--aside-width) + var(--subnav-width) + 36px);
+  bottom: 16px;
+  z-index: 20;
+  min-height: 36px;
+  padding: 3px 6px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: 12px;
+  background: var(--m3-surface-container);
+  max-width: calc(100vw - var(--aside-width) - var(--subnav-width) - 280px);
+  overflow: hidden;
+}
+.bottom-accessory-enter-active {
+  transition:
+    opacity 0.18s cubic-bezier(0.2, 0, 0, 1),
+    transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
+.bottom-accessory-leave-active {
+  pointer-events: none;
+  transition:
+    opacity 0.12s cubic-bezier(0.3, 0, 0.8, 0.15),
+    transform 0.12s cubic-bezier(0.3, 0, 0.8, 0.15);
+}
+.bottom-accessory-enter-from,
+.bottom-accessory-leave-to {
+  opacity: 0;
+  transform: scale(0.985);
+}
 
 .exit-btn {
   min-width: 88px;
@@ -1099,11 +1176,19 @@ onUnmounted(() => {
   .subnav-slot {
     width: var(--subnav-width-compact);
   }
+  .task-pagination-control {
+    left: calc(var(--aside-width) + var(--subnav-width-compact) + 36px);
+    max-width: calc(100vw - var(--aside-width) - var(--subnav-width-compact) - 280px);
+  }
 }
 
 @media (max-width: 600px) {
   .subnav-slot {
     display: none;
+  }
+  .task-pagination-control {
+    left: calc(var(--aside-width) + 24px);
+    max-width: calc(100vw - var(--aside-width) - 268px);
   }
 }
 

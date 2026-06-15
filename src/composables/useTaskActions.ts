@@ -98,7 +98,7 @@ export function useTaskActions(deps: TaskActionsDeps) {
       title: t('task.delete-task'),
       content: () =>
         h('div', {}, [
-          h('p', { style: 'margin: 0 0 12px; word-break: break-all;' }, name),
+          h('p', { class: 'technical-text-wrap', style: 'margin: 0 0 12px;' }, name),
           h(
             NCheckbox,
             {
@@ -154,7 +154,7 @@ export function useTaskActions(deps: TaskActionsDeps) {
       title: t('task.delete-task'),
       content: () =>
         h('div', {}, [
-          h('p', { style: 'margin: 0 0 12px; word-break: break-all;' }, name),
+          h('p', { class: 'technical-text-wrap', style: 'margin: 0 0 12px;' }, name),
           h(
             NCheckbox,
             {

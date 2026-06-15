@@ -58,14 +58,13 @@ export function renderCompletionToast(options: CompletionToastOptions): string |
         h(
           'span',
           {
+            class: 'technical-text-wrap',
             style: {
               minWidth: '0',
               overflow: 'hidden',
               display: '-webkit-box',
               WebkitLineClamp: '2',
               WebkitBoxOrient: 'vertical',
-              whiteSpace: 'normal',
-              wordBreak: 'break-all',
             },
           },
           body,

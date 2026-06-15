@@ -138,6 +138,7 @@ export const checkIsNeedRestart = (changed: Record<string, unknown> = {}): boole
  */
 const NON_HOT_RELOADABLE = new Set([
   ...needRestartKeys,
+  'allow-remote-access',
   'checksum',
   'index-out',
   'out',

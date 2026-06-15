@@ -1,6 +1,6 @@
 /** @fileoverview Pinia store for download task management: list, add, pause, resume, remove. */
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { EMPTY_STRING, TASK_STATUS } from '@shared/constants'
 import { checkTaskIsEd2kSearch, intersection } from '@shared/utils'
 import { logger } from '@shared/logger'
@@ -35,7 +35,16 @@ import { createTaskOperations } from './operations'
 
 export type { Aria2Task, Aria2File, Aria2Peer }
 
+type TaskTabKey = 'active' | 'stopped' | 'all'
+
+const DEFAULT_TASK_PAGE_SIZE = 20
+
+function normalizeTaskTab(list: string): TaskTabKey {
+  return list === 'stopped' ? 'stopped' : list === 'all' ? 'all' : 'active'
+}
+
 export const useTaskStore = defineStore('task', () => {
+  const preferenceStore = usePreferenceStore()
   const currentList = ref('active')
   const taskDetailVisible = ref(false)
   const currentTaskGid = ref(EMPTY_STRING)
@@ -46,6 +55,14 @@ export const useTaskStore = defineStore('task', () => {
   const sharingList = ref<string[]>([])
   const taskList = ref<Aria2Task[]>([])
   const selectedGidList = ref<string[]>([])
+  const taskListTransitionRevision = ref(0)
+  const taskPagination = reactive({
+    active: { page: 1, total: 0, loaded: false },
+    stopped: { page: 1, total: 0, loaded: false },
+    all: { page: 1, total: 0, loaded: false },
+    pageSize: clampPageSize(preferenceStore.config.taskPageSize),
+  })
+  const visibleTaskPageCount = ref(1)
 
   let api: TaskApi
 
@@ -76,11 +93,82 @@ export const useTaskStore = defineStore('task', () => {
   }
 
   async function changeCurrentList(list: string) {
+    const sameList = currentList.value === list
     currentList.value = list
-    taskList.value = []
-    selectedGidList.value = []
+    if (!sameList) {
+      taskList.value = []
+      selectedGidList.value = []
+      const tab = currentTaskTab()
+      if (taskPagination[tab].loaded) refreshCurrentTaskPageCount()
+    }
     await fetchList()
   }
+
+  function currentTaskTab(): TaskTabKey {
+    return normalizeTaskTab(currentList.value)
+  }
+
+  function clampPage(page: number): number {
+    return Math.max(1, Math.floor(Number.isFinite(page) ? page : 1))
+  }
+
+  function clampPageSize(size: number): number {
+    return Math.min(Math.max(1, Math.floor(Number.isFinite(size) ? size : DEFAULT_TASK_PAGE_SIZE)), 100)
+  }
+
+  function maxTaskPage(tab = currentTaskTab()): number {
+    return Math.max(1, Math.ceil(taskPagination[tab].total / taskPagination.pageSize))
+  }
+
+  function currentTaskPageCount(): number {
+    return visibleTaskPageCount.value
+  }
+
+  function refreshCurrentTaskPageCount() {
+    visibleTaskPageCount.value = maxTaskPage()
+  }
+
+  function clampCurrentTaskPage() {
+    const tab = currentTaskTab()
+    taskPagination[tab].page = Math.min(clampPage(taskPagination[tab].page), maxTaskPage(tab))
+  }
+
+  function updateCurrentTaskTotal(total: number) {
+    const tab = currentTaskTab()
+    taskPagination[tab].total = Math.max(0, Math.floor(Number.isFinite(total) ? total : 0))
+    taskPagination[tab].loaded = true
+  }
+
+  function setTaskPage(tab: TaskTabKey, page: number) {
+    taskPagination[tab].page = clampPage(page)
+  }
+
+  function setCurrentTaskPage(page: number) {
+    setTaskPage(currentTaskTab(), page)
+  }
+
+  function applyTaskPageSize(size: number) {
+    const pageSize = clampPageSize(size)
+    if (taskPagination.pageSize === pageSize) return pageSize
+    taskPagination.pageSize = pageSize
+    clampCurrentTaskPage()
+    refreshCurrentTaskPageCount()
+    return pageSize
+  }
+
+  function setTaskPageSize(size: number) {
+    const pageSize = applyTaskPageSize(size)
+    preferenceStore
+      .updateAndSave({ taskPageSize: pageSize })
+      .catch((e: unknown) => logger.error('TaskStore.setTaskPageSize', e))
+  }
+
+  watch(
+    () => preferenceStore.config.taskPageSize,
+    (size) => {
+      applyTaskPageSize(size)
+    },
+  )
 
   async function fetchList() {
     try {
@@ -170,6 +258,9 @@ export const useTaskStore = defineStore('task', () => {
       })
 
       taskList.value = data
+      updateCurrentTaskTotal(data.length)
+      clampCurrentTaskPage()
+      refreshCurrentTaskPageCount()
       const gids = data.map((task: Aria2Task) => task.gid)
       selectedGidList.value = intersection(selectedGidList.value, gids)
       if (taskDetailVisible.value && currentTaskGid.value) {
@@ -193,7 +284,7 @@ export const useTaskStore = defineStore('task', () => {
 
   async function saveManualOrder(gids: string[]) {
     const preferenceStore = usePreferenceStore()
-    const tab = currentList.value === 'stopped' ? 'stopped' : currentList.value === 'all' ? 'all' : 'active'
+    const tab = currentTaskTab()
     const taskSort = {
       ...preferenceStore.config.taskSort,
       [tab]: {
@@ -212,9 +303,18 @@ export const useTaskStore = defineStore('task', () => {
     await saveManualOrder(createManualOrderSnapshot(taskList.value))
   }
 
+  async function saveVisiblePageManualOrder(visibleTasks: Aria2Task[]) {
+    const tab = currentTaskTab()
+    const start = (taskPagination[tab].page - 1) * taskPagination.pageSize
+    const nextList = [...taskList.value]
+    nextList.splice(start, visibleTasks.length, ...visibleTasks)
+    taskList.value = nextList
+    await saveManualOrder(createManualOrderSnapshot(nextList))
+  }
+
   async function changeCurrentSort(field: ActiveSortField | StoppedSortField | AllSortField) {
     const preferenceStore = usePreferenceStore()
-    const tab = currentList.value === 'stopped' ? 'stopped' : currentList.value === 'all' ? 'all' : 'active'
+    const tab = currentTaskTab()
     const taskSort = preferenceStore.config?.taskSort ?? DEFAULT_TASK_SORT
     const current = taskSort[tab]
     const direction: SortDirection =
@@ -232,6 +332,7 @@ export const useTaskStore = defineStore('task', () => {
         : { taskSort: nextTaskSort }
 
     preferenceStore.updatePreference(nextConfig)
+    taskListTransitionRevision.value += 1
     await fetchList()
     preferenceStore.updateAndSave(nextConfig).catch((e: unknown) => logger.error('TaskStore.changeCurrentSort', e))
   }
@@ -451,6 +552,9 @@ export const useTaskStore = defineStore('task', () => {
     sharingList,
     taskList,
     selectedGidList,
+    taskListTransitionRevision,
+    taskPagination,
+    currentTaskPageCount,
     setApi,
     getApi,
     changeCurrentList,
@@ -458,6 +562,11 @@ export const useTaskStore = defineStore('task', () => {
     selectTasks,
     saveManualOrder,
     saveCurrentManualOrder,
+    saveVisiblePageManualOrder,
+    setTaskPage,
+    setCurrentTaskPage,
+    setTaskPageSize,
+    clampCurrentTaskPage,
     changeCurrentSort,
     selectAllTask,
     fetchItem,

@@ -173,6 +173,8 @@ export default {
   'ua-edit': '編輯',
   'ua-delete': '刪除',
   'aria2-conf-path': '引擎設定檔',
+  'allow-remote-access': '允許遠端存取',
+  'remote-access-secret-required': '遠端存取需要同時設定 RPC 金鑰和擴充功能 API 金鑰',
   'temp-files-dir': '暫存檔案目錄',
   'factory-reset': '刪除設定並重置',
   'factory-reset-confirm': '確定要還原原廠設定嗎？',
@@ -264,8 +266,7 @@ export default {
   'high-bt-peers-reason': '過多節點連線會顯著增加記憶體消耗',
   'engine-section': 'Aria2 Next 下載引擎',
   'hardware-rendering': 'WebKitGTK 硬體加速',
-  'hardware-rendering-hint':
-    '開啟後可能提升介面渲染效能，但部分顯卡、驅動程式或桌面環境可能導致 WebKitGTK 崩潰',
+  'hardware-rendering-hint': '開啟後可能提升介面渲染效能，但部分顯卡、驅動程式或桌面環境可能導致 WebKitGTK 崩潰',
   'hardware-rendering-restart-confirm':
     'WebKitGTK 硬體加速變更需要重新啟動應用程式。若開啟後無法啟動，請手動編輯 config.json，將 preferences.hardwareRendering 改為 false。',
   'session-path': '任務快取檔案',

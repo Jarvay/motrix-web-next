@@ -27,7 +27,8 @@ export default {
   'sharing-mode-scope-hint': 'Se aplica a la siembra BT y a la compartición ED2K',
   'sharing-mode-stop-by-condition': 'Detener por condiciones',
   'sharing-mode-manual-stop': 'Detener manualmente',
-  'sharing-mode-manual-stop-tips': 'Las descargas completadas siguen compartiéndose hasta que detengas la tarea manualmente',
+  'sharing-mode-manual-stop-tips':
+    'Las descargas completadas siguen compartiéndose hasta que detengas la tarea manualmente',
   'share-ratio': 'Ratio de compartición',
   'share-time': 'Tiempo de compartición',
   'share-time-unit': 'minutos',
@@ -133,7 +134,8 @@ export default {
   'invalid-proxy-url': 'Invalid proxy URL format',
   'proxy-unsupported-protocol': 'Protocolo de proxy no compatible. Aria2 Next solo admite proxy HTTP (http/https/ftp).',
   'proxy-http-only-hint': 'Solo se admiten proxies HTTP, los proxies SOCKS no se admiten',
-  'proxy-request-scope-hint': 'Solo se envían por proxy las solicitudes de descarga, no las conexiones de pares BT/ED2K',
+  'proxy-request-scope-hint':
+    'Solo se envían por proxy las solicitudes de descarga, no las conexiones de pares BT/ED2K',
   'user-agent-string': 'Cadena UA',
   port: 'Puertos de escucha',
   'auto-change-conflicting-ports': 'Cambiar automáticamente los puertos en conflicto',
@@ -179,6 +181,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Configuración del motor',
+  'allow-remote-access': 'Permitir acceso remoto',
+  'remote-access-secret-required': 'El acceso remoto requiere el secreto RPC y el secreto de API de extensión',
   'temp-files-dir': 'Directorio de archivos temporales',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': '¿Restaurar los valores de fábrica?',
@@ -302,7 +306,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Abrir carpeta de configuración',

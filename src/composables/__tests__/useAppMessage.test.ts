@@ -28,7 +28,7 @@ import { useAppMessage } from '../useAppMessage'
 function renderMessageCallContent(method: keyof typeof mockMessageApi, index = 0) {
   const content = (mockMessageApi[method].mock.calls[index] as unknown as [() => unknown])[0]
   expect(typeof content).toBe('function')
-  return content as () => { props?: { style?: Record<string, string> }; children?: string }
+  return content as () => { props?: { class?: string; style?: Record<string, string> }; children?: string }
 }
 
 describe('useAppMessage', () => {
@@ -69,18 +69,17 @@ describe('useAppMessage', () => {
     expect(displayedContent).toContain('...')
   })
 
-  it('renders plain toast text with break-all wrapping', () => {
+  it('renders plain toast text with shared technical wrapping', () => {
     const msg = useAppMessage()
 
     msg.success('Deleted "amd-software-adrenalin-edition-26.5.2-minimalsetup.exe"')
 
     const vnode = renderMessageCallContent('success')()
     expect(vnode.children).toContain('amd-software-adrenalin-edition')
+    expect(vnode.props?.class).toBe('technical-text-wrap')
     expect(vnode.props?.style).toMatchObject({
       display: 'inline-block',
       maxWidth: 'min(560px, calc(100vw - 96px))',
-      whiteSpace: 'normal',
-      wordBreak: 'break-all',
     })
   })
 
