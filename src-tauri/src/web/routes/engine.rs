@@ -24,7 +24,11 @@ pub fn routes() -> Router<AppState> {
 async fn engine_status(
     State(state): State<AppState>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
-    let running = state.engine.lock().unwrap().is_running();
+    let running = state
+        .engine
+        .lock()
+        .expect("engine mutex poisoned")
+        .is_running();
 
     // Try to probe aria2 for additional status
     let engine_info = match state.aria2_client.get_version().await {
@@ -97,7 +101,7 @@ async fn restart_engine(
         .await;
 
     tokio::spawn(async move {
-        crate::web::engine::wait_for_engine_ready(&state.aria2_client, 30).await;
+        let _ = crate::web::engine::wait_for_engine_ready(&state.aria2_client, 30).await;
     });
 
     Ok(Json(serde_json::json!({

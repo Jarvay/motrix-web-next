@@ -32,8 +32,12 @@ impl Aria2Client {
     /// The `reqwest::Client` is reused across all requests for connection
     /// pooling.  Credentials can be updated later via `update_credentials`.
     pub fn new(port: u16, secret: String) -> Self {
+        let http = reqwest::Client::builder()
+            .no_proxy()
+            .build()
+            .expect("local aria2 RPC client");
         Self {
-            http: reqwest::Client::new(),
+            http,
             port: RwLock::new(port),
             secret: RwLock::new(secret),
             request_id: AtomicU64::new(1),
@@ -44,7 +48,7 @@ impl Aria2Client {
     pub async fn update_credentials(&self, port: u16, secret: String) {
         *self.port.write().await = port;
         *self.secret.write().await = secret;
-        log::info!("aria2 client credentials updated: port={}", port);
+        log::info!("aria2 client credentials updated: port={port}");
     }
 
     /// Builds the JSON-RPC params array with token prepended if secret is set.
@@ -351,6 +355,9 @@ fn parse_jsonrpc_response<T: DeserializeOwned>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+    use std::time::Duration;
 
     // ── Token parameter construction ────────────────────────────────
 
@@ -463,6 +470,63 @@ mod tests {
             err.to_string().contains("HTTP request to aria2 failed"),
             "unexpected message: {}",
             err
+        );
+    }
+
+    #[tokio::test]
+    async fn local_rpc_ignores_proxy_environment() {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local rpc server");
+        listener
+            .set_nonblocking(true)
+            .expect("configure local rpc server");
+        let port = listener.local_addr().expect("local addr").port();
+        let server = std::thread::spawn(move || {
+            let deadline = std::time::Instant::now() + Duration::from_secs(3);
+            let (mut stream, _) = loop {
+                match listener.accept() {
+                    Ok(accepted) => break accepted,
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        if std::time::Instant::now() >= deadline {
+                            return false;
+                        }
+                        std::thread::sleep(Duration::from_millis(10));
+                    }
+                    Err(_) => return false,
+                }
+            };
+            stream
+                .set_read_timeout(Some(Duration::from_secs(2)))
+                .expect("configure stream timeout");
+            let mut buf = [0_u8; 2048];
+            let _ = stream.read(&mut buf);
+            stream
+                .write_all(
+                    b"HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 77\r\n\r\n{\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{\"version\":\"1.37.0\",\"enabledFeatures\":[]}}",
+                )
+                .expect("write rpc response");
+            true
+        });
+
+        std::env::set_var("HTTP_PROXY", "http://127.0.0.1:9");
+        std::env::set_var("http_proxy", "http://127.0.0.1:9");
+        std::env::set_var("ALL_PROXY", "http://127.0.0.1:9");
+        std::env::set_var("all_proxy", "http://127.0.0.1:9");
+        std::env::remove_var("NO_PROXY");
+        std::env::remove_var("no_proxy");
+
+        let client = Aria2Client::new(port, String::new());
+        let result = client.get_version().await;
+
+        std::env::remove_var("HTTP_PROXY");
+        std::env::remove_var("http_proxy");
+        std::env::remove_var("ALL_PROXY");
+        std::env::remove_var("all_proxy");
+        let reached_local_rpc = server.join().expect("server thread");
+
+        assert!(reached_local_rpc, "local rpc server was bypassed");
+        assert_eq!(
+            result.expect("local rpc response")["version"],
+            serde_json::json!("1.37.0")
         );
     }
 

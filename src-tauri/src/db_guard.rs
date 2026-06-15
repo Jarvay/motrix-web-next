@@ -44,7 +44,7 @@ pub fn check(app_data_dir: &Path) {
         Ok(v) => v,
         Err(e) => {
             // Cannot read DB — let tauri_plugin_sql handle it normally.
-            log::debug!("db_guard: skipping check: {}", e);
+            log::debug!("db_guard: skipping check: {e}");
             return;
         }
     };

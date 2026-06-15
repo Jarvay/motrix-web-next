@@ -190,7 +190,7 @@ onBeforeUnmount(() => {
                    :key ensures transition only fires when the text actually changes.
                    Polling-safe: computed returns the same string each cycle → no key change. -->
               <Transition name="name-crossfade" mode="out-in">
-                <span :key="taskFullName">{{ taskFullName }}</span>
+                <span :key="taskFullName" class="technical-text-wrap">{{ taskFullName }}</span>
               </Transition>
             </div>
           </template>
@@ -264,7 +264,9 @@ onBeforeUnmount(() => {
               <span>{{ task.connections }}</span>
             </span>
           </div>
-          <div class="error-message" :class="{ 'info-hidden': !task.errorMessage }">{{ task.errorMessage }}</div>
+          <div class="error-message technical-text-wrap" :class="{ 'info-hidden': !task.errorMessage }">
+            {{ task.errorMessage }}
+          </div>
         </div>
       </div>
     </div>
@@ -522,7 +524,6 @@ onBeforeUnmount(() => {
   color: var(--m3-error);
   margin-top: 4px;
   opacity: 0.85;
-  word-break: break-all;
   line-height: 1.4;
 }
 </style>

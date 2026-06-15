@@ -177,6 +177,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Configurare motor',
+  'allow-remote-access': 'Permite acces la distanță',
+  'remote-access-secret-required': 'Accesul la distanță necesită secretul RPC și secretul API al extensiei',
   'temp-files-dir': 'Director fișiere temporare',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Restaurați setările din fabrică?',
@@ -299,7 +301,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Deschide dosarul de configurare',

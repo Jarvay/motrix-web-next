@@ -20,6 +20,9 @@ use tokio::task::JoinHandle;
 /// Most consumer routers cap this at 3600; we request 3600 and renew at half.
 const LEASE_DURATION_SECS: u32 = 3600;
 
+/// UPnP IGD uses 0 to request an infinite mapping lease.
+const PERMANENT_LEASE_SECS: u32 = 0;
+
 /// How often the background task re-adds the mapping to keep it alive.
 const RENEWAL_INTERVAL: Duration = Duration::from_secs(1800);
 
@@ -43,6 +46,13 @@ struct Inner {
 struct MappedPort {
     internal: u16,
     protocol: PortMappingProtocol,
+    lease: MappingLease,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum MappingLease {
+    Temporary,
+    Permanent,
 }
 
 impl UpnpState {
@@ -90,11 +100,29 @@ async fn map_port(
     local_ip: Ipv4Addr,
     port: u16,
     proto: PortMappingProtocol,
-) -> Result<(), String> {
+) -> Result<MappingLease, String> {
     let local = SocketAddr::V4(SocketAddrV4::new(local_ip, port));
-    gw.add_port(proto, port, local, LEASE_DURATION_SECS, MAPPING_DESC)
+    match gw
+        .add_port(proto, port, local, LEASE_DURATION_SECS, MAPPING_DESC)
         .await
         .map_err(|e| format!("UPnP map port {port} ({proto:?}) failed: {e}"))
+    {
+        Ok(()) => Ok(MappingLease::Temporary),
+        Err(err) if requires_permanent_lease(&err) => {
+            log::info!("upnp:retry-permanent-lease port={port} proto={proto:?}");
+            gw.add_port(proto, port, local, PERMANENT_LEASE_SECS, MAPPING_DESC)
+                .await
+                .map(|()| MappingLease::Permanent)
+                .map_err(|e| {
+                    format!("UPnP map port {port} ({proto:?}) with permanent lease failed: {e}")
+                })
+        }
+        Err(err) => Err(err),
+    }
+}
+
+fn requires_permanent_lease(error: &str) -> bool {
+    error.contains("only supports permanent leases") || error.contains("lease_duration of 0")
 }
 
 /// Unmap a single port on the gateway.
@@ -149,9 +177,10 @@ pub async fn start_mapping(
     let mut errors: Vec<String> = Vec::new();
 
     match bt_result {
-        Ok(()) => mapped.push(MappedPort {
+        Ok(lease) => mapped.push(MappedPort {
             internal: bt_port,
             protocol: PortMappingProtocol::TCP,
+            lease,
         }),
         Err(e) => {
             log::warn!("upnp:map-failed port={bt_port} proto=TCP err={e}");
@@ -160,9 +189,10 @@ pub async fn start_mapping(
     }
 
     match dht_result {
-        Ok(()) => mapped.push(MappedPort {
+        Ok(lease) => mapped.push(MappedPort {
             internal: dht_port,
             protocol: PortMappingProtocol::UDP,
+            lease,
         }),
         Err(e) => {
             log::warn!("upnp:map-failed port={dht_port} proto=UDP err={e}");
@@ -172,9 +202,10 @@ pub async fn start_mapping(
 
     if let Some((port, result)) = ed2k_result {
         match result {
-            Ok(()) => mapped.push(MappedPort {
+            Ok(lease) => mapped.push(MappedPort {
                 internal: port,
                 protocol: PortMappingProtocol::TCP,
+                lease,
             }),
             Err(e) => {
                 log::warn!("upnp:map-failed port={port} proto=TCP err={e}");
@@ -185,9 +216,10 @@ pub async fn start_mapping(
 
     if let Some((port, result)) = ed2k_udp_result {
         match result {
-            Ok(()) => mapped.push(MappedPort {
+            Ok(lease) => mapped.push(MappedPort {
                 internal: port,
                 protocol: PortMappingProtocol::UDP,
+                lease,
             }),
             Err(e) => {
                 log::warn!("upnp:map-failed port={port} proto=UDP err={e}");
@@ -209,15 +241,17 @@ pub async fn start_mapping(
     );
 
     // Spawn the renewal background task.
-    let renewal_ports = mapped.clone();
-    let renewal_handle = tokio::spawn(async move {
-        renewal_loop(renewal_ports).await;
+    let renewal_ports = renewal_ports(&mapped);
+    let renewal_handle = (!renewal_ports.is_empty()).then(|| {
+        tokio::spawn(async move {
+            renewal_loop(renewal_ports).await;
+        })
     });
 
     // Store state.
     if let Ok(mut inner) = state.inner.lock() {
         inner.mapped_ports = mapped.clone();
-        inner.renewal_handle = Some(renewal_handle);
+        inner.renewal_handle = renewal_handle;
     }
 
     // Retrieve the external IP for informational purposes.
@@ -309,6 +343,14 @@ pub fn get_status(state: &UpnpState) -> serde_json::Value {
 
 // ─── Renewal Loop ────────────────────────────────────────────────────
 
+fn renewal_ports(ports: &[MappedPort]) -> Vec<MappedPort> {
+    ports
+        .iter()
+        .filter(|port| matches!(port.lease, MappingLease::Temporary))
+        .cloned()
+        .collect()
+}
+
 /// Periodically re-add the port mappings to keep the UPnP lease alive.
 /// Runs until cancelled by `stop_mapping`.
 async fn renewal_loop(ports: Vec<MappedPort>) {
@@ -365,10 +407,12 @@ mod tests {
             inner.mapped_ports.push(MappedPort {
                 internal: 6881,
                 protocol: PortMappingProtocol::TCP,
+                lease: MappingLease::Temporary,
             });
             inner.mapped_ports.push(MappedPort {
                 internal: 6882,
                 protocol: PortMappingProtocol::UDP,
+                lease: MappingLease::Temporary,
             });
         }
         let status = get_status(&state);
@@ -388,5 +432,35 @@ mod tests {
         assert_eq!(MAPPING_DESC, "Motrix Next");
         // Renewal interval must be less than lease duration
         assert!(RENEWAL_INTERVAL.as_secs() < u64::from(LEASE_DURATION_SECS));
+    }
+
+    #[test]
+    fn permanent_lease_error_detection_matches_gateway_message() {
+        assert!(requires_permanent_lease(
+            "UPnP map port 29668 (TCP) failed: The gateway only supports permanent leases (ie. a lease_duration of 0),"
+        ));
+        assert!(!requires_permanent_lease(
+            "UPnP map port 29668 (TCP) failed: The requested mapping conflicts with a mapping assigned to another client."
+        ));
+    }
+
+    #[test]
+    fn renewal_ports_excludes_permanent_mappings() {
+        let temporary = MappedPort {
+            internal: 6881,
+            protocol: PortMappingProtocol::TCP,
+            lease: MappingLease::Temporary,
+        };
+        let permanent = MappedPort {
+            internal: 6882,
+            protocol: PortMappingProtocol::UDP,
+            lease: MappingLease::Permanent,
+        };
+
+        let ports = renewal_ports(&[temporary.clone(), permanent]);
+
+        assert_eq!(ports.len(), 1);
+        assert_eq!(ports[0].internal, temporary.internal);
+        assert!(matches!(ports[0].lease, MappingLease::Temporary));
     }
 }

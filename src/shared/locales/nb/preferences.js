@@ -176,6 +176,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Motorkonfigurasjon',
+  'allow-remote-access': 'Tillat ekstern tilgang',
+  'remote-access-secret-required': 'Ekstern tilgang krever både RPC-nøkkel og API-nøkkel for utvidelse',
   'temp-files-dir': 'Mappe for midlertidige filer',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Gjenopprette fabrikkinnstillinger?',
@@ -297,7 +299,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Åpne konfigurasjonsmappe',

@@ -833,6 +833,7 @@ function kindTagType(kind: string): 'info' | 'success' | 'warning' {
   white-space: pre-wrap;
   overflow-wrap: normal;
   word-break: break-all;
+  hyphens: none;
 }
 
 /* ── Torrent panel ────────────────────────────────────────────────── */

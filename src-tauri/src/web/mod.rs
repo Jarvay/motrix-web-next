@@ -139,7 +139,7 @@ pub async fn start_engine(state: &AppState) -> Result<(), String> {
 }
 
 /// Load system.json config for engine startup.
-fn load_system_config(data_dir: &PathBuf) -> serde_json::Value {
+fn load_system_config(data_dir: &std::path::Path) -> serde_json::Value {
     let path = data_dir.join("system.json");
     match std::fs::read_to_string(&path) {
         Ok(content) => serde_json::from_str(&content).unwrap_or(serde_json::json!({})),

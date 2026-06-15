@@ -27,7 +27,8 @@ export default {
   'sharing-mode-scope-hint': 'Ισχύει για BT seeding και ED2K sharing',
   'sharing-mode-stop-by-condition': 'Διακοπή βάσει συνθηκών',
   'sharing-mode-manual-stop': 'Μη αυτόματη διακοπή',
-  'sharing-mode-manual-stop-tips': 'Οι ολοκληρωμένες λήψεις συνεχίζουν να κοινοποιούνται μέχρι να σταματήσετε την εργασία χειροκίνητα',
+  'sharing-mode-manual-stop-tips':
+    'Οι ολοκληρωμένες λήψεις συνεχίζουν να κοινοποιούνται μέχρι να σταματήσετε την εργασία χειροκίνητα',
   'share-ratio': 'Αναλογία κοινής χρήσης',
   'share-time': 'Χρόνος κοινής χρήσης',
   'share-time-unit': 'λεπτά',
@@ -179,6 +180,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Ρυθμίσεις μηχανής',
+  'allow-remote-access': 'Να επιτρέπεται απομακρυσμένη πρόσβαση',
+  'remote-access-secret-required': 'Η απομακρυσμένη πρόσβαση απαιτεί και μυστικό RPC και μυστικό API επέκτασης',
   'temp-files-dir': 'Κατάλογος προσωρινών αρχείων',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Επαναφορά εργοστασιακών ρυθμίσεων;',
@@ -301,7 +304,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Άνοιγμα φακέλου ρυθμίσεων',

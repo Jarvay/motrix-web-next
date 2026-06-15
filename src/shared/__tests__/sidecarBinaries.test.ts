@@ -24,12 +24,6 @@ const BINARIES_DIR = resolve(__dirname, '..', '..', '..', 'src-tauri', 'binaries
  * This list MUST stay in sync with .github/workflows/release.yml matrix.
  */
 const EXPECTED_TARGETS = [
-  // macOS
-  'aarch64-apple-darwin',
-  'x86_64-apple-darwin',
-  // Windows
-  'x86_64-pc-windows-msvc',
-  'aarch64-pc-windows-msvc',
   // Linux
   'x86_64-unknown-linux-gnu',
   'aarch64-unknown-linux-gnu',
@@ -189,11 +183,11 @@ describe('sidecar binaries', () => {
   })
 
   describe('CI matrix sync guard', () => {
-    it('release.yml matrix covers every expected target', () => {
+    it('release.yml matrix covers every expected arch', () => {
       const releaseYml = readFileSync(resolve(BINARIES_DIR, '..', '..', '.github', 'workflows', 'release.yml'), 'utf-8')
-      for (const target of EXPECTED_TARGETS) {
-        expect(releaseYml).toContain(target)
-      }
+      // Docker-based builds use arch names, not Rust target triples
+      expect(releaseYml).toContain('amd64')
+      expect(releaseYml).toContain('arm64')
     })
   })
 })

@@ -177,6 +177,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'エンジン設定ファイル',
+  'allow-remote-access': 'リモートアクセスを許可',
+  'remote-access-secret-required': 'リモートアクセスには RPC シークレットと拡張機能 API シークレットの両方が必要です',
   'temp-files-dir': '一時ファイルディレクトリ',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': '出荷時設定に戻しますか？',
@@ -297,7 +299,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': '設定フォルダーを開く',

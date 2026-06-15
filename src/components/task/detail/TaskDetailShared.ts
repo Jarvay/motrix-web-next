@@ -5,7 +5,7 @@ import { CopyOutline } from '@vicons/ionicons5'
 import MTooltip from '@/components/common/MTooltip.vue'
 
 export function renderDetailLongText(value: string | number): VNodeChild {
-  return h('span', { class: 'detail-long-text' }, String(value || '-'))
+  return h('span', { class: 'detail-long-text technical-text-wrap' }, String(value || '-'))
 }
 
 export function renderDetailCopyableText(options: {
@@ -16,7 +16,7 @@ export function renderDetailCopyableText(options: {
 }): VNodeChild {
   const text = String(options.value || '-')
   return h('span', { class: 'detail-copyable-value' }, [
-    h('span', { class: 'detail-copyable-text' }, text),
+    h('span', { class: 'detail-copyable-text technical-text-wrap' }, text),
     h(
       MTooltip,
       { placement: 'top' },

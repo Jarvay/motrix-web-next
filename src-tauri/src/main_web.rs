@@ -63,7 +63,7 @@ async fn main() {
     motrix_next_lib::gpu_guard::pre_flight();
 
     std::panic::set_hook(Box::new(|info| {
-        log::error!("PANIC: {}", info);
+        log::error!("PANIC: {info}");
     }));
 
     let log_level = motrix_next_lib::read_log_level();
@@ -104,11 +104,9 @@ async fn main() {
     // ── Start HTTP server ───────────────────────────────────────────
     let port: u16 = env_or("PORT", "22077").parse().unwrap_or(22077);
     let host = env_or("HOST", "127.0.0.1");
-    let addr: SocketAddr = format!("{}:{}", host, port)
-        .parse()
-        .expect("Invalid HOST:PORT");
+    let addr: SocketAddr = format!("{host}:{port}").parse().expect("Invalid HOST:PORT");
 
-    log::info!("motrix-web-next listening on http://{}", addr);
+    log::info!("motrix-web-next listening on http://{addr}");
 
     let listener = tokio::net::TcpListener::bind(addr)
         .await
@@ -119,5 +117,5 @@ async fn main() {
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
     .await
-    .unwrap();
+    .expect("server error");
 }

@@ -257,6 +257,7 @@ export interface AppConfig {
   theme: 'auto' | 'light' | 'dark'
   colorScheme: string
   taskCardMode: 'full' | 'compact'
+  taskPageSize: number
   locale: string
   dir: string
   split: number
@@ -354,6 +355,8 @@ export interface AppConfig {
   extensionApiSecret: string
   /** Shared secret for the aria2 RPC API. Empty string means the user intentionally cleared it. */
   rpcSecret: string
+  /** When true, aria2 RPC and the extension API listen on all network interfaces. */
+  allowRemoteAccess: boolean
   /** Automatically switches locally bound ports when another process or OS reservation blocks them. */
   autoChangeConflictingPorts: boolean
   portConflictRecovery: PortConflictRecoveryConfig

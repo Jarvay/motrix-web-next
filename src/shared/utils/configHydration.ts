@@ -83,6 +83,20 @@ function normalizePositiveNumber(value: unknown, fallback: number, key: string, 
   return fallback
 }
 
+function normalizeBoundedInteger(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number,
+  key: string,
+  repairs: string[],
+): number {
+  const number = Number(value)
+  if (Number.isInteger(number) && number >= min && number <= max) return number
+  repairs.push(key)
+  return fallback
+}
+
 function normalizeProxy(value: unknown, repairs: string[]): ProxyConfig {
   const defaults = clonePlain(DEFAULT_APP_CONFIG.proxy)
   const saved = isRecord(value) ? value : {}
@@ -208,6 +222,14 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
   )
 
   config.split = normalizePositiveNumber(config.split, DEFAULT_APP_CONFIG.split, 'split', repairs)
+  config.taskPageSize = normalizeBoundedInteger(
+    config.taskPageSize,
+    DEFAULT_APP_CONFIG.taskPageSize,
+    1,
+    100,
+    'taskPageSize',
+    repairs,
+  )
   config.maxConcurrentDownloads = normalizePositiveNumber(
     config.maxConcurrentDownloads,
     DEFAULT_APP_CONFIG.maxConcurrentDownloads,

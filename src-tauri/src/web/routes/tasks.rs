@@ -83,7 +83,7 @@ async fn list_tasks(
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> AppResult<Vec<Aria2Task>> {
     let client = &state.aria2_client;
-    let list_type = params.get("type").map(|s| s.as_str()).unwrap_or("active");
+    let list_type = params.get("type").map(String::as_str).unwrap_or("active");
 
     match list_type {
         "active" => {
@@ -107,7 +107,7 @@ async fn list_tasks(
                 .unwrap_or(128);
             map_err(client.tell_stopped(0, limit.into()).await)
         }
-        "all" | _ => {
+        _ => {
             let active = client.tell_active().await;
             let waiting = client.tell_waiting(0, 1000).await;
             let mut result = active.map_err(app_err)?;

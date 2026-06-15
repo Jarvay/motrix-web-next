@@ -93,6 +93,13 @@ pre,
   -webkit-user-select: text;
 }
 
+.technical-text-wrap {
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: break-all;
+  hyphens: none;
+}
+
 /* ── Draggable Regions ─────────────────────────────────────────────── */
 .draggable {
   -webkit-app-region: drag;

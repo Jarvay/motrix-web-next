@@ -76,7 +76,7 @@ describe('renderCompletionToast', () => {
 
     expect(typeof result).toBe('function')
     const vnode = (result as () => { props?: { style?: Record<string, string> }; children?: unknown[] })()
-    const children = vnode.children as Array<{ props?: { style?: Record<string, string> } }>
+    const children = vnode.children as Array<{ props?: { class?: string; style?: Record<string, string> } }>
     const body = children[0]
     const actions = children[1]
 
@@ -86,14 +86,13 @@ describe('renderCompletionToast', () => {
     })
     expect(vnode.props?.style?.width).toBeUndefined()
     expect(vnode.props?.style?.gridTemplateColumns).toBe('minmax(0, 1fr) max-content')
+    expect(body.props?.class).toBe('technical-text-wrap')
     expect(body.props?.style).toMatchObject({
       minWidth: '0',
       overflow: 'hidden',
       display: '-webkit-box',
       WebkitLineClamp: '2',
       WebkitBoxOrient: 'vertical',
-      whiteSpace: 'normal',
-      wordBreak: 'break-all',
     })
     expect(actions.props?.style).toMatchObject({
       display: 'inline-flex',

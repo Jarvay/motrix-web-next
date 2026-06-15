@@ -265,6 +265,7 @@ describe('filterHotReloadableKeys', () => {
   it('strips restart-required keys (ports + secret)', () => {
     const config = {
       'rpc-listen-port': '29100',
+      'allow-remote-access': 'false',
       'rpc-secret': 'abc',
       'listen-port': '29120',
       'dht-listen-port': '29130',
@@ -311,6 +312,7 @@ describe('filterHotReloadableKeys', () => {
   it('separates hot-reloadable from non-hot-reloadable in mixed input', () => {
     const config = {
       'max-concurrent-downloads': '8',
+      'allow-remote-access': 'true',
       'rpc-listen-port': '29100',
       'bt-tracker': 'udp://t.example.org:6969',
       'rpc-secret': 'secret',

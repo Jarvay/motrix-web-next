@@ -176,6 +176,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Engine Configuration',
+  'allow-remote-access': 'Allow Remote Access',
+  'remote-access-secret-required': 'Remote access requires both RPC Secret and Extension API Secret',
   'temp-files-dir': 'Temporary Files Directory',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'Are you sure you want to restore factory settings?',
@@ -296,7 +298,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Open Config Folder',

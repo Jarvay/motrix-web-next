@@ -64,7 +64,7 @@ pub fn resolve_engine_binary() -> PathBuf {
         }
     };
 
-    let binary_name = format!("{}-{}", ENGINE_RESOURCE_NAME, target_suffix);
+    let binary_name = format!("{ENGINE_RESOURCE_NAME}-{target_suffix}");
 
     // Try alongside the executable first
     if let Ok(exe) = std::env::current_exe() {
@@ -96,7 +96,7 @@ const DEFAULT_ARIA2_LOG_LEVEL: &str = "info";
 /// that the Tauri version uses.
 pub fn start_engine(
     engine_handle: &Mutex<EngineHandle>,
-    data_dir: &PathBuf,
+    data_dir: &std::path::Path,
     _rpc_port: u16,
     system_config: &serde_json::Value,
 ) -> Result<(), String> {
@@ -115,7 +115,7 @@ pub fn start_engine(
             Box::leak(d.to_string_lossy().to_string().into_boxed_str())
         });
     std::fs::create_dir_all(download_dir)
-        .map_err(|e| format!("Failed to create download dir '{}': {}", download_dir, e))?;
+        .map_err(|e| format!("Failed to create download dir '{download_dir}': {e}"))?;
 
     // Resolve paths
     let engine_binary = resolve_engine_binary();
@@ -195,7 +195,7 @@ pub fn start_engine(
 
 /// Stop the engine process.
 pub fn stop_engine(engine_handle: &Mutex<EngineHandle>) {
-    let mut guard = engine_handle.lock().unwrap();
+    let mut guard = engine_handle.lock().expect("engine mutex poisoned");
     guard.kill();
 }
 
@@ -207,7 +207,7 @@ pub async fn wait_for_engine_ready(
     for i in 0..max_retries {
         match aria2_client.get_version().await {
             Ok(version) => {
-                log::info!("engine: ready — version: {}", version);
+                log::info!("engine: ready — version: {version}");
                 return Ok(());
             }
             Err(_) if i + 1 < max_retries => {

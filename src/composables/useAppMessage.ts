@@ -26,11 +26,10 @@ function renderTextToast(content: string): () => VNodeChild {
     h(
       'span',
       {
+        class: 'technical-text-wrap',
         style: {
           display: 'inline-block',
           maxWidth: 'min(560px, calc(100vw - 96px))',
-          whiteSpace: 'normal',
-          wordBreak: 'break-all',
         },
       },
       content,

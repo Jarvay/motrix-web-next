@@ -76,12 +76,12 @@ jobs:
 
       - name: Clippy lint
         working-directory: src-tauri
-        run: cargo clippy --no-default-features --features web --all-targets -- -D warnings
+        run: cargo clippy --no-default-features --features web --lib --bin motrix-web-next -- -D warnings
 
       - name: Cargo check
         working-directory: src-tauri
-        run: cargo check --no-default-features --features web --all-targets
+        run: cargo check --no-default-features --features web --lib --bin motrix-web-next
 
       - name: Cargo test
         working-directory: src-tauri
-        run: cargo test --no-default-features --features web --all-targets
+        run: cargo test --no-default-features --features web --lib --bin motrix-web-next

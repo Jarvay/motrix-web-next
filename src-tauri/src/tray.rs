@@ -42,11 +42,7 @@ pub fn tray_icon_image() -> tauri::image::Image<'static> {
 /// otherwise AppKit treats the bitmap as a normal white image.
 pub fn refresh_tray_icon(tray: &TrayIcon<tauri::Wry>) -> tauri::Result<()> {
     let icon = tray_icon_image();
-    tray.set_icon(Some(icon))?;
-    if TRAY_ICON_IS_TEMPLATE {
-        tray.set_icon_as_template(true)?;
-    }
-    Ok(())
+    tray.set_icon_with_as_template(Some(icon), TRAY_ICON_IS_TEMPLATE)
 }
 
 /// Holds references to tray menu items for dynamic label updates (i18n).

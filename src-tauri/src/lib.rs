@@ -999,7 +999,7 @@ pub use desktop::run;
 pub use desktop::try_run_elevated;
 
 // ── Tests ─────────────────────────────────────────────────────────
-#[cfg(test)]
+#[cfg(all(test, feature = "desktop"))]
 mod tests {
     use super::desktop::AppLifecycleState;
 

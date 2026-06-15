@@ -34,6 +34,7 @@ export interface AdvancedForm {
   rpcSecret: string
   extensionApiPort: number
   extensionApiSecret: string
+  allowRemoteAccess: boolean
   autoSubmitFromExtension: boolean
   autoSelectAllBtFilesFromExtension: boolean
   silentAutoSubmitFromExtension: boolean
@@ -92,6 +93,7 @@ export function buildAdvancedForm(config: AppConfig): {
       rpcSecret: config.rpcSecret,
       extensionApiPort: config.extensionApiPort ?? D.extensionApiPort,
       extensionApiSecret: config.extensionApiSecret,
+      allowRemoteAccess: config.allowRemoteAccess ?? D.allowRemoteAccess,
       autoSubmitFromExtension: config.autoSubmitFromExtension ?? D.autoSubmitFromExtension,
       autoSelectAllBtFilesFromExtension:
         config.autoSelectAllBtFilesFromExtension ?? D.autoSelectAllBtFilesFromExtension,
@@ -128,6 +130,7 @@ export function buildAdvancedForm(config: AppConfig): {
 export function buildAdvancedSystemConfig(f: AdvancedForm): Record<string, string> {
   return {
     'rpc-listen-port': String(f.rpcListenPort),
+    'allow-remote-access': String(!!f.allowRemoteAccess),
     'rpc-secret': f.rpcSecret,
     'listen-port': String(f.listenPort),
     'dht-listen-port': String(f.dhtListenPort),
@@ -173,6 +176,9 @@ export function transformAdvancedForStore(f: AdvancedForm): Record<string, unkno
  * Returns null if valid, or an i18n error key if invalid.
  */
 export function validateAdvancedForm(f: AdvancedForm): string | null {
+  if (f.allowRemoteAccess && (!f.rpcSecret || !f.extensionApiSecret)) {
+    return 'preferences.remote-access-secret-required'
+  }
   if (f.proxy.mode === 'manual' && f.proxy.server) {
     if (!isValidAria2ProxyUrl(f.proxy.server)) {
       return UNSUPPORTED_PROXY_SCHEME_RE.test(f.proxy.server.trim())

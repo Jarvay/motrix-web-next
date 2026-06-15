@@ -58,6 +58,22 @@ fn compact_size(bytes: u64) -> String {
     }
 }
 
+fn tray_title_for_speed(tray_speedometer: bool, download_speed: u64, upload_speed: u64) -> String {
+    if !tray_speedometer || (download_speed == 0 && upload_speed == 0) {
+        return String::new();
+    }
+
+    if download_speed > 0 {
+        format!("↓{}", compact_size(download_speed))
+    } else {
+        format!("↑{}", compact_size(upload_speed))
+    }
+}
+
+fn tray_title_needs_update(last_title: &Option<String>, next_title: &str) -> bool {
+    last_title.as_deref() != Some(next_title)
+}
+
 #[cfg(any(target_os = "macos", target_os = "windows", test))]
 fn parse_length(value: Option<&str>) -> u64 {
     value.and_then(|v| v.parse::<u64>().ok()).unwrap_or(0)
@@ -387,6 +403,7 @@ async fn stat_loop(
     //   Windows: PowerCreateRequest + PowerSetRequest(SystemRequired)
     //   Linux:   systemd Inhibit("idle") (D-Bus)
     let mut awake_guard: Option<PowerGuard> = None;
+    let mut last_tray_title: Option<String> = None;
 
     loop {
         tokio::select! {
@@ -480,23 +497,19 @@ async fn stat_loop(
 
             // ── Tray title (macOS menu bar / Linux appindicator label) ──
             if let Some(tray) = app.tray_by_id("motrix-next") {
-                if cfg.tray_speedometer && (download_speed > 0 || upload_speed > 0) {
-                    let title = if download_speed > 0 {
-                        format!("↓{}", compact_size(download_speed))
-                    } else {
-                        format!("↑{}", compact_size(upload_speed))
-                    };
-                    let _ = tray.set_title(Some(&title));
-                } else {
-                    let _ = tray.set_title(Some(""));
-                }
-                // Workaround: re-set icon after set_title to prevent macOS
-                // icon disappearing (Tauri/tao bug). The helper preserves
-                // AppKit template rendering so the menu bar can auto-adapt
-                // the icon color on light and dark backgrounds.
-                #[cfg(target_os = "macos")]
-                {
-                    let _ = crate::tray::refresh_tray_icon(&tray);
+                let next_title =
+                    tray_title_for_speed(cfg.tray_speedometer, download_speed, upload_speed);
+                if tray_title_needs_update(&last_tray_title, &next_title) {
+                    let _ = tray.set_title(Some(&next_title));
+                    last_tray_title = Some(next_title);
+
+                    // Re-apply the macOS template icon only after title changes.
+                    // This avoids unnecessary NSStatusItem width recalculation on
+                    // every stat tick while preserving the existing tao workaround.
+                    #[cfg(target_os = "macos")]
+                    {
+                        let _ = crate::tray::refresh_tray_icon(&tray);
+                    }
                 }
             }
 
@@ -633,6 +646,20 @@ mod tests {
     fn compact_size_gigabytes() {
         assert_eq!(compact_size(1_073_741_824), "1.0G");
         assert_eq!(compact_size(2_684_354_560), "2.5G");
+    }
+
+    #[test]
+    fn tray_title_is_empty_when_speedometer_is_disabled() {
+        assert_eq!(tray_title_for_speed(false, 1_048_576, 0), "");
+    }
+
+    #[test]
+    fn tray_title_updates_only_when_value_changes() {
+        let mut last_title: Option<String> = None;
+        assert!(tray_title_needs_update(&last_title, ""));
+        last_title = Some(String::new());
+        assert!(!tray_title_needs_update(&last_title, ""));
+        assert!(tray_title_needs_update(&last_title, "↓1.0M"));
     }
 
     // ── IntervalState ───────────────────────────────────────────────

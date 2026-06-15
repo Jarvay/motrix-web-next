@@ -177,6 +177,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'Engine configuration',
+  'allow-remote-access': 'Remote Access की अनुमति दें',
+  'remote-access-secret-required': 'Remote access के लिए RPC Secret और Extension API Secret दोनों चाहिए',
   'temp-files-dir': 'Temporary files directory',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'क्या आप सच में factory settings restore करना चाहते हैं?',
@@ -297,7 +299,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'Config Folder खोलें',

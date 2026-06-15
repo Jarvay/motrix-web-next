@@ -26,7 +26,8 @@ export default {
   'sharing-mode-scope-hint': 'برای سید کردن BT و اشتراک‌گذاری ED2K اعمال می‌شود',
   'sharing-mode-stop-by-condition': 'توقف پس از شرایط',
   'sharing-mode-manual-stop': 'توقف دستی',
-  'sharing-mode-manual-stop-tips': 'دانلودهای کامل‌شده تا زمانی که کار را دستی متوقف کنید به اشتراک‌گذاری ادامه می‌دهند',
+  'sharing-mode-manual-stop-tips':
+    'دانلودهای کامل‌شده تا زمانی که کار را دستی متوقف کنید به اشتراک‌گذاری ادامه می‌دهند',
   'share-ratio': 'نسبت اشتراک‌گذاری',
   'share-time': 'زمان اشتراک‌گذاری',
   'share-time-unit': 'دقیقه',
@@ -177,6 +178,8 @@ export default {
   'ua-edit': 'Edit',
   'ua-delete': 'Delete',
   'aria2-conf-path': 'پیکربندی موتور',
+  'allow-remote-access': 'اجازه دسترسی از راه دور',
+  'remote-access-secret-required': 'دسترسی از راه دور به کلید RPC و کلید API افزونه نیاز دارد',
   'temp-files-dir': 'Temporary Files Directory',
   'factory-reset': 'Delete Config and Reset',
   'factory-reset-confirm': 'تنظیمات کارخانه بازیابی شود؟',
@@ -297,7 +300,8 @@ export default {
   'import-settings-success': 'Settings imported',
   'import-settings-failed': 'Failed to import settings',
   'import-settings-invalid': 'Invalid settings backup file',
-  'import-settings-confirm': 'This will replace current app settings. Download history, task cache, and files stay unchanged.',
+  'import-settings-confirm':
+    'This will replace current app settings. Download history, task cache, and files stay unchanged.',
   'settings-imported': 'Settings Imported',
   'import-settings-restart-confirm': 'Restart the app to apply all engine and API changes.',
   'open-config-folder': 'باز کردن پوشه تنظیمات',
