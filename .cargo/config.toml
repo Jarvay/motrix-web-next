@@ -1,0 +1,8 @@
+# Cargo registry mirror for China
+# Used when building within Docker with USE_USTC_MIRROR=true
+
+[source.crates-io]
+replace-with = 'ustc'
+
+[source.ustc]
+registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"

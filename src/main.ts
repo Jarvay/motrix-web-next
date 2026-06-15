@@ -1,4 +1,12 @@
-/** @fileoverview Application entry point: mounts Vue, initializes i18n, aria2 engine, and IPC listeners. */
+/** @fileoverview Application entry point: mounts Vue, initializes i18n, aria2 engine, and IPC listeners.
+ *
+ *  Supports two runtime modes:
+ *  - Tauri (desktop): full engine lifecycle, IPC, native integrations
+ *  - Web (browser):  UI-only preview without Rust backend
+ *
+ *  Web mode is activated via VITE_WEB_MODE=1 environment variable at build time.
+ *  Vite aliases redirect all @tauri-apps/* imports to browser-compatible mocks.
+ */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import router from './router'
@@ -8,7 +16,7 @@ import { usePreferenceStore } from './stores/preference'
 import { useTaskStore } from './stores/task'
 import { useAppStore } from './stores/app'
 import { useHistoryStore } from './stores/history'
-import aria2Api from './api/aria2'
+import aria2Api, { setEngineReady } from './api/aria2'
 import {
   BT_LISTEN_PORT,
   DEFAULT_TRACKER_SOURCE,
@@ -36,6 +44,9 @@ import { getCurrentWindow } from '@tauri-apps/api/window'
 import { getLocale } from 'tauri-plugin-locale-api'
 import { resolveSystemLocale } from '@shared/utils/locale'
 
+// In web mode, __TAURI__ is defined as false by vite.config.ts
+const isWebMode = typeof __TAURI__ === 'undefined' ? !('__TAURI_INTERNALS__' in window) : !__TAURI__
+
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
@@ -58,7 +69,8 @@ app.config.errorHandler = (err) => {
 // ── Production guard: suppress browser default context menu ─────────
 // In dev mode, keep the context menu for DevTools / Inspect Element.
 // Industry standard for Tauri/Electron desktop apps (Discord, Slack, VS Code).
-if (import.meta.env.PROD) {
+// Skipped in web mode — browser users expect normal right-click.
+if (import.meta.env.PROD && !isWebMode) {
   document.addEventListener('contextmenu', (e) => e.preventDefault())
 }
 
@@ -510,8 +522,109 @@ if (import.meta.env.PROD) {
     })
   }
 
-  void bootstrapMainWindow().catch((e) => {
-    logger.error('main.bootstrap', e)
+  // ── Web mode bootstrap ───────────────────────────────────────────
+
+  async function bootstrapWeb(): Promise<void> {
+    logger.info('Bootstrap', 'Running in web mode — connecting to remote backend engine')
+
+    await preferenceStore.loadPreference()
+
+    const storedLocale = preferenceStore.locale
+    let resolvedLocale: string
+    if (!storedLocale || storedLocale === 'auto') {
+      try {
+        const raw = (await getLocale()) || 'en-US'
+        resolvedLocale = resolveSystemLocale(raw, i18n.global.availableLocales)
+      } catch {
+        resolvedLocale = 'en-US'
+      }
+      if (!storedLocale) {
+        preferenceStore.updatePreference({ locale: 'auto' })
+        void preferenceStore.savePreference()
+      }
+    } else {
+      resolvedLocale = storedLocale
+    }
+
+    if (resolvedLocale) {
+      setI18nLocale(i18n, resolvedLocale)
+    }
+
+    preferenceStore.flushMigrationSignals()
+
+    taskStore.setApi(aria2Api)
+
+    app.mount('#app')
+
+    const config = preferenceStore.config
+    const port = config.rpcListenPort || ENGINE_RPC_PORT
+
+    Promise.allSettled([syncAutostart(config)])
+
+    if (config.enableUpnp) {
+      import('@tauri-apps/api/core')
+        .then(({ invoke }) =>
+          invoke('start_upnp_mapping', {
+            btPort: Number(config.listenPort) || BT_LISTEN_PORT,
+            dhtPort: Number(config.dhtListenPort) || DHT_LISTEN_PORT,
+            ed2kPort: Number(config.ed2kListenPort) > 0 ? Number(config.ed2kListenPort) : null,
+            ed2kUdpPort: Number(config.ed2kUdpListenPort) > 0 ? Number(config.ed2kUdpListenPort) : null,
+          }),
+        )
+        .catch((e) => logger.warn('UPnP', `startup mapping failed: ${getErrorMessage(e)}`))
+    }
+
+    appStore.engineReady = true
     appStore.setEngineRestarting(false)
-  })
-} // end: main window initialization
+    setEngineReady(true)
+
+    if (config.resumeAllWhenAppLaunched) {
+      taskStore.resumeAllTask().catch((e) => logger.debug('main.resumeAll', e))
+    }
+
+    autoCheckForUpdate()
+    syncNetworkSourcesIfDue(true)
+
+    historyStore
+      .init({
+        onCorrupt: () => logger.warn('HistoryDB', 'Database corrupted, rebuilding…'),
+        onError: (e: unknown) => logger.warn('HistoryDB', `Load failed, rebuilding… ${e}`),
+        onRebuilt: () => logger.info('HistoryDB', 'Database rebuilt successfully'),
+        onRebuildFailed: (e: unknown) => logger.error('HistoryDB', `Rebuild failed: ${e}`),
+      })
+      .then(() => {
+        const runCleanup = async () => {
+          try {
+            const { runHistoryMaintenance } = await import('./composables/useStaleCleanup')
+            const { extractHistoryFilePaths } = await import('./composables/useTaskLifecycle')
+            await runHistoryMaintenance({
+              autoDeleteStaleRecords: !!preferenceStore.config?.autoDeleteStaleRecords,
+              completedRecordRetentionDays: Number(preferenceStore.config?.completedRecordRetentionDays ?? 0),
+              getRecords: historyStore.getRecords,
+              removeStaleRecords: historyStore.removeStaleRecords,
+              removeHistoryRecords: historyStore.removeStaleRecords,
+              removeTaskRecord: aria2Api.removeTaskRecord,
+              extractFilePaths: extractHistoryFilePaths,
+            })
+          } catch (e) {
+            logger.debug('HistoryMaintenance', e)
+          }
+        }
+        setTimeout(runCleanup, 30_000)
+      })
+      .catch((e: unknown) => logger.debug('HistoryInit', e))
+
+    logger.info('Bootstrap', `Web mode ready — connected to backend engine on port ${port}`)
+  }
+
+  if (isWebMode) {
+    void bootstrapWeb().catch((e: unknown) => {
+      logger.error('main.bootstrapWeb', e)
+    })
+  } else {
+    void bootstrapMainWindow().catch((e: unknown) => {
+      logger.error('main.bootstrap', e)
+      appStore.setEngineRestarting(false)
+    })
+  }
+}

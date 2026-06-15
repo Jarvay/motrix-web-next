@@ -8,12 +8,12 @@
 import { ref, type Ref, h } from 'vue'
 import { getTaskUri, getTaskDisplayName, resolveOpenTarget, canRestart } from '@shared/utils'
 import { getErrorMessage } from '@shared/utils/errorMessage'
-import { invoke } from '@tauri-apps/api/core'
 import { deleteTaskFiles } from '@/composables/useFileDelete'
 import { resolveTaskFilePath, requestFileRecheck } from '@/composables/useArchivedPaths'
 import { TASK_STATUS } from '@shared/constants'
 import { logger } from '@shared/logger'
 import { NCheckbox, useDialog } from 'naive-ui'
+import { checkPathExists, checkPathIsDir, showItemInDir, openPathNormalized } from '@/api/aria2'
 import type { Aria2Task, AppConfig } from '@shared/types'
 
 interface TaskActionsDeps {
@@ -216,18 +216,18 @@ export function useTaskActions(deps: TaskActionsDeps) {
 
     if (!filePath) return
     try {
-      const fileExists = await invoke<boolean>('check_path_exists', { path: filePath })
+      const fileExists = await checkPathExists(filePath)
       if (fileExists) {
-        await invoke('show_item_in_dir', { path: filePath })
+        await showItemInDir(filePath)
         message.success(t('task.open-folder-success'))
         return
       }
       // Fallback: file missing but BT folder or download dir may still exist
       const fallback = await resolveOpenTarget(task)
       if (fallback) {
-        const fallbackExists = await invoke<boolean>('check_path_exists', { path: fallback })
+        const fallbackExists = await checkPathExists(fallback)
         if (fallbackExists) {
-          await invoke('show_item_in_dir', { path: fallback })
+          await showItemInDir(fallback)
           message.success(t('task.open-folder-success'))
           return
         }
@@ -245,14 +245,14 @@ export function useTaskActions(deps: TaskActionsDeps) {
     const target = await resolveOpenTarget(task)
     if (!target) return
     try {
-      const fileExists = await invoke<boolean>('check_path_exists', { path: target })
+      const fileExists = await checkPathExists(target)
       if (!fileExists) {
         message.warning(t('task.file-not-exist'))
         requestFileRecheck()
         return
       }
-      const isDir = await invoke<boolean>('check_path_is_dir', { path: target })
-      await invoke('open_path_normalized', { path: target })
+      const isDir = await checkPathIsDir(target)
+      await openPathNormalized(target)
       message.success(t(isDir ? 'task.open-file-is-folder' : 'task.open-file-success'))
     } catch (e) {
       logger.warn('TaskView.openFile error', e instanceof Error ? e.message : JSON.stringify(e))

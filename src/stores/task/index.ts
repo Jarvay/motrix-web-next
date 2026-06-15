@@ -71,6 +71,10 @@ export const useTaskStore = defineStore('task', () => {
     Object.assign(taskOps, ops)
   }
 
+  function getApi(): TaskApi {
+    return api
+  }
+
   async function changeCurrentList(list: string) {
     currentList.value = list
     taskList.value = []
@@ -153,6 +157,17 @@ export const useTaskStore = defineStore('task', () => {
           sortTasks(data, field, direction, addedAtIndex)
         }
       }
+
+      // Deduplicate by GID to ensure no duplicate tasks appear
+      const seen = new Set<string>()
+      data = data.filter((t) => {
+        if (seen.has(t.gid)) {
+          logger.debug('TaskStore.fetchList', `removing duplicate task with gid=${t.gid}`)
+          return false
+        }
+        seen.add(t.gid)
+        return true
+      })
 
       taskList.value = data
       const gids = data.map((task: Aria2Task) => task.gid)
@@ -283,6 +298,7 @@ export const useTaskStore = defineStore('task', () => {
       registerAddedAt(gid, now)
       historyStore.recordTaskBirth(gid, now).catch((e) => logger.debug('taskBirth.write', e))
     }
+    await api.saveSession()
     await fetchList()
   }
 
@@ -349,6 +365,7 @@ export const useTaskStore = defineStore('task', () => {
       appStore.pendingMagnetGids = [...appStore.pendingMagnetGids, gid]
     }
 
+    await api.saveSession()
     await fetchList()
     return gid
   }
@@ -369,6 +386,7 @@ export const useTaskStore = defineStore('task', () => {
     registerAddedAt(gid, now)
     const historyStore = useHistoryStore()
     historyStore.recordTaskBirth(gid, now).catch((e) => logger.debug('taskBirth.write', e))
+    await api.saveSession()
     await fetchList()
     return gid
   }
@@ -434,6 +452,7 @@ export const useTaskStore = defineStore('task', () => {
     taskList,
     selectedGidList,
     setApi,
+    getApi,
     changeCurrentList,
     fetchList,
     selectTasks,

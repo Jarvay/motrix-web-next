@@ -1,5 +1,5 @@
 import { appDataDir, downloadDir, homeDir, join } from '@tauri-apps/api/path'
-import { invoke } from '@tauri-apps/api/core'
+import { checkPathExists } from '@/api/aria2'
 
 export type UserVisibleDirectorySource = 'configured' | 'system-downloads' | 'home-downloads' | 'home' | 'app-data'
 
@@ -26,7 +26,7 @@ const defaultDeps: UserVisibleDirectoryDeps = {
   downloadDir,
   homeDir,
   appDataDir,
-  pathExists: (path: string) => invoke<boolean>('check_path_exists', { path }),
+  pathExists: (path: string) => checkPathExists(path),
   join,
 }
 

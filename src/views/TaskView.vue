@@ -67,20 +67,49 @@ let refreshTimer: ReturnType<typeof setTimeout> | null = null
 let pollStopped = true
 let isUnmounted = false
 let changeRequestId = 0
+let sseUnlisten: (() => void) | null = null
+
+/** True when running in browser mode (no Tauri). */
+const isWeb = typeof __TAURI__ === 'undefined' ? !('__TAURI_INTERNALS__' in window) : !__TAURI__
+
+/** Web-mode polling bounds — much wider than desktop to reduce network load. */
+const WEB_POLL_MIN = 2_000
+const WEB_POLL_MAX = 10_000
+
+/** Returns the polling interval for the current mode. */
+function resolveInterval(): number {
+  if (!isWeb) return appStore.interval
+  return Math.min(WEB_POLL_MAX, Math.max(WEB_POLL_MIN, appStore.interval))
+}
 
 function startPolling() {
   if (isUnmounted) return
   stopPolling()
   pollStopped = false
+
+  // ── SSE task:changed listener (web only) ──────────────────────
+  // Provides immediate refresh when tasks are added / completed,
+  // so the frontend feels responsive despite longer poll intervals.
+  if (isWeb) {
+    import('@/api/sse').then(({ sseConnection }) => {
+      if (pollStopped) return
+      sseUnlisten = sseConnection.on('task:changed', () => {
+        if (pollStopped || !isEngineReady()) return
+        taskStore.fetchList().catch((e) => logger.debug('TaskView.fetchList', e))
+      })
+    })
+  }
+
+  // ── Adaptive polling (both modes) ────────────────────────────
   async function tick() {
     if (pollStopped) return
     if (isEngineReady()) {
       await taskStore.fetchList().catch((e) => logger.debug('TaskView.fetchList', e))
     }
     if (pollStopped) return
-    refreshTimer = setTimeout(tick, appStore.interval)
+    refreshTimer = setTimeout(tick, resolveInterval())
   }
-  refreshTimer = setTimeout(tick, appStore.interval)
+  refreshTimer = setTimeout(tick, resolveInterval())
 }
 
 function stopPolling() {
@@ -88,6 +117,10 @@ function stopPolling() {
   if (refreshTimer) {
     clearTimeout(refreshTimer)
     refreshTimer = null
+  }
+  if (sseUnlisten) {
+    sseUnlisten()
+    sseUnlisten = null
   }
 }
 

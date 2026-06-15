@@ -1,0 +1,107 @@
+name: Docker Build & Push
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: motrix-web-next
+
+jobs:
+  # ── Generate shared build id ───────────────────────────────────────
+  id:
+    runs-on: ubuntu-latest
+    outputs:
+      build_id: ${{ steps.gen.outputs.build_id }}
+    steps:
+      - name: Generate build id
+        id: gen
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "build_id=$(TZ=Asia/Shanghai date +%Y%m%d%H%M)" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_id=$(echo '${{ github.sha }}' | cut -c1-7)" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Build each arch on native runner ───────────────────────────────
+  build:
+    needs: id
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-latest
+            arch: amd64
+          - platform: ubuntu-24.04-arm
+            arch: arm64
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push (${{ matrix.arch }})
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          platforms: linux/${{ matrix.arch }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:build-${{ needs.id.outputs.build_id }}-${{ matrix.arch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            USE_USTC_MIRROR=${{ vars.USE_USTC_MIRROR }}
+            USE_NPM_MIRROR=${{ vars.USE_NPM_MIRROR }}
+
+  # ── Merge into final multi-arch images ─────────────────────────────
+  merge:
+    needs: [id, build]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push multi-arch manifest
+        run: |
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          BUILD_ID="${{ needs.id.outputs.build_id }}"
+          SRC_AMD64="${IMAGE}:build-${BUILD_ID}-amd64"
+          SRC_ARM64="${IMAGE}:build-${BUILD_ID}-arm64"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAGS="${IMAGE}:${BUILD_ID} ${IMAGE}:latest"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+            MAJOR="${VERSION%%.*}"
+            MINOR="${VERSION%.*}"
+            TAGS="${IMAGE}:${VERSION} ${IMAGE}:${MAJOR}.${MINOR#*.} ${IMAGE}:${MAJOR}"
+          else
+            BRANCH="${{ github.ref_name }}"
+            TAGS="${IMAGE}:${BRANCH} ${IMAGE}:${BUILD_ID}"
+          fi
+
+          for TAG in $TAGS; do
+            echo "Creating manifest: $TAG"
+            docker buildx imagetools create -t "$TAG" "$SRC_AMD64" "$SRC_ARM64"
+          done

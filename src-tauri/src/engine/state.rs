@@ -1,5 +1,8 @@
+#[cfg(feature = "desktop")]
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+#[cfg(feature = "desktop")]
 use std::sync::Mutex;
+#[cfg(feature = "desktop")]
 use tauri_plugin_shell::process::CommandChild;
 
 /// Converts a [`Path`] to a string safe for passing to external processes.
@@ -23,6 +26,7 @@ pub(crate) fn path_to_safe_string(path: &std::path::Path) -> String {
 /// Strips ANSI escape sequences (color codes) from a string.
 /// Aria2 Next emits colored output (e.g., `\x1b[1;31mERROR\x1b[0m`) which
 /// produces garbage in log files.
+#[cfg(feature = "desktop")]
 pub(crate) fn strip_ansi(input: &str) -> String {
     strip_ansi_escapes::strip_str(input)
 }
@@ -32,6 +36,7 @@ pub(crate) fn strip_ansi(input: &str) -> String {
 /// `intentional_stop` distinguishes deliberate kills (restart, update, relaunch)
 /// from genuine crashes.  Set to `true` before `child.kill()`, checked by the
 /// async Terminated handler to suppress false `engine-error` events.
+#[cfg(feature = "desktop")]
 pub struct EngineState {
     pub(crate) child: Mutex<Option<CommandChild>>,
     pub(crate) intentional_stop: AtomicBool,
@@ -42,6 +47,7 @@ pub struct EngineState {
     gen: AtomicU32,
 }
 
+#[cfg(feature = "desktop")]
 impl EngineState {
     pub fn new() -> Self {
         Self {
