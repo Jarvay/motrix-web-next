@@ -33,7 +33,7 @@ import {
   getResolvedMagnetSelection,
 } from '@/composables/useMagnetFlow'
 import type { MagnetFileItem } from '@/composables/useMagnetFlow'
-import aria2Api from '@/api/aria2'
+import aria2Api, { checkPathExists, checkPathIsDir, showItemInDir, openPathNormalized } from '@/api/aria2'
 import { usePlatform } from '@/composables/usePlatform'
 import { throttledResizeHandler, cancelPendingResize } from '@/layouts/resizeThrottle'
 import AsideBar from '@/components/layout/AsideBar.vue'
@@ -112,18 +112,17 @@ let unlistenAppToast: (() => void) | null = null
  *   - `open_path_normalized` to invoke the system opener
  */
 async function openFileFromNotification(task: Aria2Task) {
-  const { invoke } = await import('@tauri-apps/api/core')
   const target = await resolveOpenTarget(task)
   if (!target) return
   try {
-    const fileExists = await invoke<boolean>('check_path_exists', { path: target })
+    const fileExists = await checkPathExists(target)
     if (!fileExists) {
       message.warning(t('task.file-not-exist'))
       requestFileRecheck()
       return
     }
-    const isDir = await invoke<boolean>('check_path_is_dir', { path: target })
-    await invoke('open_path_normalized', { path: target })
+    const isDir = await checkPathIsDir(target)
+    await openPathNormalized(target)
     message.success(t(isDir ? 'task.open-file-is-folder' : 'task.open-file-success'))
   } catch (e) {
     logger.warn('Notification.openFile', e instanceof Error ? e.message : String(e))
@@ -140,25 +139,23 @@ async function openFileFromNotification(task: Aria2Task) {
  *   - `show_item_in_dir` to invoke the platform-native file reveal
  */
 async function showInFolderFromNotification(task: Aria2Task) {
-  const { invoke } = await import('@tauri-apps/api/core')
-
   // Resolve correct path — archived location takes priority over aria2 original
   const filePath = resolveTaskFilePath(task)
 
   if (!filePath) return
   try {
-    const fileExists = await invoke<boolean>('check_path_exists', { path: filePath })
+    const fileExists = await checkPathExists(filePath)
     if (fileExists) {
-      await invoke('show_item_in_dir', { path: filePath })
+      await showItemInDir(filePath)
       message.success(t('task.open-folder-success'))
       return
     }
     // Fallback: file missing but BT folder or download dir may still exist
     const fallback = await resolveOpenTarget(task)
     if (fallback) {
-      const fallbackExists = await invoke<boolean>('check_path_exists', { path: fallback })
+      const fallbackExists = await checkPathExists(fallback)
       if (fallbackExists) {
-        await invoke('show_item_in_dir', { path: fallback })
+        await showItemInDir(fallback)
         message.success(t('task.open-folder-success'))
         return
       }
@@ -772,7 +769,11 @@ onMounted(async () => {
       }
     },
   })
-  lifecycleService.start(() => appStore.interval)
+  // In web mode, the lifecycle service only needs to detect task completion /
+  // error events — these are not time-sensitive, so poll at a lower frequency
+  // to reduce server load.  Stats and task list are driven by SSE events.
+  const isWeb = typeof __TAURI__ === 'undefined' ? !('__TAURI_INTERNALS__' in window) : !__TAURI__
+  lifecycleService.start(() => (isWeb ? 10_000 : appStore.interval))
 
   // ── Window-focus file-existence recheck ─────────────────────────────
   // When the user switches back from Finder / Explorer after deleting a

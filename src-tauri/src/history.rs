@@ -64,8 +64,7 @@ impl HistoryDb {
         })
     }
 
-    /// Opens an in-memory database for testing, with the schema pre-applied.
-    #[cfg(test)]
+    /// Opens an in-memory database for testing or fallback, with the schema pre-applied.
     pub fn open_in_memory() -> Result<Self, AppError> {
         let conn = Connection::open_in_memory()?;
         conn.execute_batch(

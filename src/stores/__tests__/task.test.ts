@@ -86,6 +86,14 @@ function createMockApi() {
     removeTaskRecord: vi.fn().mockResolvedValue('OK'),
     purgeTaskRecord: vi.fn().mockResolvedValue('OK'),
     saveSession: vi.fn().mockResolvedValue('OK'),
+    getGlobalStat: vi.fn().mockResolvedValue({
+      downloadSpeed: 0,
+      uploadSpeed: 0,
+      numActive: 0,
+      numWaiting: 0,
+      numStopped: 0,
+      numStoppedTotal: 0,
+    }),
   }
 }
 

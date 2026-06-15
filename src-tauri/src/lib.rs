@@ -1,39 +1,33 @@
-mod aria2;
+// ── Shared modules (always compiled) ───────────────────────────────
+pub mod aria2;
+pub mod db_guard;
+pub mod error;
+pub mod gpu_guard;
+pub mod history;
+pub mod web;
+
+// ── Desktop-only modules (Tauri-dependent) ─────────────────────────
+#[cfg(feature = "desktop")]
 mod commands;
-mod db_guard;
 mod engine;
-mod error;
-mod gpu_guard;
-mod history;
-#[cfg(target_os = "macos")]
+#[cfg(all(feature = "desktop", target_os = "macos"))]
 mod menu;
+#[cfg(feature = "desktop")]
 mod services;
+#[cfg(feature = "desktop")]
 mod tray;
+#[cfg(feature = "desktop")]
 mod upnp;
+// ════════════════════════════════════════════════════════════════════
 
-// Re-export the Windows elevation entry point at the crate root so that
-// main.rs can call it before Tauri initialises.  The `commands` module
-// is intentionally private — only this single function needs to be
-// accessible from the binary crate.
-#[cfg(windows)]
-pub use commands::protocol::try_run_elevated;
-
-use crate::commands::power::ShutdownCancelState;
-use crate::commands::updater::{DownloadedUpdate, UpdateCancelState};
-use engine::EngineState;
-use services::port_guard::DEFAULT_RPC_PORT;
-use tauri::{Emitter, Manager};
-#[cfg(target_os = "macos")]
-use tauri_plugin_deep_link::DeepLinkExt;
-use tauri_plugin_store::StoreExt;
-use upnp::UpnpState;
+// ── Shared utility (compiled for both desktop and web) ─────────────
 
 /// Pre-reads the user's log-level preference from the raw config.json file.
 ///
 /// `tauri-plugin-store` isn't available until after `Builder.build()`, so we
 /// read the raw JSON file directly.  Falls back to `Debug` if absent so that
 /// first-run users get full diagnostic output for bug reports.
-pub(crate) fn read_log_level() -> log::LevelFilter {
+pub fn read_log_level() -> log::LevelFilter {
     (|| -> Option<log::LevelFilter> {
         let data_dir = dirs::data_dir()?.join("com.motrix.next");
         let store_path = data_dir.join("config.json");
@@ -50,6 +44,22 @@ pub(crate) fn read_log_level() -> log::LevelFilter {
     })()
     .unwrap_or(log::LevelFilter::Debug)
 }
+
+// ════════════════════════════════════════════════════════════════════
+// ── Desktop-only code (compiled only with the "desktop" feature) ───
+// ════════════════════════════════════════════════════════════════════
+#[cfg(feature = "desktop")]
+#[allow(clippy::unwrap_used)]
+mod desktop {
+use crate::commands::updater::{DownloadedUpdate, UpdateCancelState};
+use crate::commands::power::ShutdownCancelState;
+use crate::engine::EngineState;
+use crate::services::port_guard::DEFAULT_RPC_PORT;
+use tauri::{Emitter, Manager};
+#[cfg(target_os = "macos")]
+use tauri_plugin_deep_link::DeepLinkExt;
+use tauri_plugin_store::StoreExt;
+use crate::upnp::UpnpState;
 
 /// Tracks the application lifecycle phase for window visibility decisions.
 ///
@@ -978,11 +988,20 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(handle_run_event);
+    }
 }
 
+// ── Re-export desktop entry-point for main.rs ─────────────────────
+#[cfg(feature = "desktop")]
+#[cfg(windows)]
+pub use desktop::try_run_elevated;
+#[cfg(feature = "desktop")]
+pub use desktop::run;
+
+// ── Tests ─────────────────────────────────────────────────────────
 #[cfg(test)]
 mod tests {
-    use super::AppLifecycleState;
+    use super::desktop::AppLifecycleState;
 
     #[test]
     fn app_lifecycle_starts_cold() {

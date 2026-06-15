@@ -1,30 +1,20 @@
 /** @fileoverview Composable for deleting download task files and associated artifacts from disk.
  *
- * Implements a dual-layer deletion architecture:
+ * All deletions are **permanent** — files are NOT moved to the OS trash/recycle bin.
  *
- * **Layer 1 — User content (recoverable):**
- * `trashPath()` moves files to the OS trash / recycle bin via the Rust `trash_file`
- * command.  Used for user-downloaded content and user-imported .torrent files.
- * - macOS:  NSFileManager.trashItemAtURL
- * - Windows: IFileOperation + FOFX_RECYCLEONDELETE
- * - Linux:  FreeDesktop Trash spec (XDG_DATA_HOME/Trash)
- *
- * **Layer 2 — Internal metadata (permanent):**
  * `removePath()` permanently deletes files via the Rust `remove_file` command.
- * Used exclusively for internal aria2 metadata that has no user value:
+ * Used for:
+ * - User-downloaded content and user-imported .torrent files
  * - `.aria2` control files (piece bitmap + checksums)
  * - hex40-named `.torrent` metadata (bt-save-metadata / rpc-save-upload-metadata)
  *
- * This mirrors aria2's native `removeControlFile()` behavior for stale
- * metadata cleanup.
- *
  * Folder detection reuses the existing `resolveOpenTarget` + `check_path_is_dir`
- * infrastructure so folder downloads are trashed in a single OS call (one sound).
+ * infrastructure so folder downloads are deleted in a single OS call (one sound).
  */
-import { invoke } from '@tauri-apps/api/core'
 import { logger } from '@shared/logger'
 import { resolveOpenTarget } from '@shared/utils'
 import { cleanupAria2MetadataFiles } from '@/composables/useDownloadCleanup'
+import { checkPathExists, checkPathIsDir, trashFile, removeFile } from '@/api/aria2'
 import type { Aria2Task } from '@shared/types'
 
 /**
@@ -36,9 +26,9 @@ import type { Aria2Task } from '@shared/types'
 export async function trashPath(path: string): Promise<boolean> {
   if (!path) return false
   try {
-    const exists = await invoke<boolean>('check_path_exists', { path })
+    const exists = await checkPathExists(path)
     if (!exists) return false
-    await invoke('trash_file', { path })
+    await trashFile(path)
     return true
   } catch (e) {
     logger.debug('trashPath', `Failed to trash ${path}: ${e}`)
@@ -61,9 +51,9 @@ export async function trashPath(path: string): Promise<boolean> {
 export async function removePath(path: string): Promise<boolean> {
   if (!path) return false
   try {
-    const exists = await invoke<boolean>('check_path_exists', { path })
+    const exists = await checkPathExists(path)
     if (!exists) return false
-    await invoke('remove_file', { path })
+    await removeFile(path)
     return true
   } catch (e) {
     logger.debug('removePath', `Failed to remove ${path}: ${e}`)
@@ -130,40 +120,40 @@ export async function deleteTaskFiles(task: Aria2Task): Promise<void> {
   const target = await resolveOpenTarget(task)
 
   // Fallback: resolveOpenTarget returned the bare download directory,
-  // meaning no specific file/folder could be resolved — trash individually.
+  // meaning no specific file/folder could be resolved — delete individually.
   if (!target || target === task.dir) {
-    await trashFilesIndividually(task)
+    await deleteFilesIndividually(task)
     return
   }
 
-  const isDir = await invoke<boolean>('check_path_is_dir', { path: target })
+  const isDir = await checkPathIsDir(target)
   if (isDir) {
-    // Folder task: trash the entire directory in a single OS call
-    await trashPath(target)
-    // External .aria2 control file sits alongside the folder (e.g., "My Torrent.aria2")
-    await trashPath(target + '.aria2')
+    // Folder task: delete the entire directory
+    await removePath(target)
+    // External .aria2 control file sits alongside the folder
+    await removePath(target + '.aria2')
   } else {
-    // Single-file task: trash the file + companion .aria2 control file
-    await trashPath(target)
-    await trashPath(target + '.aria2')
+    // Single-file task: delete the file + companion .aria2 control file
+    await removePath(target)
+    await removePath(target + '.aria2')
   }
 
-  // BT tasks: clean up the hex40-named .torrent metadata file in the download dir
+  // BT tasks: clean up the hex40-named .aria2 and .torrent metadata
   if (task.dir && task.infoHash) {
-    await trashPath(`${task.dir}/${task.infoHash}.aria2`)
+    await removePath(`${task.dir}/${task.infoHash}.aria2`)
     await cleanupAria2MetadataFiles(task.dir, task.infoHash)
   }
 }
 
 /**
- * Fallback: trash files one by one.
+ * Fallback: delete files one by one.
  * Used when `resolveOpenTarget` cannot determine a specific target
  * (e.g., magnet still resolving metadata, or task with empty file list).
  */
-async function trashFilesIndividually(task: Aria2Task): Promise<void> {
+async function deleteFilesIndividually(task: Aria2Task): Promise<void> {
   for (const f of task.files || []) {
     if (!f.path) continue
-    await trashPath(f.path)
-    await trashPath(f.path + '.aria2')
+    await removePath(f.path)
+    await removePath(f.path + '.aria2')
   }
 }

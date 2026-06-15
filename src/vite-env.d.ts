@@ -7,3 +7,8 @@ declare module '*.vue' {
   const component: DefineComponent<{}, {}, any>
   export default component
 }
+
+/** Defined by @tauri-apps/api or set to false by vite.config.ts in web mode. */
+declare const __TAURI__: boolean | undefined
+/** Defined by @tauri-apps/api internals or set to empty object in web mode. */
+declare const __TAURI_INTERNALS__: Record<string, unknown> | undefined

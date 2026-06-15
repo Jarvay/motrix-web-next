@@ -604,4 +604,5 @@ export interface TaskApi {
   removeTaskRecord: (params: { gid: string }) => Promise<string>
   purgeTaskRecord: () => Promise<string>
   saveSession: () => Promise<string>
+  getGlobalStat: () => Promise<Aria2RawGlobalStat>
 }
