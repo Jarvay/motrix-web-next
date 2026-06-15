@@ -255,10 +255,39 @@ export const useAppStore = defineStore('app', () => {
   }
 
   /**
-   * Subscribes to the Rust stat_service's `stat:update` event stream.
-   * Returns an unlisten function for cleanup.
+   * Subscribes to stat updates.
+   *
+   * Desktop mode: listens to Rust `stat:update` IPC events.
+   * Web mode: connects via SSE (Server-Sent Events) — zero polling.
+   * Returns an unlisten / stop function for cleanup.
    */
   function setupStatListener(): Promise<() => void> {
+    const isWeb = typeof __TAURI__ === 'undefined' ? !('__TAURI_INTERNALS__' in window) : !__TAURI__
+
+    if (isWeb) {
+      return import('@/api/sse').then(({ sseConnection }) => {
+        // Start the SSE connection
+        sseConnection.start()
+
+        // Listen for stat:update events
+        const unlisten = sseConnection.on('stat:update', (payload) => {
+          handleStatEvent({
+            downloadSpeed: payload.downloadSpeed,
+            uploadSpeed: payload.uploadSpeed,
+            numActive: payload.numActive,
+            numWaiting: payload.numWaiting,
+            numStopped: payload.numStopped,
+            numStoppedTotal: payload.numStoppedTotal,
+          })
+        })
+
+        return () => {
+          unlisten()
+          sseConnection.stop()
+        }
+      })
+    }
+
     return listen<StatPayload>('stat:update', (event) => {
       handleStatEvent(event.payload)
     })

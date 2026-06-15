@@ -3,8 +3,8 @@
  * Pure, testable functions — side effects (FS access) are injected via imports.
  */
 import { join } from '@tauri-apps/api/path'
-import { invoke } from '@tauri-apps/api/core'
 import { removePath } from '@/composables/useFileDelete'
+import { checkPathExists, trashFile, readLocalFile, listDirFiles } from '@/api/aria2'
 import { logger } from '@shared/logger'
 import { getTorrentInfoHash } from '@shared/utils/torrentMeta'
 
@@ -29,7 +29,7 @@ export async function findStaleRecords(records: StaleCheckItem[]): Promise<strin
       let anyExists = false
       for (const fp of record.filePaths) {
         try {
-          if (await invoke<boolean>('check_path_exists', { path: fp })) {
+          if (await checkPathExists(fp)) {
             anyExists = true
             break
           }
@@ -48,7 +48,7 @@ export async function findStaleRecords(records: StaleCheckItem[]): Promise<strin
 
     try {
       const filePath = await join(record.dir, record.name)
-      const fileExists = await invoke<boolean>('check_path_exists', { path: filePath })
+      const fileExists = await checkPathExists(filePath)
       if (!fileExists) {
         staleGids.push(record.gid)
       }
@@ -67,10 +67,10 @@ export async function trashTorrentFile(path: string): Promise<boolean> {
   if (!path) return false
 
   try {
-    const fileExists = await invoke<boolean>('check_path_exists', { path })
+    const fileExists = await checkPathExists(path)
     if (!fileExists) return false
 
-    await invoke('trash_file', { path })
+    await trashFile(path)
     return true
   } catch (e) {
     logger.warn('trashTorrentFile', `Failed to trash ${path}: ${e}`)
@@ -91,7 +91,7 @@ const HEX40_TORRENT_METADATA_RE = /^[0-9a-f]{40}\.torrent$/
  * parsing/infoHash extraction to the shared torrent adapter.
  */
 async function defaultHashExtractor(filePath: string): Promise<string | null> {
-  const bytes = await invoke<number[]>('read_local_file', { path: filePath })
+  const bytes = await readLocalFile(filePath)
   const uint8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)
   return getTorrentInfoHash(uint8)
 }
@@ -128,8 +128,8 @@ export async function cleanupAria2MetadataFiles(
   if (!dir || !infoHash) return false
 
   try {
-    const entries = await invoke<string[]>('list_dir_files', { path: dir })
-    const candidates = entries.filter((name) => HEX40_TORRENT_METADATA_RE.test(name))
+    const entries = await listDirFiles(dir)
+    const candidates = entries.filter((name: string) => HEX40_TORRENT_METADATA_RE.test(name))
 
     let torrentMatched = false
 

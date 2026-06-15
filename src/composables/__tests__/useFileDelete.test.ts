@@ -2,16 +2,16 @@
  * @fileoverview Tests for the deleteTaskFiles function.
  *
  * Key behaviors under test:
- * - Folder downloads (BT multi-file): trashes entire directory + external .aria2 in one go
- * - Single-file downloads: trashes file + companion .aria2 control file
+ * - Folder downloads (BT multi-file): deletes entire directory + external .aria2 in one go
+ * - Single-file downloads: deletes file + companion .aria2 control file
  * - BT tasks with infoHash: triggers .torrent metadata cleanup
  * - HTTP tasks without infoHash: skips .torrent cleanup
- * - Fallback: trashes files individually when resolveOpenTarget returns dir
- * - Download directory is NEVER trashed (issue #167)
+ * - Fallback: deletes files individually when resolveOpenTarget returns dir
+ * - Download directory is NEVER deleted (issue #167)
  * - Silently handles missing files without throwing
  *
  * Also covers:
- * - removePath: permanently deletes internal aria2 metadata via remove_file command
+ * - removePath: permanently deletes files via remove_file command
  * - cleanupAria2ControlFiles: removes .aria2 control files after P2P sharing ends
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -81,7 +81,7 @@ describe('deleteTaskFiles', () => {
 
   // ── Folder download (BT multi-file) ───────────────────────────────
 
-  it('trashes entire folder + external .aria2 for multi-file BT task', async () => {
+  it('deletes entire folder + external .aria2 for multi-file BT task', async () => {
     const task = makeTask({
       bittorrent: { info: { name: 'My Torrent' } },
       infoHash: 'abcdef1234567890abcdef1234567890abcdef12',
@@ -110,16 +110,16 @@ describe('deleteTaskFiles', () => {
     await deleteTaskFiles(task)
 
     // Folder + external .aria2
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/My Torrent' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/My Torrent.aria2' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/abcdef1234567890abcdef1234567890abcdef12.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/My Torrent' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/My Torrent.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/abcdef1234567890abcdef1234567890abcdef12.aria2' })
     // .torrent metadata cleanup triggered
     expect(mockCleanupTorrentMetadata).toHaveBeenCalledWith('/downloads', 'abcdef1234567890abcdef1234567890abcdef12')
   })
 
   // ── Single-file download ─────────────────────────────────────────
 
-  it('trashes file + .aria2 for single-file HTTP download', async () => {
+  it('deletes file + .aria2 for single-file HTTP download', async () => {
     const task = makeTask({
       files: [
         {
@@ -137,15 +137,15 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/movie.mp4' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/movie.mp4.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/movie.mp4' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/movie.mp4.aria2' })
     // No infoHash → no .torrent cleanup
     expect(mockCleanupTorrentMetadata).not.toHaveBeenCalled()
   })
 
   // ── Single-file BT (torrent with one file) ───────────────────────
 
-  it('trashes file + .aria2 + .torrent for single-file BT task', async () => {
+  it('deletes file + .aria2 + .torrent for single-file BT task', async () => {
     const task = makeTask({
       bittorrent: { info: { name: 'movie.mkv' } },
       infoHash: 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef',
@@ -165,15 +165,15 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/movie.mkv' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/movie.mkv.aria2' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/deadbeefdeadbeefdeadbeefdeadbeefdeadbeef.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/movie.mkv' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/movie.mkv.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/deadbeefdeadbeefdeadbeefdeadbeefdeadbeef.aria2' })
     expect(mockCleanupTorrentMetadata).toHaveBeenCalledWith('/downloads', 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef')
   })
 
   // ── Fallback: resolveOpenTarget returns dir ───────────────────────
 
-  it('falls back to per-file trash when resolveOpenTarget returns dir', async () => {
+  it('falls back to per-file delete when resolveOpenTarget returns dir', async () => {
     const task = makeTask({
       dir: '/downloads',
       files: [
@@ -185,17 +185,17 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/file1.zip' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/file1.zip.aria2' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/file2.zip' })
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/file2.zip.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/file1.zip' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/file1.zip.aria2' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/file2.zip' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/file2.zip.aria2' })
     // Fallback does NOT invoke check_path_is_dir
     expect(mockCheckPathIsDir).not.toHaveBeenCalled()
   })
 
-  // ── Download directory is NEVER trashed (issue #167) ──────────────
+  // ── Download directory is NEVER deleted (issue #167) ──────────────
 
-  it('never trashes the download directory itself', async () => {
+  it('never deletes the download directory itself', async () => {
     const task = makeTask({
       dir: '/downloads',
       files: [
@@ -214,10 +214,10 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    // Only the file and its .aria2 are trashed — download dir untouched
-    const trashedPaths = mockTrashFile.mock.calls.map((c) => (c[0] as Record<string, unknown>)?.path)
-    expect(trashedPaths).not.toContain('/downloads')
-    expect(trashedPaths).toContain('/downloads/only-file.zip')
+    // Only the file and its .aria2 are deleted — download dir untouched
+    const deletedPaths = mockRemoveFile.mock.calls.map((c) => (c[0] as Record<string, unknown>)?.path)
+    expect(deletedPaths).not.toContain('/downloads')
+    expect(deletedPaths).toContain('/downloads/only-file.zip')
   })
 
   // ── Edge cases ────────────────────────────────────────────────────
@@ -241,7 +241,7 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    expect(mockTrashFile).not.toHaveBeenCalled()
+    expect(mockRemoveFile).not.toHaveBeenCalled()
   })
 
   it('handles empty resolveOpenTarget result', async () => {
@@ -254,7 +254,7 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    expect(mockTrashFile).toHaveBeenCalledWith({ path: '/downloads/file.zip' })
+    expect(mockRemoveFile).toHaveBeenCalledWith({ path: '/downloads/file.zip' })
   })
 
   it('skips files with empty path in fallback mode', async () => {
@@ -268,9 +268,9 @@ describe('deleteTaskFiles', () => {
 
     await deleteTaskFiles(task)
 
-    const trashedPaths = mockTrashFile.mock.calls.map((c) => (c[0] as Record<string, unknown>)?.path)
-    expect(trashedPaths).not.toContain('')
-    expect(trashedPaths).toContain('/downloads/valid.zip')
+    const deletedPaths = mockRemoveFile.mock.calls.map((c) => (c[0] as Record<string, unknown>)?.path)
+    expect(deletedPaths).not.toContain('')
+    expect(deletedPaths).toContain('/downloads/valid.zip')
   })
 })
 

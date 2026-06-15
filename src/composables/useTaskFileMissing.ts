@@ -1,9 +1,9 @@
 /** @fileoverview File-missing detection for stopped task cards. */
 import { computed, onBeforeUnmount, ref, watch, type ComputedRef } from 'vue'
-import { invoke } from '@tauri-apps/api/core'
 import { TASK_STATUS } from '@shared/constants'
 import { logger } from '@shared/logger'
 import { resolveTaskFilePath, recheckTrigger } from '@/composables/useArchivedPaths'
+import { checkPathExists } from '@/api/aria2'
 import type { Aria2Task } from '@shared/types'
 
 const FILE_CHECK_THROTTLE_MS = 120
@@ -27,7 +27,7 @@ export function useTaskFileMissing(task: ComputedRef<Aria2Task>) {
     }
 
     try {
-      fileMissing.value = !(await invoke<boolean>('check_path_exists', { path: targetPath }))
+      fileMissing.value = !(await checkPathExists(targetPath))
     } catch (e) {
       logger.debug('TaskItem.fileCheck', e)
       fileMissing.value = false

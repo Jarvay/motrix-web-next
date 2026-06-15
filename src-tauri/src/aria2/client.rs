@@ -48,7 +48,7 @@ impl Aria2Client {
     pub async fn update_credentials(&self, port: u16, secret: String) {
         *self.port.write().await = port;
         *self.secret.write().await = secret;
-        log::info!("aria2 client credentials updated: port={}", port);
+        log::info!("aria2 client credentials updated: port={port}");
     }
 
     /// Builds the JSON-RPC params array with token prepended if secret is set.

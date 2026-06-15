@@ -1,5 +1,8 @@
 fn main() {
-    tauri_build::build();
+    #[cfg(feature = "desktop")]
+    {
+        tauri_build::build();
+    }
 
     // On macOS, clear quarantine flags from sidecar binaries so they can execute.
     // This runs AFTER tauri_build::build() which copies sidecars into target/.

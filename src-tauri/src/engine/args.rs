@@ -178,13 +178,13 @@ fn build_start_args_impl(
 
     // Load bundled config file if available
     if let Some(path) = conf_path {
-        args.push(format!("--conf-path={}", path));
+        args.push(format!("--conf-path={path}"));
     }
 
     // Session persistence: save active/paused downloads, restore on restart
-    args.push(format!("--save-session={}", session_path));
+    args.push(format!("--save-session={session_path}"));
     if session_exists {
-        args.push(format!("--input-file={}", session_path));
+        args.push(format!("--input-file={session_path}"));
     }
 
     args.push(format!("--log={log_file_path}"));
@@ -249,10 +249,7 @@ fn build_start_args_impl(
             // aria2's HttpProxyOptionHandler only accepts http/https/ftp schemes;
             // socks4/socks5 URIs cause errorCode=28 and crash the engine.
             if key == "all-proxy" && val_str.to_ascii_lowercase().starts_with("socks") {
-                log::warn!(
-                    "Skipping unsupported proxy protocol for --all-proxy: {}",
-                    val_str
-                );
+                log::warn!("Skipping unsupported proxy protocol for --all-proxy: {val_str}");
                 continue;
             }
 
@@ -262,7 +259,7 @@ fn build_start_args_impl(
                 continue;
             }
 
-            args.push(format!("--{}={}", key, val_str));
+            args.push(format!("--{key}={val_str}"));
         }
     }
 

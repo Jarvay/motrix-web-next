@@ -88,6 +88,10 @@ export const useTaskStore = defineStore('task', () => {
     Object.assign(taskOps, ops)
   }
 
+  function getApi(): TaskApi {
+    return api
+  }
+
   async function changeCurrentList(list: string) {
     const sameList = currentList.value === list
     currentList.value = list
@@ -242,6 +246,17 @@ export const useTaskStore = defineStore('task', () => {
         }
       }
 
+      // Deduplicate by GID to ensure no duplicate tasks appear
+      const seen = new Set<string>()
+      data = data.filter((t) => {
+        if (seen.has(t.gid)) {
+          logger.debug('TaskStore.fetchList', `removing duplicate task with gid=${t.gid}`)
+          return false
+        }
+        seen.add(t.gid)
+        return true
+      })
+
       taskList.value = data
       updateCurrentTaskTotal(data.length)
       clampCurrentTaskPage()
@@ -384,6 +399,7 @@ export const useTaskStore = defineStore('task', () => {
       registerAddedAt(gid, now)
       historyStore.recordTaskBirth(gid, now).catch((e) => logger.debug('taskBirth.write', e))
     }
+    await api.saveSession()
     await fetchList()
   }
 
@@ -450,6 +466,7 @@ export const useTaskStore = defineStore('task', () => {
       appStore.pendingMagnetGids = [...appStore.pendingMagnetGids, gid]
     }
 
+    await api.saveSession()
     await fetchList()
     return gid
   }
@@ -470,6 +487,7 @@ export const useTaskStore = defineStore('task', () => {
     registerAddedAt(gid, now)
     const historyStore = useHistoryStore()
     historyStore.recordTaskBirth(gid, now).catch((e) => logger.debug('taskBirth.write', e))
+    await api.saveSession()
     await fetchList()
     return gid
   }
@@ -538,6 +556,7 @@ export const useTaskStore = defineStore('task', () => {
     taskPagination,
     currentTaskPageCount,
     setApi,
+    getApi,
     changeCurrentList,
     fetchList,
     selectTasks,

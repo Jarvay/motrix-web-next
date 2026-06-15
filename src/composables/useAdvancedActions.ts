@@ -8,6 +8,7 @@
  */
 import { ref, h, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import { checkPathExists, showItemInDir, openPathNormalized } from '@/api/aria2'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { appDataDir, join } from '@tauri-apps/api/path'
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog'
@@ -457,12 +458,12 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
   async function handleRevealPath(filePath: string) {
     if (!filePath) return
     try {
-      const fileExists = await invoke<boolean>('check_path_exists', { path: filePath })
+      const fileExists = await checkPathExists(filePath)
       if (!fileExists) {
         message.warning(t('task.file-not-exist'))
         return
       }
-      await invoke('show_item_in_dir', { path: filePath })
+      await showItemInDir(filePath)
       message.success(t('task.open-folder-success'))
     } catch (e) {
       logger.warn('Advanced.revealPath', e instanceof Error ? e.message : JSON.stringify(e))
@@ -473,7 +474,7 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
   async function handleOpenConfigFolder() {
     try {
       const dir = await appDataDir()
-      await invoke('open_path_normalized', { path: dir })
+      await openPathNormalized(dir)
       message.success(t('task.open-folder-success'))
     } catch (e) {
       logger.error('Advanced.openConfigFolder', e)
