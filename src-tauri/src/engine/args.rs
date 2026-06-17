@@ -264,7 +264,7 @@ fn build_start_args_impl(
     }
 
     args.push(format!("--rpc-listen-all={allow_remote_access}"));
-    args.push(format!("--rpc-allow-origin-all={allow_remote_access}"));
+    args.push("--rpc-allow-origin-all=true".to_string());
 
     if let Some((server_met_path, nodes_dat_path)) = ed2k_bootstrap_paths {
         args.push(format!("--ed2k-server-list={server_met_path}"));
@@ -651,7 +651,7 @@ mod tests {
         );
         assert!(args.iter().any(|a| a == "--enable-rpc=true"));
         assert!(args.iter().any(|a| a == "--rpc-listen-all=false"));
-        assert!(args.iter().any(|a| a == "--rpc-allow-origin-all=false"));
+        assert!(args.iter().any(|a| a == "--rpc-allow-origin-all=true"));
     }
 
     #[test]
@@ -672,7 +672,7 @@ mod tests {
     fn bundled_conf_uses_local_rpc_by_default() {
         const BUNDLED_CONF: &str = include_str!("../../binaries/aria2.conf");
         assert!(BUNDLED_CONF.contains("rpc-listen-all=false"));
-        assert!(BUNDLED_CONF.contains("rpc-allow-origin-all=false"));
+        assert!(BUNDLED_CONF.contains("rpc-allow-origin-all=true"));
     }
 
     #[test]

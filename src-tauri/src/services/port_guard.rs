@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::BTreeSet;
 use std::net::{TcpListener, UdpSocket};
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter};
 use tauri_plugin_store::StoreExt;
 
@@ -338,6 +339,31 @@ pub(crate) fn reconcile_engine_ports(app: &AppHandle) -> Result<Vec<PortSwitch>,
     Ok(switches)
 }
 
+pub(crate) fn wait_for_engine_ports_available(
+    app: &AppHandle,
+    timeout: Duration,
+    interval: Duration,
+) -> Result<bool, AppError> {
+    let prefs_store = app
+        .store("config.json")
+        .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
+    let prefs = prefs_store.get("preferences").unwrap_or_else(|| json!({}));
+    let snapshot = PortSnapshot::from_preferences(&prefs);
+    let deadline = Instant::now() + timeout;
+    let interval = interval.max(Duration::from_millis(1));
+
+    loop {
+        if engine_ports_available(snapshot) {
+            return Ok(true);
+        }
+        let now = Instant::now();
+        if now >= deadline {
+            return Ok(false);
+        }
+        std::thread::sleep(interval.min(deadline.saturating_duration_since(now)));
+    }
+}
+
 pub(crate) fn reconcile_runtime_ports(
     app: &AppHandle,
     kinds: &[PortKind],
@@ -629,6 +655,15 @@ fn port_available(port: u16, transport: PortTransport) -> bool {
         PortTransport::Tcp => tcp_available(port),
         PortTransport::Udp => udp_available(port),
     }
+}
+
+fn engine_ports_available(snapshot: PortSnapshot) -> bool {
+    ENGINE_PORT_KINDS.iter().all(|kind| {
+        let kind = *kind;
+        let port = snapshot.get(kind);
+        let spec = spec_for(kind);
+        (spec.allows_zero && port == 0) || port_available(port, spec.transport)
+    })
 }
 
 fn tcp_available(port: u16) -> bool {

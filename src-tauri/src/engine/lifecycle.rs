@@ -15,6 +15,8 @@ static BT_PORT_RECOVERY_IN_FLIGHT: std::sync::atomic::AtomicBool =
 
 const ENGINE_SIDECAR_NAME: &str = "motrix-next-engine";
 const DEFAULT_RPC_PORT_STR: &str = "29100";
+const ENGINE_PORT_RELEASE_TIMEOUT_MS: u64 = 2600;
+const ENGINE_PORT_RELEASE_POLL_MS: u64 = 100;
 const PROXY_ENV_VARS: &[&str] = &[
     "http_proxy",
     "https_proxy",
@@ -137,6 +139,25 @@ fn kill_process_by_pid(pid: u32) -> Result<(), String> {
             return Ok(());
         }
         Err(format!("kill failed for PID {pid}: {status}"))
+    }
+}
+
+fn wait_for_engine_ports_release(app: &tauri::AppHandle) {
+    match port_guard::wait_for_engine_ports_available(
+        app,
+        std::time::Duration::from_millis(ENGINE_PORT_RELEASE_TIMEOUT_MS),
+        std::time::Duration::from_millis(ENGINE_PORT_RELEASE_POLL_MS),
+    ) {
+        Ok(true) => {}
+        Ok(false) => {
+            log::warn!(
+                "restart: engine ports still occupied after {}ms, running conflict recovery",
+                ENGINE_PORT_RELEASE_TIMEOUT_MS
+            );
+        }
+        Err(e) => {
+            log::warn!("restart: failed to wait for engine port release: {e}");
+        }
     }
 }
 
@@ -380,8 +401,7 @@ pub fn restart_engine(app: &tauri::AppHandle, _config: &serde_json::Value) -> Re
         kill_process_by_pid(pid)?;
         *child_lock = None;
         log::info!("restart: killed old engine process: PID {}", pid);
-        // Wait for the OS to reclaim the process and release the port
-        std::thread::sleep(std::time::Duration::from_millis(500));
+        wait_for_engine_ports_release(app);
     }
 
     if let Err(e) = port_guard::reconcile_engine_ports(app) {
