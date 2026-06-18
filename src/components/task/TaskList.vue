@@ -30,7 +30,7 @@ type ListRefTarget = HTMLElement | ComponentPublicInstance | null
 const taskList = ref<Aria2Task[]>(taskStore.taskList)
 const listRef = ref<ListRefTarget>(null)
 const sorting = ref(false)
-const pageTransitioning = ref(false)
+const containerTransitioning = ref(false)
 let lastFloatingRect: DOMRect | null = null
 let floatingRectFrame = 0
 let sortable: Sortable | null = null
@@ -153,6 +153,15 @@ watch([taskPage, pageSize], () => {
   taskStore.clampCurrentTaskPage()
 })
 
+watch(
+  pageTransitionKey,
+  () => {
+    if (sorting.value) return
+    containerTransitioning.value = true
+  },
+  { flush: 'sync' },
+)
+
 const sortableOptions: SortableOptions = {
   animation: 240,
   handle: '.task-drag-handle',
@@ -232,13 +241,21 @@ function handleItemClick(task: Aria2Task, event: MouseEvent) {
 }
 
 function handlePageSwapBeforeLeave() {
-  pageTransitioning.value = true
+  containerTransitioning.value = true
   destroySortable()
 }
 
 function handlePageSwapAfterEnter() {
-  pageTransitioning.value = false
+  containerTransitioning.value = false
   void nextTick(mountSortable)
+}
+
+function handleCardBeforeLeave(element: Element) {
+  if (containerTransitioning.value) return
+  if (!(element instanceof HTMLElement)) return
+  const height = Math.ceil(element.getBoundingClientRect().height || element.offsetHeight)
+  element.classList.add('task-list-item--collapsing')
+  element.style.setProperty('--task-list-card-leave-height', `${height}px`)
 }
 </script>
 
@@ -257,9 +274,10 @@ function handlePageSwapAfterEnter() {
         :key="pageTransitionKey"
         ref="listRef"
         tag="div"
-        :css="!sorting && !pageTransitioning"
+        :css="!sorting && !containerTransitioning"
         name="task-list-card"
         class="task-list-inner"
+        @before-leave="handleCardBeforeLeave"
       >
         <div
           v-for="item in visibleTaskList"
@@ -338,8 +356,7 @@ function handlePageSwapAfterEnter() {
   margin-bottom: 16px;
 }
 .task-list-card-move,
-.task-list-card-enter-active,
-.task-list-card-leave-active {
+.task-list-card-enter-active {
   transition:
     transform 260ms ease,
     opacity 180ms ease;
@@ -353,7 +370,24 @@ function handlePageSwapAfterEnter() {
   transform: scale(0.995);
 }
 .task-list-card-leave-active {
+  transition:
+    transform 260ms ease,
+    opacity 180ms ease;
   pointer-events: none;
+}
+.task-list-card-leave-active.task-list-item--collapsing {
+  height: var(--task-list-card-leave-height);
+  overflow: hidden;
+  transition:
+    height 260ms ease,
+    margin-bottom 260ms ease,
+    opacity 180ms ease;
+  transform: none;
+}
+.task-list-card-leave-to.task-list-item--collapsing {
+  height: 0;
+  margin-bottom: 0;
+  transform: none;
 }
 .task-list-item--ghost {
   overflow: hidden;

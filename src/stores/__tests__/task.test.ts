@@ -460,24 +460,28 @@ describe('TaskStore', () => {
   })
 
   it('keeps the previous page count while a different tab is loading', async () => {
-    mockApi.fetchTaskList.mockResolvedValueOnce([
+    const activeTasks = [
       makeMockTask('a1'),
       makeMockTask('a2'),
       makeMockTask('a3'),
       makeMockTask('a4'),
       makeMockTask('a5'),
-    ])
+    ]
+    mockApi.fetchTaskList.mockResolvedValueOnce([...activeTasks])
     store.setTaskPageSize(2)
     await store.fetchList()
     expect(store.currentTaskPageCount()).toBe(3)
 
-    mockApi.fetchTaskList.mockImplementationOnce(async () => {
-      expect(store.taskList).toEqual([])
+    mockHistoryFns.getRecords.mockImplementationOnce(async () => {
+      expect(store.taskList.map((task) => task.gid).sort()).toEqual(activeTasks.map((task) => task.gid).sort())
       expect(store.currentTaskPageCount()).toBe(3)
-      return [makeMockTask('b1'), makeMockTask('b2')]
+      return [
+        { gid: 'b1', name: 'b1.zip', status: 'complete' } as HistoryRecord,
+        { gid: 'b2', name: 'b2.zip', status: 'complete' } as HistoryRecord,
+      ]
     })
 
-    await store.changeCurrentList('waiting')
+    await store.changeCurrentList('stopped')
 
     expect(store.currentTaskPageCount()).toBe(1)
   })
@@ -605,20 +609,17 @@ describe('TaskStore', () => {
 
   // ─── changeCurrentList ──────────────────────────────────
 
-  it('changeCurrentList clears list only when switching to a different tab', async () => {
+  it('changeCurrentList keeps the current list visible until the target tab data arrives', async () => {
     store.taskList = [makeMockTask('old')]
-    await store.changeCurrentList('completed')
-    expect(store.currentList).toBe('completed')
-    expect(mockApi.fetchTaskList).toHaveBeenCalledWith({ type: 'completed' })
-
-    store.taskList = [makeMockTask('cached')]
     mockApi.fetchTaskList.mockImplementationOnce(async () => {
-      expect(store.taskList.map((task) => task.gid)).toEqual(['cached'])
+      expect(store.taskList.map((task) => task.gid)).toEqual(['old'])
       return [makeMockTask('fresh')]
     })
 
-    await store.changeCurrentList('completed')
+    await store.changeCurrentList('waiting')
 
+    expect(store.currentList).toBe('waiting')
+    expect(mockApi.fetchTaskList).toHaveBeenCalledWith({ type: 'waiting' })
     expect(store.taskList.map((task) => task.gid)).toEqual(['fresh'])
   })
 

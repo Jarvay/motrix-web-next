@@ -92,7 +92,6 @@ export const useTaskStore = defineStore('task', () => {
     const sameList = currentList.value === list
     currentList.value = list
     if (!sameList) {
-      taskList.value = []
       selectedGidList.value = []
       const tab = currentTaskTab()
       if (taskPagination[tab].loaded) refreshCurrentTaskPageCount()
@@ -120,8 +119,8 @@ export const useTaskStore = defineStore('task', () => {
     return visibleTaskPageCount.value
   }
 
-  function refreshCurrentTaskPageCount() {
-    visibleTaskPageCount.value = maxTaskPage()
+  function refreshCurrentTaskPageCount(tab = currentTaskTab()) {
+    visibleTaskPageCount.value = maxTaskPage(tab)
   }
 
   function clampCurrentTaskPage() {
@@ -168,6 +167,7 @@ export const useTaskStore = defineStore('task', () => {
 
   async function fetchList() {
     try {
+      const tabAtFetchStart = currentTaskTab()
       // Stopped tab is DB-primary: history.db is the single source of truth.
       // Active tab reads from aria2 (tellActive + tellWaiting).
       // All tab merges: aria2 active + aria2 stopped (bridge) + history DB.
@@ -245,7 +245,7 @@ export const useTaskStore = defineStore('task', () => {
       taskList.value = data
       updateCurrentTaskTotal(data.length)
       clampCurrentTaskPage()
-      refreshCurrentTaskPageCount()
+      if (currentTaskTab() === tabAtFetchStart) refreshCurrentTaskPageCount()
       const gids = data.map((task: Aria2Task) => task.gid)
       selectedGidList.value = intersection(selectedGidList.value, gids)
       if (taskDetailVisible.value && currentTaskGid.value) {
