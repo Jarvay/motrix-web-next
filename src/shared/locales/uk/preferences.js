@@ -323,6 +323,7 @@ export default {
   'system-runtime': 'Середовище виконання',
   'clipboard-detection': 'Виявлення буфера обміну',
   'clipboard-auto-detect': 'Автоматично виявляти посилання для завантаження з буфера обміну',
+  'clipboard-filter-hint': 'Параметри фільтрують лише окремі посилання; багаторядковий вміст не фільтрується за типом',
   'clipboard-http': 'Посилання HTTP / HTTPS',
   'clipboard-ftp': 'Посилання FTP',
   'clipboard-ed2k': 'Посилання ED2K',

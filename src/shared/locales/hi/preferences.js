@@ -322,6 +322,7 @@ export default {
   'system-runtime': 'Runtime',
   'clipboard-detection': 'Clipboard detection',
   'clipboard-auto-detect': 'Clipboard से download links auto-detect करें',
+  'clipboard-filter-hint': 'Options केवल single links को filter करते हैं; multi-line content type से filter नहीं होता',
   'clipboard-http': 'HTTP / HTTPS links',
   'clipboard-ftp': 'FTP links',
   'clipboard-ed2k': 'ED2K links',

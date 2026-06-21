@@ -318,6 +318,7 @@ export default {
   'system-runtime': 'بيئة التشغيل',
   'clipboard-detection': 'كشف الحافظة',
   'clipboard-auto-detect': 'كشف روابط التحميل تلقائياً من الحافظة',
+  'clipboard-filter-hint': 'تقوم الخيارات بتصفية الروابط المفردة فقط، ولا تخضع المحتويات متعددة الأسطر لتصفية النوع',
   'clipboard-http': 'روابط HTTP / HTTPS',
   'clipboard-ftp': 'روابط FTP',
   'clipboard-ed2k': 'روابط ED2K',

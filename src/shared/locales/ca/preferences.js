@@ -327,6 +327,7 @@ export default {
   'system-runtime': "Entorn d'execució",
   'clipboard-detection': 'Detecció del porta-retalls',
   'clipboard-auto-detect': 'Detecta automàticament els enllaços de descàrrega del porta-retalls',
+  'clipboard-filter-hint': 'Les opcions només filtren enllaços individuals; el contingut de diverses línies no es filtra per tipus',
   'clipboard-http': 'Enllaços HTTP / HTTPS',
   'clipboard-ftp': 'Enllaços FTP',
   'clipboard-ed2k': 'Enllaços ED2K',

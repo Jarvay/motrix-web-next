@@ -320,6 +320,7 @@ export default {
   'system-runtime': 'Môi trường chạy',
   'clipboard-detection': 'Phát hiện bảng nhớ tạm',
   'clipboard-auto-detect': 'Tự động phát hiện liên kết tải xuống từ bảng nhớ tạm',
+  'clipboard-filter-hint': 'Tùy chọn chỉ lọc liên kết đơn; nội dung nhiều dòng không được lọc theo loại',
   'clipboard-http': 'Liên kết HTTP / HTTPS',
   'clipboard-ftp': 'Liên kết FTP',
   'clipboard-ed2k': 'Liên kết ED2K',

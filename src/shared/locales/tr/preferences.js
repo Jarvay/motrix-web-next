@@ -324,6 +324,7 @@ export default {
   'system-runtime': 'Çalışma Ortamı',
   'clipboard-detection': 'Pano Algılama',
   'clipboard-auto-detect': 'Panodan indirme bağlantılarını otomatik algıla',
+  'clipboard-filter-hint': 'Seçenekler yalnızca tek bağlantıları filtreler; çok satırlı içerik türe göre filtrelenmez',
   'clipboard-http': 'HTTP / HTTPS bağlantıları',
   'clipboard-ftp': 'FTP bağlantıları',
   'clipboard-ed2k': 'ED2K bağlantıları',

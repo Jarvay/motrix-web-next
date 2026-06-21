@@ -15,6 +15,7 @@ import { getLocale } from 'tauri-plugin-locale-api'
 import { resolveSystemLocale } from '@shared/utils/locale'
 import { i18n } from '@/composables/useLocale'
 import { logger } from '@shared/logger'
+import { writeAppClipboardText } from '@shared/utils'
 import {
   buildGeneralForm,
   buildGeneralSystemConfig,
@@ -61,7 +62,7 @@ const archLabelDisplay = computed(() => getArchLabel(sysArch.value))
 
 async function copyVersionToClipboard(text: string, label: string) {
   try {
-    await navigator.clipboard.writeText(text)
+    await writeAppClipboardText(text)
     message.success(t('about.version-copied', { label }))
   } catch (e) {
     logger.debug('General.clipboard', `writeText failed: ${e}`)

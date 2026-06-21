@@ -325,6 +325,7 @@ export default {
   'system-runtime': 'Runtime',
   'clipboard-detection': 'Klemborddetectie',
   'clipboard-auto-detect': 'Downloadlinks automatisch detecteren vanuit het klembord',
+  'clipboard-filter-hint': 'Opties filteren alleen losse links; inhoud met meerdere regels wordt niet op type gefilterd',
   'clipboard-http': 'HTTP / HTTPS-links',
   'clipboard-ftp': 'FTP-links',
   'clipboard-ed2k': 'ED2K-links',

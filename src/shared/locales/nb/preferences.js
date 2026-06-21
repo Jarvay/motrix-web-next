@@ -322,6 +322,7 @@ export default {
   'system-runtime': 'Kjøretidsmiljø',
   'clipboard-detection': 'Utklippstavle-deteksjon',
   'clipboard-auto-detect': 'Oppdage nedlastingslenker automatisk fra utklippstavlen',
+  'clipboard-filter-hint': 'Valgene filtrerer bare enkeltlenker; flerlinjeinnhold filtreres ikke etter type',
   'clipboard-http': 'HTTP / HTTPS-lenker',
   'clipboard-ftp': 'FTP-lenker',
   'clipboard-ed2k': 'ED2K-lenker',

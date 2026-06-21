@@ -318,6 +318,7 @@ export default {
   'system-runtime': 'รันไทม์',
   'clipboard-detection': 'ตรวจจับคลิปบอร์ด',
   'clipboard-auto-detect': 'ตรวจจับลิงก์ดาวน์โหลดจากคลิปบอร์ดโดยอัตโนมัติ',
+  'clipboard-filter-hint': 'ตัวเลือกจะกรองเฉพาะลิงก์เดี่ยว เนื้อหาหลายบรรทัดจะไม่ถูกกรองตามประเภท',
   'clipboard-http': 'ลิงก์ HTTP / HTTPS',
   'clipboard-ftp': 'ลิงก์ FTP',
   'clipboard-ed2k': 'ลิงก์ ED2K',

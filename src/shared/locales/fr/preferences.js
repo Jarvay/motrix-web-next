@@ -330,6 +330,7 @@ export default {
   'system-runtime': "Environnement d'exécution",
   'clipboard-detection': 'Détection du presse-papiers',
   'clipboard-auto-detect': 'Détecter automatiquement les liens de téléchargement depuis le presse-papiers',
+  'clipboard-filter-hint': 'Les options filtrent uniquement les liens seuls ; le contenu multiligne n’est pas filtré par type',
   'clipboard-http': 'Liens HTTP / HTTPS',
   'clipboard-ftp': 'Liens FTP',
   'clipboard-ed2k': 'Liens ED2K',

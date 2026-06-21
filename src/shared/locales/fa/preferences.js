@@ -323,6 +323,7 @@ export default {
   'system-runtime': 'محیط اجرا',
   'clipboard-detection': 'تشخیص کلیپ‌بورد',
   'clipboard-auto-detect': 'تشخیص خودکار لینک‌های دانلود از کلیپ‌بورد',
+  'clipboard-filter-hint': 'گزینه‌ها فقط پیوندهای تکی را فیلتر می‌کنند؛ محتوای چندخطی بر اساس نوع فیلتر نمی‌شود',
   'clipboard-http': 'لینک‌های HTTP / HTTPS',
   'clipboard-ftp': 'لینک‌های FTP',
   'clipboard-ed2k': 'لینک‌های ED2K',

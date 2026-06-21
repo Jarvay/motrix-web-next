@@ -325,6 +325,7 @@ export default {
   'system-runtime': 'Laufzeitumgebung',
   'clipboard-detection': 'Zwischenablage-Erkennung',
   'clipboard-auto-detect': 'Download-Links automatisch aus der Zwischenablage erkennen',
+  'clipboard-filter-hint': 'Optionen filtern nur einzelne Links; mehrzeilige Inhalte werden nicht nach Typ gefiltert',
   'clipboard-http': 'HTTP / HTTPS-Links',
   'clipboard-ftp': 'FTP-Links',
   'clipboard-ed2k': 'ED2K-Links',

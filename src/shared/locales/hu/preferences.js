@@ -324,6 +324,7 @@ export default {
   'system-runtime': 'Futtatókörnyezet',
   'clipboard-detection': 'Vágólap-érzékelés',
   'clipboard-auto-detect': 'Letöltési hivatkozások automatikus felismerése a vágólapról',
+  'clipboard-filter-hint': 'A beállítások csak az egyedi hivatkozásokat szűrik; a többsoros tartalom nincs típus szerint szűrve',
   'clipboard-http': 'HTTP / HTTPS hivatkozások',
   'clipboard-ftp': 'FTP hivatkozások',
   'clipboard-ed2k': 'ED2K hivatkozások',

@@ -322,6 +322,7 @@ export default {
   'system-runtime': 'Среда за изпълнение',
   'clipboard-detection': 'Откриване от клипборда',
   'clipboard-auto-detect': 'Автоматично откриване на линкове от клипборда',
+  'clipboard-filter-hint': 'Опциите филтрират само единични връзки; многоредовото съдържание не се филтрира по тип',
   'clipboard-http': 'HTTP / HTTPS линкове',
   'clipboard-ftp': 'FTP линкове',
   'clipboard-ed2k': 'ED2K връзки',

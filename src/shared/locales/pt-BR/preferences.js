@@ -325,6 +325,7 @@ export default {
   'system-runtime': 'Runtime',
   'clipboard-detection': 'Detecção da área de transferência',
   'clipboard-auto-detect': 'Detectar automaticamente links de download da área de transferência',
+  'clipboard-filter-hint': 'As opções filtram apenas links únicos; conteúdo em várias linhas não é filtrado por tipo',
   'clipboard-http': 'Links HTTP / HTTPS',
   'clipboard-ftp': 'Links FTP',
   'clipboard-ed2k': 'Links ED2K',

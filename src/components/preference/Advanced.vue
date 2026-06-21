@@ -74,6 +74,7 @@ const { isLinux } = usePlatform()
 
 import { ENGINE_RPC_PORT } from '@shared/constants'
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
+import { writeAppClipboardText } from '@shared/utils'
 
 const appLogLevelOptions = APP_LOG_LEVELS.map((level) => ({ label: level, value: level }))
 const aria2LogLevelOptions = ARIA2_LOG_LEVELS.map((level) => ({ label: level, value: level }))
@@ -298,7 +299,7 @@ function onApiSecretDice() {
 async function copyToClipboard(text: string, label: string) {
   if (!text) return
   try {
-    await navigator.clipboard.writeText(text)
+    await writeAppClipboardText(text)
     message.success(t('preferences.copied-to-clipboard', { label }))
   } catch (e) {
     logger.debug('Advanced.clipboard', `writeText failed: ${e}`)
@@ -658,7 +659,13 @@ watch(protocolHandlers.lastError, (error) => {
 
       <!-- Clipboard Detection (migrated from Basic) -->
       <NDivider title-placement="left">{{ t('preferences.clipboard-detection') }}</NDivider>
-      <NFormItem :label="t('preferences.clipboard-auto-detect')">
+      <NFormItem>
+        <template #label>
+          <PreferenceHintLabel
+            :label="t('preferences.clipboard-auto-detect')"
+            :hint="t('preferences.clipboard-filter-hint')"
+          />
+        </template>
         <NSwitch v-model:value="form.clipboardEnable" />
       </NFormItem>
       <NCollapseTransition :show="form.clipboardEnable">

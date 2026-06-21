@@ -323,6 +323,7 @@ export default {
   'system-runtime': 'Среда выполнения',
   'clipboard-detection': 'Обнаружение буфера обмена',
   'clipboard-auto-detect': 'Автоматически обнаруживать ссылки для скачивания из буфера обмена',
+  'clipboard-filter-hint': 'Параметры фильтруют только одиночные ссылки; многострочное содержимое не фильтруется по типу',
   'clipboard-http': 'Ссылки HTTP / HTTPS',
   'clipboard-ftp': 'Ссылки FTP',
   'clipboard-ed2k': 'Ссылки ED2K',

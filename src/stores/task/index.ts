@@ -391,6 +391,18 @@ export const useTaskStore = defineStore('task', () => {
     await fetchList()
   }
 
+  async function addUriAtomic(data: { uris: string[]; options: Aria2EngineOptions }) {
+    const httpAuthStore = useHttpAuthStore()
+    const options = await applySavedHttpAuth(data.uris[0] ?? '', data.options, httpAuthStore)
+    const gid = await api.addUriAtomic({ uris: data.uris, options })
+    const now = new Date().toISOString()
+    registerAddedAt(gid, now)
+    const historyStore = useHistoryStore()
+    historyStore.recordTaskBirth(gid, now).catch((e) => logger.debug('taskBirth.write', e))
+    await fetchList()
+    return gid
+  }
+
   async function applySavedHttpAuth(
     uri: string,
     options: Aria2EngineOptions,
@@ -560,6 +572,7 @@ export const useTaskStore = defineStore('task', () => {
     hideTaskDetail,
     updateCurrentTaskItem,
     addUri,
+    addUriAtomic,
     addTorrent,
     addMagnetUri,
     getFiles,

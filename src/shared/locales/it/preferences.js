@@ -327,6 +327,7 @@ export default {
   'system-runtime': 'Runtime',
   'clipboard-detection': 'Rilevamento appunti',
   'clipboard-auto-detect': 'Rileva automaticamente i link di download dagli appunti',
+  'clipboard-filter-hint': 'Le opzioni filtrano solo i link singoli; i contenuti multilinea non vengono filtrati per tipo',
   'clipboard-http': 'Link HTTP / HTTPS',
   'clipboard-ftp': 'Link FTP',
   'clipboard-ed2k': 'Link ED2K',

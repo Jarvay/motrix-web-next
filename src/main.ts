@@ -499,7 +499,11 @@ if (import.meta.env.PROD) {
         const { readText } = await import('@tauri-apps/plugin-clipboard-manager')
         const text = ((await readText()) || '').trim()
         if (!text || text === lastClipboardText) return
-        const { detectResource } = await import('@shared/utils')
+        const { detectResource, shouldIgnoreClipboardTextForAutoDetect } = await import('@shared/utils')
+        if (shouldIgnoreClipboardTextForAutoDetect(text)) {
+          lastClipboardText = text
+          return
+        }
         if (detectResource(text, clipboardConfig)) {
           lastClipboardText = text
           appStore.showAddTaskDialog()

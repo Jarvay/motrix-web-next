@@ -330,6 +330,7 @@ export default {
   'system-runtime': 'Entorno de ejecución',
   'clipboard-detection': 'Detección del portapapeles',
   'clipboard-auto-detect': 'Detectar automáticamente enlaces de descarga del portapapeles',
+  'clipboard-filter-hint': 'Las opciones solo filtran enlaces individuales; el contenido de varias líneas no se filtra por tipo',
   'clipboard-http': 'Enlaces HTTP / HTTPS',
   'clipboard-ftp': 'Enlaces FTP',
   'clipboard-ed2k': 'Enlaces ED2K',

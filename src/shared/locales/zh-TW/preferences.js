@@ -312,6 +312,7 @@ export default {
   'system-runtime': '執行環境',
   'clipboard-detection': '剪貼簿偵測',
   'clipboard-auto-detect': '自動偵測剪貼簿中的下載連結',
+  'clipboard-filter-hint': '選項僅篩選單條連結，多行內容不參與類型篩選',
   'clipboard-http': 'HTTP / HTTPS 連結',
   'clipboard-ftp': 'FTP 連結',
   'clipboard-ed2k': 'ED2K 連結',

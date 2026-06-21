@@ -312,6 +312,7 @@ export default {
   'system-runtime': '运行环境',
   'clipboard-detection': '剪贴板检测',
   'clipboard-auto-detect': '自动检测剪贴板中的下载链接',
+  'clipboard-filter-hint': '选项仅过滤单条链接，多行内容不参与类型过滤',
   'clipboard-http': 'HTTP / HTTPS 链接',
   'clipboard-ftp': 'FTP 链接',
   'clipboard-ed2k': 'ED2K 链接',

@@ -3,6 +3,7 @@
 import { ref, computed, watch, defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { logger } from '@shared/logger'
+import { writeAppClipboardText } from '@shared/utils'
 import {
   checkTaskIsBT,
   checkTaskIsSharing,
@@ -119,7 +120,7 @@ async function copyDetailValue(value: string | number | null | undefined, label:
   const text = value === null || value === undefined ? '' : String(value)
   if (!text || text === '-') return
   try {
-    await navigator.clipboard.writeText(text)
+    await writeAppClipboardText(text)
     message.success(t('preferences.copied-to-clipboard', { label }))
   } catch (e) {
     logger.debug('TaskDetail.clipboard', `writeText failed: ${e}`)

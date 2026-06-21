@@ -320,6 +320,7 @@ export default {
   'system-runtime': '런타임',
   'clipboard-detection': '클립보드 감지',
   'clipboard-auto-detect': '클립보드에서 다운로드 링크 자동 감지',
+  'clipboard-filter-hint': '옵션은 단일 링크만 필터링하며 여러 줄 내용은 유형별로 필터링하지 않습니다',
   'clipboard-http': 'HTTP / HTTPS 링크',
   'clipboard-ftp': 'FTP 링크',
   'clipboard-ed2k': 'ED2K 링크',

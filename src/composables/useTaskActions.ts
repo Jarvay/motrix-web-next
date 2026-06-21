@@ -6,7 +6,7 @@
  * i18n, dialog, and message are passed in via the options object.
  */
 import { ref, type Ref, h } from 'vue'
-import { getTaskUri, getTaskDisplayName, resolveOpenTarget, canRestart } from '@shared/utils'
+import { getTaskUri, getTaskDisplayName, resolveOpenTarget, canRestart, writeAppClipboardText } from '@shared/utils'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { invoke } from '@tauri-apps/api/core'
 import { deleteTaskFiles } from '@/composables/useFileDelete'
@@ -195,7 +195,7 @@ export function useTaskActions(deps: TaskActionsDeps) {
       return
     }
     try {
-      await navigator.clipboard.writeText(uri)
+      await writeAppClipboardText(uri)
       message.success(t('task.copy-link-success'))
     } catch (e) {
       logger.warn('TaskView.copyLink', getErrorMessage(e))

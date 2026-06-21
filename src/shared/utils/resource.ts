@@ -8,6 +8,7 @@ import {
 } from '@shared/constants'
 import { splitTextRows } from './format'
 import { isAudioOrVideo } from './file'
+import { parseAria2Input } from './batchHelpers'
 import type { ClipboardConfig } from '@shared/types'
 
 /** Decodes a Thunder (迅雷) protocol link to its original HTTP/FTP URL. */
@@ -73,6 +74,25 @@ function buildAllowedTags(filter?: ClipboardConfig): string[] {
   return tags
 }
 
+function lineMatchesAllowedResource(line: string, allowedTags: string[], allowHash: boolean): boolean {
+  const lower = line.toLowerCase()
+  return (
+    allowedTags.some((tag) => lower.startsWith(tag) && line.length > tag.length) ||
+    (allowHash && BARE_INFO_HASH_RE.test(line))
+  )
+}
+
+function lineMatchesAnyResource(line: string): boolean {
+  return lineMatchesAllowedResource(line, RESOURCE_TAGS, true)
+}
+
+function countMeaningfulInputLines(content: string): number {
+  return content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#')).length
+}
+
 /**
  * Returns true if the clipboard content represents downloadable resource(s).
  *
@@ -103,13 +123,14 @@ export const detectResource = (content: string, filter?: ClipboardConfig): boole
   const allowedTags = buildAllowedTags(filter)
   const allowHash = filter ? filter.btHash : true
 
-  return lines.every((line) => {
-    const lower = line.toLowerCase()
-    return (
-      allowedTags.some((tag) => lower.startsWith(tag) && line.length > tag.length) ||
-      (allowHash && BARE_INFO_HASH_RE.test(line))
-    )
-  })
+  if (lines.length === 1) return lineMatchesAllowedResource(lines[0], allowedTags, allowHash)
+
+  const parsed = parseAria2Input(content)
+  if (parsed.entries.length === 0) return false
+
+  if (parsed.validLineCount !== countMeaningfulInputLines(content)) return false
+
+  return parsed.entries.every((entry) => entry.uris.length > 0 && entry.uris.every(lineMatchesAnyResource))
 }
 
 export const needCheckCopyright = (links = ''): boolean => {

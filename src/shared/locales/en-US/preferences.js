@@ -321,6 +321,7 @@ export default {
   'system-runtime': 'Runtime',
   'clipboard-detection': 'Clipboard Detection',
   'clipboard-auto-detect': 'Auto-detect download links from clipboard',
+  'clipboard-filter-hint': 'Options filter single links only; multi-line content is not filtered by type',
   'clipboard-http': 'HTTP / HTTPS links',
   'clipboard-ftp': 'FTP links',
   'clipboard-ed2k': 'ED2K links',

@@ -324,6 +324,7 @@ export default {
   'system-runtime': 'Mediu de execuție',
   'clipboard-detection': 'Detectare clipboard',
   'clipboard-auto-detect': 'Detectează automat linkuri de descărcare din clipboard',
+  'clipboard-filter-hint': 'Opțiunile filtrează doar linkuri individuale; conținutul pe mai multe linii nu este filtrat după tip',
   'clipboard-http': 'Linkuri HTTP / HTTPS',
   'clipboard-ftp': 'Linkuri FTP',
   'clipboard-ed2k': 'Linkuri ED2K',

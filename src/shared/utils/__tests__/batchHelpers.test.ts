@@ -12,6 +12,7 @@ import {
   extractDecodedFilename,
   sanitizeAria2OutHint,
   resolveExternalFilenameHint,
+  parseAria2Input,
 } from '../batchHelpers'
 
 describe('normalizeUriLines', () => {
@@ -98,6 +99,66 @@ describe('normalizeUriLines', () => {
   it('deduplicates Thunder links by exact normalized line', () => {
     const thunder = 'thunder://' + btoa('AAhttps://example.com/file.zipZZ')
     expect(normalizeUriLines(`${thunder}\n${thunder}`)).toEqual([thunder])
+  })
+})
+
+describe('parseAria2Input', () => {
+  it('parses aria2 input-file entries with per-task options', () => {
+    expect(
+      parseAria2Input(`
+        https://example.com/index.html
+          out=index1.html
+        https://example.com/index.html
+          out=index2.html
+      `).entries,
+    ).toEqual([
+      { uris: ['https://example.com/index.html'], options: { out: 'index1.html' } },
+      { uris: ['https://example.com/index.html'], options: { out: 'index2.html' } },
+    ])
+  })
+
+  it('keeps tab-separated mirrors as one aria2 task', () => {
+    expect(
+      parseAria2Input('https://mirror-a.example/file.zip\thttps://mirror-b.example/file.zip\n  out=file.zip').entries,
+    ).toEqual([
+      {
+        uris: ['https://mirror-a.example/file.zip', 'https://mirror-b.example/file.zip'],
+        options: { out: 'file.zip' },
+      },
+    ])
+  })
+
+  it('keeps cumulative header options in input order', () => {
+    expect(
+      parseAria2Input(
+        [
+          'https://example.com/file.zip',
+          '  header=Accept-Language: en-US,en;q=0.9',
+          '  header=Cookie: a=b',
+          '  checksum=sha-256=abc',
+        ].join('\n'),
+      ).entries,
+    ).toEqual([
+      {
+        uris: ['https://example.com/file.zip'],
+        options: {
+          header: ['Accept-Language: en-US,en;q=0.9', 'Cookie: a=b'],
+          checksum: 'sha-256=abc',
+        },
+      },
+    ])
+  })
+
+  it('does not treat orphan option lines as URIs', () => {
+    expect(parseAria2Input('  out=orphan.html\nhttps://example.com/file.zip').entries).toEqual([
+      { uris: ['https://example.com/file.zip'], options: {} },
+    ])
+  })
+
+  it('ignores malformed indented option lines after a task', () => {
+    expect(parseAria2Input('https://example.com/file.zip\n  malformed-option-line').entries).toEqual([
+      { uris: ['https://example.com/file.zip'], options: {} },
+    ])
   })
 })
 

@@ -324,6 +324,7 @@ export default {
   'system-runtime': 'Runtime',
   'clipboard-detection': 'Deteksi Papan Klip',
   'clipboard-auto-detect': 'Otomatis mendeteksi tautan unduhan dari papan klip',
+  'clipboard-filter-hint': 'Opsi hanya memfilter tautan tunggal; konten multi-baris tidak difilter menurut jenis',
   'clipboard-http': 'Tautan HTTP / HTTPS',
   'clipboard-ftp': 'Tautan FTP',
   'clipboard-ed2k': 'Tautan ED2K',

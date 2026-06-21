@@ -322,6 +322,7 @@ export default {
   'system-runtime': 'ランタイム',
   'clipboard-detection': 'クリップボード検出',
   'clipboard-auto-detect': 'クリップボードからダウンロードリンクを自動検出',
+  'clipboard-filter-hint': 'オプションは単一リンクのみをフィルターし、複数行の内容は種類でフィルターされません',
   'clipboard-http': 'HTTP / HTTPS リンク',
   'clipboard-ftp': 'FTP リンク',
   'clipboard-ed2k': 'ED2K リンク',

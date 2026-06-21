@@ -324,6 +324,7 @@ export default {
   'system-runtime': 'Środowisko uruchomieniowe',
   'clipboard-detection': 'Wykrywanie schowka',
   'clipboard-auto-detect': 'Automatycznie wykrywaj linki do pobrania ze schowka',
+  'clipboard-filter-hint': 'Opcje filtrują tylko pojedyncze linki; treść wielowierszowa nie jest filtrowana według typu',
   'clipboard-http': 'Linki HTTP / HTTPS',
   'clipboard-ftp': 'Linki FTP',
   'clipboard-ed2k': 'Linki ED2K',

@@ -522,6 +522,7 @@ describe('submitBatchItems', () => {
 describe('submitManualUris', () => {
   const mockTaskStore = {
     addUri: vi.fn().mockResolvedValue(['gid1']),
+    addUriAtomic: vi.fn().mockResolvedValue('atomic-gid'),
     addMagnetUri: vi.fn().mockResolvedValue('magnet-gid'),
     addTorrent: vi.fn().mockResolvedValue('torrent-gid'),
     registerTorrentSource: vi.fn(),
@@ -589,6 +590,52 @@ describe('submitManualUris', () => {
     const call = (mockTaskStore.addUri as ReturnType<typeof vi.fn>).mock.calls[0][0]
     expect(call.uris).toEqual([thunder])
     expect(call.outs).toEqual([''])
+  })
+
+  it('submits aria2 input-file out options as separate task options', async () => {
+    await submitManualUris(
+      {
+        ...baseForm,
+        uris: [
+          'https://example.com/index.html',
+          '  out=index1.html',
+          'https://example.com/index.html',
+          '  out=index2.html',
+        ].join('\n'),
+      },
+      { dir: '/dl' },
+      mockTaskStore,
+    )
+
+    expect(mockTaskStore.addUri).toHaveBeenCalledTimes(2)
+    expect(mockTaskStore.addUri).toHaveBeenNthCalledWith(1, {
+      uris: ['https://example.com/index.html'],
+      outs: ['index1.html'],
+      options: { dir: '/dl', out: 'index1.html' },
+      fileCategory: undefined,
+    })
+    expect(mockTaskStore.addUri).toHaveBeenNthCalledWith(2, {
+      uris: ['https://example.com/index.html'],
+      outs: ['index2.html'],
+      options: { dir: '/dl', out: 'index2.html' },
+      fileCategory: undefined,
+    })
+  })
+
+  it('submits tab-separated aria2 input-file mirrors as one atomic URI task', async () => {
+    await submitManualUris(
+      {
+        ...baseForm,
+        uris: 'https://a.example/file.zip\thttps://b.example/file.zip\n  out=file.zip\n  header=Accept-Language: en-US',
+      },
+      { dir: '/dl' },
+      mockTaskStore,
+    )
+
+    expect(mockTaskStore.addUriAtomic).toHaveBeenCalledWith({
+      uris: ['https://a.example/file.zip', 'https://b.example/file.zip'],
+      options: { dir: '/dl', out: 'file.zip', header: ['Accept-Language: en-US'] },
+    })
   })
 
   it('generates numbered outs for multi-URI with out specified', async () => {
