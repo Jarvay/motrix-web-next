@@ -37,7 +37,8 @@ export interface BtForm {
   [key: string]: unknown
   btAutoDownloadContent: boolean
   btForceEncryption: boolean
-  btDhtEnabled: boolean
+  btDhtIpv4Enabled: boolean
+  btDhtIpv6Enabled: boolean
   btPeerExchangeEnabled: boolean
   btLocalPeerDiscoveryEnabled: boolean
   btMaxPeers: number
@@ -62,7 +63,8 @@ export function buildBtForm(config: AppConfig): BtForm {
   return {
     btAutoDownloadContent,
     btForceEncryption: config.btForceEncryption ?? D.btForceEncryption,
-    btDhtEnabled: config.btDhtEnabled ?? D.btDhtEnabled,
+    btDhtIpv4Enabled: config.btDhtIpv4Enabled ?? D.btDhtIpv4Enabled,
+    btDhtIpv6Enabled: config.btDhtIpv6Enabled ?? D.btDhtIpv6Enabled,
     btPeerExchangeEnabled: config.btPeerExchangeEnabled ?? D.btPeerExchangeEnabled,
     btLocalPeerDiscoveryEnabled: config.btLocalPeerDiscoveryEnabled ?? D.btLocalPeerDiscoveryEnabled,
     btMaxPeers: config.btMaxPeers ?? D.btMaxPeers,
@@ -89,7 +91,8 @@ export function buildBtSystemConfig(f: BtForm): Record<string, string> {
     'bt-max-peers': String(f.btMaxPeers),
     'bt-force-encryption': String(!!f.btForceEncryption),
     'bt-require-crypto': String(!!f.btForceEncryption),
-    'enable-dht': String(!!f.btDhtEnabled),
+    'enable-dht': String(!!f.btDhtIpv4Enabled),
+    'enable-dht6': String(!!f.btDhtIpv6Enabled),
     'enable-peer-exchange': String(!!f.btPeerExchangeEnabled),
     'bt-enable-lpd': String(!!f.btLocalPeerDiscoveryEnabled),
     'pause-metadata': String(!autoContent),

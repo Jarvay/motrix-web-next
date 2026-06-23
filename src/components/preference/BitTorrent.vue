@@ -41,12 +41,15 @@ import {
   useDialog,
 } from 'naive-ui'
 import PreferenceActionBar from './PreferenceActionBar.vue'
+import PreferenceCheckboxGrid from './PreferenceCheckboxGrid.vue'
 import { SyncOutline, AddCircleOutline, CloseCircleOutline } from '@vicons/ionicons5'
 
 const { t } = useI18n()
 const preferenceStore = usePreferenceStore()
 const dialog = useDialog()
 const message = useAppMessage()
+const DHT_NETWORK_IPV4 = 'ipv4'
+const DHT_NETWORK_IPV6 = 'ipv6'
 
 const syncingTracker = ref(false)
 const customTrackerInput = ref('')
@@ -58,6 +61,22 @@ const syncIntervalOptions = computed(() => [
   { label: t('preferences.interval-daily'), value: 24 },
   { label: t('preferences.interval-weekly'), value: 168 },
 ])
+const dhtNetworkOptions = computed(() => [
+  { label: t('preferences.bt-dht-ipv4'), value: DHT_NETWORK_IPV4 },
+  { label: t('preferences.bt-dht-ipv6'), value: DHT_NETWORK_IPV6 },
+])
+const selectedDhtNetworks = computed({
+  get: () => {
+    const values: string[] = []
+    if (form.value.btDhtIpv4Enabled) values.push(DHT_NETWORK_IPV4)
+    if (form.value.btDhtIpv6Enabled) values.push(DHT_NETWORK_IPV6)
+    return values
+  },
+  set: (values: string[]) => {
+    form.value.btDhtIpv4Enabled = values.includes(DHT_NETWORK_IPV4)
+    form.value.btDhtIpv6Enabled = values.includes(DHT_NETWORK_IPV6)
+  },
+})
 
 // ── Tracker source management ───────────────────────────────────────
 const presetTrackerValues = new Set<string>(
@@ -343,14 +362,14 @@ onMounted(() => {
       </NFormItem>
 
       <NDivider title-placement="left">{{ t('preferences.bt-discovery-section') }}</NDivider>
-      <NFormItem :label="t('preferences.bt-dht')">
-        <NSwitch v-model:value="form.btDhtEnabled" />
-      </NFormItem>
       <NFormItem :label="t('preferences.bt-peer-exchange')">
         <NSwitch v-model:value="form.btPeerExchangeEnabled" />
       </NFormItem>
       <NFormItem :label="t('preferences.bt-local-peer-discovery')">
         <NSwitch v-model:value="form.btLocalPeerDiscoveryEnabled" />
+      </NFormItem>
+      <NFormItem :label="t('preferences.bt-dht-network')">
+        <PreferenceCheckboxGrid v-model:value="selectedDhtNetworks" :options="dhtNetworkOptions" />
       </NFormItem>
 
       <!-- Tracker Management -->

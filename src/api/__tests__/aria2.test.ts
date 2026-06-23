@@ -387,6 +387,38 @@ describe('aria2 API (invoke transport)', () => {
       })
     })
 
+    it('addUri classifies downloads by extension and URL context', async () => {
+      mockInvoke.mockResolvedValue('gid1')
+
+      await addUri({
+        uris: ['https://cdn.example.net/export/file.zip'],
+        outs: ['file.zip'],
+        options: { dir: '/downloads' },
+        fileCategory: {
+          enabled: true,
+          categories: [
+            {
+              label: 'Logs',
+              extensions: ['zip'],
+              urlPatterns: ['*://reports.example.com/logs/*'],
+              urlPatternMode: 'wildcard',
+              directory: '/downloads/Logs',
+            },
+          ],
+          contexts: {
+            'https://cdn.example.net/export/file.zip': {
+              finalUrl: 'https://reports.example.com/logs/file.zip',
+            },
+          },
+        },
+      })
+
+      expect(mockInvoke).toHaveBeenCalledWith('aria2_add_uri', {
+        uris: ['https://cdn.example.net/export/file.zip'],
+        options: { dir: '/downloads/Logs', out: 'file.zip' },
+      })
+    })
+
     it('addUriAtomic creates exactly one invoke with all URIs', async () => {
       mockInvoke.mockResolvedValueOnce('gid-atomic')
 

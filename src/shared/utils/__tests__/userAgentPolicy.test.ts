@@ -78,6 +78,16 @@ describe('userAgentPolicy', () => {
     expect(result).toEqual([rules[0]])
   })
 
+  it('accepts wildcard host patterns and rejects URL-shaped patterns', () => {
+    expect(normalizeUserAgentRules([{ ...rules[0], hostPattern: '*.Example.com' }], profiles)).toEqual([
+      { ...rules[0], hostPattern: '*.example.com' },
+    ])
+
+    expect(normalizeUserAgentRules([{ ...rules[0], hostPattern: 'https://example.com/file.zip' }], profiles)).toEqual(
+      [],
+    )
+  })
+
   it('matches host rules against final url, source url, and referer', () => {
     expect(
       findMatchingUserAgentRule({

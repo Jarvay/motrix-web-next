@@ -11,6 +11,7 @@ import {
 import { runMigrations, type MigrationResult } from '@shared/utils/configMigration'
 import { normalizeProxyMode } from '@shared/utils/proxyPolicy'
 import type { AppConfig, ClipboardConfig, PortConflictRecoveryConfig, ProxyConfig } from '@shared/types'
+import { normalizeFileCategory } from '@shared/utils/fileCategory'
 import {
   normalizeRecentUserAgentProfileIds,
   normalizeUserAgentProfiles,
@@ -289,6 +290,23 @@ function normalizeSecrets(config: AppConfig, input: Partial<AppConfig> | null, r
   }
 }
 
+function normalizeFileCategories(config: AppConfig, repairs: string[]): void {
+  const before = JSON.stringify(config.fileCategories)
+  config.fileCategories = Array.isArray(config.fileCategories)
+    ? config.fileCategories
+        .filter((category): category is AppConfig['fileCategories'][number] => {
+          if (!isRecord(category)) return false
+          return (
+            typeof category.label === 'string' &&
+            Array.isArray(category.extensions) &&
+            typeof category.directory === 'string'
+          )
+        })
+        .map(normalizeFileCategory)
+    : []
+  if (JSON.stringify(config.fileCategories) !== before) repairs.push('fileCategories')
+}
+
 /**
  * Converts a partial persisted config into a complete, runtime-safe AppConfig.
  *
@@ -319,6 +337,7 @@ export function hydrateAppConfig(saved?: Partial<AppConfig> | null): HydratedApp
 
   normalizeScalarValues(record, repairs)
   normalizeSecrets(merged, input, repairs)
+  normalizeFileCategories(merged, repairs)
   normalizeUserAgentConfig(merged, repairs)
 
   return {

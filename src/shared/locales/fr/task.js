@@ -269,7 +269,7 @@ export default {
   'stop-all-sharing': 'Arrêter tous les partages',
   'stop-all-sharing-confirm': 'Arrêter toutes les tâches de partage ?',
   'stop-all-sharing-success': 'Tous les partages sont arrêtés',
-  'stop-all-sharing-fail': 'Impossible d\'arrêter le partage',
+  'stop-all-sharing-fail': "Impossible d'arrêter le partage",
   'stop-all-sharing-none': 'Aucune tâche de partage active',
   'stop-sharing-success': 'Partage arrêté',
   'download-fail-message': '{taskName}: téléchargement échoué',
@@ -308,6 +308,9 @@ export default {
   'category-hint-active':
     'La classification automatique est active, les fichiers seront enregistrés dans leurs dossiers de catégorie',
   'category-hint-overridden': 'Chemin personnalisé spécifié, les règles de classification seront ignorées',
+  'category-match-single': 'Correspondance : {category}',
+  'category-match-multiple': 'Plusieurs catégories correspondent',
+  'category-match-none': 'Aucune catégorie ne correspond, utilisation du dossier par défaut',
   'category-dir-placeholder': 'Laisser vide pour la classification automatique',
   'favorite-folders': 'Dossiers favoris',
   'recent-folders': 'Dossiers récents',

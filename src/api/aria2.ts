@@ -18,6 +18,7 @@ import type {
   AppConfig,
   Ed2kSearchOptions,
   Ed2kSearchResults,
+  ExternalDownloadContext,
 } from '@shared/types'
 import { formatLogFields, logger } from '@shared/logger'
 import { resolveDownloadDir } from '@shared/utils/fileCategory'
@@ -209,7 +210,11 @@ export async function addUri(params: {
   uris: string[]
   outs: string[]
   options: Aria2EngineOptions
-  fileCategory?: { enabled: boolean; categories: import('@shared/types').FileCategory[] }
+  fileCategory?: {
+    enabled: boolean
+    categories: import('@shared/types').FileCategory[]
+    contexts?: Record<string, ExternalDownloadContext>
+  }
 }): Promise<string[]> {
   const { uris, outs, options, fileCategory } = params
   const engineOptions = formatOptionsForEngine(options)
@@ -226,7 +231,10 @@ export async function addUri(params: {
 
     // Smart file classification: resolve per-URI download directory
     if (fileCategory?.enabled && fileCategory.categories.length > 0) {
-      opts.dir = resolveDownloadDir(opts.out || uri, opts.dir || '', true, fileCategory.categories)
+      const context = fileCategory.contexts?.[uri]
+      opts.dir = resolveDownloadDir(opts.out || uri, opts.dir || '', true, fileCategory.categories, {
+        urls: [uri, context?.finalUrl ?? '', context?.url ?? '', context?.referer ?? ''],
+      })
     }
 
     return rpc(
@@ -255,7 +263,7 @@ export async function addUri(params: {
 /**
  * Adds a single download with all URIs as mirrors (alternative sources).
  */
-export async function addUriAtomic(params: { uris: string[]; options: Record<string, string> }): Promise<string> {
+export async function addUriAtomic(params: { uris: string[]; options: Aria2EngineOptions }): Promise<string> {
   const { uris, options } = params
   const engineOptions = formatOptionsForEngine(options)
   const gid = await rpc(

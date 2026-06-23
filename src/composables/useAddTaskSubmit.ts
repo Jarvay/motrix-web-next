@@ -19,6 +19,7 @@ import { handleTaskStart } from '@/composables/useTaskNotifyHandlers'
 import { isEngineReady } from '@/api/aria2'
 import {
   normalizeUriLines,
+  parseAria2Input,
   extractDecodedFilename,
   extractMagnetDisplayName,
   hasExtension,
@@ -92,6 +93,12 @@ export interface ManualUriSubmitResult {
   magnetFailures: MagnetSubmitFailure[]
 }
 
+interface ManualRegularEntry {
+  uris: string[]
+  options: Aria2EngineOptions
+  hasInputOptions: boolean
+}
+
 /**
  * Builds aria2 engine options from the add-task form.
  * Pure function — no side effects, fully testable.
@@ -154,6 +161,31 @@ function summarizeSubmitHeaderForwarding(form: AddTaskForm, context?: ExternalDo
   return summarizeHeaderForwarding(
     sanitizeBrowserRequestHeadersWithDiagnostics(context?.requestHeaders ?? form.requestHeaders).diagnostics,
   )
+}
+
+function mergeAria2InputOptions(base: Aria2EngineOptions, taskOptions: Aria2EngineOptions): Aria2EngineOptions {
+  const merged: Aria2EngineOptions = { ...base }
+  for (const [key, value] of Object.entries(taskOptions)) {
+    if (value === undefined) continue
+    if (key === 'header') {
+      const currentHeaders = merged.header
+      const nextHeaders = Array.isArray(value) ? value : [value]
+      const baseHeaders = Array.isArray(currentHeaders)
+        ? currentHeaders
+        : typeof currentHeaders === 'string'
+          ? [currentHeaders]
+          : []
+      merged.header = [...baseHeaders, ...nextHeaders]
+    } else {
+      merged[key] = value
+    }
+  }
+  return merged
+}
+
+function getScalarOption(options: Aria2EngineOptions, key: string): string {
+  const value = options[key]
+  return typeof value === 'string' ? value : ''
 }
 
 /**
@@ -226,7 +258,8 @@ export async function submitManualUris(
   downloadProxy?: string,
 ): Promise<ManualUriSubmitResult> {
   if (!form.uris.trim()) return { submittedTaskNames: [], magnetGids: [], magnetFailures: [] }
-  const allUris = normalizeUriLines(form.uris)
+  const parsedInput = parseAria2Input(form.uris)
+  const allUris = parsedInput.entries.flatMap((entry) => entry.uris)
   logger.info(
     'submitManualUris',
     formatLogFields({
@@ -240,12 +273,23 @@ export async function submitManualUris(
   )
 
   const magnetUris = allUris.filter(isMagnetUri)
-  const regularUris = allUris.filter((uri) => !isMagnetUri(uri))
+  const regularEntries: ManualRegularEntry[] = parsedInput.entries
+    .map((entry) => ({
+      uris: entry.uris.filter((uri) => !isMagnetUri(uri)),
+      options: mergeAria2InputOptions(options, entry.options),
+      hasInputOptions: Object.keys(entry.options).length > 0,
+    }))
+    .filter((entry) => entry.uris.length > 0)
+  const regularUris = regularEntries.flatMap((entry) => entry.uris)
+  const fileCategoryWithContexts = fileCategory
+    ? { ...fileCategory, contexts: form.uriRequestContexts ?? {} }
+    : undefined
   const submittedTaskNames: string[] = []
 
   // Submit regular URIs using the existing path
   if (regularUris.length > 0) {
-    if (regularUris.length > 1 && form.out) {
+    const canUseGlobalRename = regularEntries.every((entry) => entry.uris.length === 1 && !entry.hasInputOptions)
+    if (canUseGlobalRename && regularUris.length > 1 && form.out) {
       const regularOptions = { ...options }
       delete regularOptions.out
       let outs = buildOuts(regularUris, form.out)
@@ -255,65 +299,76 @@ export async function submitManualUris(
         const ext = dotIdx > 0 ? form.out.substring(dotIdx) : ''
         outs = regularUris.map((_, i) => `${base}_${i + 1}${ext}`)
       }
-      await taskStore.addUri({ uris: regularUris, outs, options: regularOptions, fileCategory })
+      await taskStore.addUri({
+        uris: regularUris,
+        outs,
+        options: regularOptions,
+        fileCategory: fileCategoryWithContexts,
+      })
       submittedTaskNames.push(...regularUris.map((uri, index) => resolveSubmittedTaskName(uri, outs[index])))
     } else {
-      // aria2's native filename resolution only uses Content-Disposition
-      // and URL path.  CDNs like Twitter/X serve media from extensionless
-      // paths (e.g. /media/HCo_0zsbkAEov7s?format=jpg).  For each URL
-      // whose path lacks an extension, invoke the Rust-side HEAD request
-      // to infer the correct name via Content-Type MIME mapping.
-      const outs = await Promise.all(
-        regularUris.map(async (uri) => {
-          // Extension already provided a filename via options.out — skip HEAD.
-          // Without this guard, resolve_filename returns a name derived from
-          // the CDN's Content-Type (e.g. .xml), and aria2.ts addUri() L108
-          // overwrites options.out with the outs[] entry.
-          if (options.out) return ''
-          const pathFilename = extractDecodedFilename(uri)
-          if (!pathFilename || hasExtension(pathFilename)) return ''
-          try {
-            const uriContext = form.uriRequestContexts?.[uri]
-            const sanitizedHeaders = sanitizeHttpHeaderOptions({
-              referer: uriContext?.referer ?? form.referer,
-              cookie: uriContext?.cookie ?? form.cookie,
-            })
-            const args: {
-              url: string
-              proxy: string | null
-              referer?: string
-              cookie?: string
-            } = {
-              url: uri,
-              proxy: downloadProxy ?? null,
-            }
-            if (sanitizedHeaders.referer) args.referer = sanitizedHeaders.referer
-            if (sanitizedHeaders.cookie) args.cookie = sanitizedHeaders.cookie
-            return (await invoke<string | null>('resolve_filename', args)) ?? ''
-          } catch {
-            return '' // HEAD failure → graceful degradation
-          }
-        }),
-      )
       const contextEntries = form.uriRequestContexts ?? {}
-      const hasPerUriContext = regularUris.some((uri) => contextEntries[uri])
-      if (hasPerUriContext) {
-        for (let index = 0; index < regularUris.length; index++) {
-          const uri = regularUris[index]
+      for (const entry of regularEntries) {
+        if (entry.uris.length > 1) {
+          await taskStore.addUriAtomic({
+            uris: entry.uris,
+            options: entry.options,
+          })
+          const out = getScalarOption(entry.options, 'out')
+          submittedTaskNames.push(...entry.uris.map((uri) => resolveSubmittedTaskName(uri, out)))
+          continue
+        }
+
+        const outs = await Promise.all(
+          entry.uris.map(async (uri) => {
+            const out = getScalarOption(entry.options, 'out')
+            if (out) return out
+            const pathFilename = extractDecodedFilename(uri)
+            if (!pathFilename || hasExtension(pathFilename)) return ''
+            try {
+              const uriContext = form.uriRequestContexts?.[uri]
+              const sanitizedHeaders = sanitizeHttpHeaderOptions({
+                referer: uriContext?.referer ?? form.referer,
+                cookie: uriContext?.cookie ?? form.cookie,
+              })
+              const args: {
+                url: string
+                proxy: string | null
+                referer?: string
+                cookie?: string
+              } = {
+                url: uri,
+                proxy: downloadProxy ?? null,
+              }
+              if (sanitizedHeaders.referer) args.referer = sanitizedHeaders.referer
+              if (sanitizedHeaders.cookie) args.cookie = sanitizedHeaders.cookie
+              return (await invoke<string | null>('resolve_filename', args)) ?? ''
+            } catch {
+              return ''
+            }
+          }),
+        )
+
+        const hasPerUriContext = entry.uris.some((uri) => contextEntries[uri])
+        if (hasPerUriContext) {
+          const uri = entry.uris[0]
           await taskStore.addUri({
             uris: [uri],
-            outs: [outs[index] ?? ''],
-            options: buildEngineOptions(form, contextEntries[uri]),
-            fileCategory,
+            outs: [outs[0] ?? ''],
+            options: mergeAria2InputOptions(buildEngineOptions(form, contextEntries[uri]), entry.options),
+            fileCategory: fileCategoryWithContexts,
+          })
+        } else {
+          await taskStore.addUri({
+            uris: entry.uris,
+            outs,
+            options: entry.options,
+            fileCategory: fileCategoryWithContexts,
           })
         }
-      } else {
-        await taskStore.addUri({ uris: regularUris, outs, options, fileCategory })
+        const out = getScalarOption(entry.options, 'out')
+        submittedTaskNames.push(...entry.uris.map((uri, index) => resolveSubmittedTaskName(uri, out || outs[index])))
       }
-      const optionOut = typeof options.out === 'string' ? options.out : ''
-      submittedTaskNames.push(
-        ...regularUris.map((uri, index) => resolveSubmittedTaskName(uri, optionOut || outs[index])),
-      )
     }
   }
 

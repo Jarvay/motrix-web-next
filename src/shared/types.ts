@@ -217,11 +217,17 @@ export interface PortConflictRecoveryConfig {
 }
 
 /** A file category rule mapping extensions to a download directory. */
+export type FileCategoryUrlPatternMode = 'wildcard' | 'regex'
+
 export interface FileCategory {
   /** Display label — i18n key suffix for built-in categories, user-provided name for custom ones. */
   label: string
   /** File extensions (lowercase, no dot prefix) belonging to this category. */
   extensions: string[]
+  /** URL, final URL, or referer match rules. Empty means URL is ignored. */
+  urlPatterns?: string[]
+  /** Matching mode for urlPatterns. */
+  urlPatternMode?: FileCategoryUrlPatternMode
   /** Absolute directory path where matching files are saved. */
   directory: string
   /** Whether this is a built-in category (cannot be deleted, label resolved via i18n). */
@@ -289,7 +295,8 @@ export interface AppConfig {
   shareTime: number
   shareRatio: number
   btMaxPeers: number
-  btDhtEnabled: boolean
+  btDhtIpv4Enabled: boolean
+  btDhtIpv6Enabled: boolean
   btPeerExchangeEnabled: boolean
   btLocalPeerDiscoveryEnabled: boolean
   openAtLogin: boolean
@@ -461,7 +468,7 @@ export interface AddUriParams {
   outs: string[]
   options: Aria2EngineOptions
   /** Optional file classification config for per-URI directory routing. */
-  fileCategory?: { enabled: boolean; categories: FileCategory[] }
+  fileCategory?: { enabled: boolean; categories: FileCategory[]; contexts?: Record<string, ExternalDownloadContext> }
 }
 
 /** Parameters for adding a torrent-based download task. */
@@ -588,7 +595,7 @@ export interface TaskApi {
   fetchTaskItemWithPeers: (params: { gid: string }) => Promise<Aria2Task & { peers: Aria2Peer[] }>
   fetchActiveTaskList: () => Promise<Aria2Task[]>
   addUri: (params: AddUriParams) => Promise<string[]>
-  addUriAtomic: (params: { uris: string[]; options: Record<string, string> }) => Promise<string>
+  addUriAtomic: (params: { uris: string[]; options: Aria2EngineOptions }) => Promise<string>
   addTorrent: (params: AddTorrentParams) => Promise<string>
   getOption: (params: { gid: string }) => Promise<Record<string, string>>
   changeOption: (params: TaskOptionParams) => Promise<void>

@@ -422,21 +422,21 @@ describe('detectResource with ClipboardConfig filter', () => {
   // ── Multi-line mixed content with partial disables ────────────────
 
   describe('multi-line content with partial protocol disables', () => {
-    it('rejects multi-line when one line uses a disabled protocol', () => {
+    it('does not apply single-link protocol filters to multi-line content', () => {
       const filter: ClipboardConfig = { ...allEnabled(), magnet: false }
       const content = 'https://example.com/file.zip\nmagnet:?xt=urn:btih:abc'
-      expect(detectResource(content, filter)).toBe(false)
-    })
-
-    it('accepts multi-line when all lines use enabled protocols', () => {
-      const filter: ClipboardConfig = { ...allEnabled(), magnet: false }
-      const content = 'https://a.com/1.zip\nftp://b.com/2.iso'
       expect(detectResource(content, filter)).toBe(true)
     })
 
-    it('rejects multi-line with hash when btHash is disabled', () => {
-      const filter: ClipboardConfig = { ...allEnabled(), btHash: false }
-      const content = 'https://example.com/file.zip\nd8988e034cb5de79d319242e3365bf30a7741a6e'
+    it('does not apply single-link protocol filters to aria2 input content', () => {
+      const filter: ClipboardConfig = { ...allEnabled(), http: false }
+      const content = 'https://example.com/index.html\n  out=index.html'
+      expect(detectResource(content, filter)).toBe(true)
+    })
+
+    it('rejects multi-line prose even when it contains a valid URL', () => {
+      const filter: ClipboardConfig = { ...allEnabled(), http: false }
+      const content = 'download this file\nhttps://example.com/file.zip'
       expect(detectResource(content, filter)).toBe(false)
     })
   })

@@ -88,9 +88,10 @@ export function resolveArchiveAction(
     return null
   }
 
-  // Determine category from real filename extension
   const ext = extractExtension(fileName)
-  const category = resolveCategory(ext, categories)
+  const category = resolveCategory(ext, categories, {
+    urls: [fileName, ...(firstFile.uris ?? []).map((entry) => entry.uri)],
+  })
   if (!category) {
     logger.debug('AutoArchive.skip', `no category match (ext=${ext || 'none'})`)
     return null

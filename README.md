@@ -35,3 +35,209 @@ services:
 ```shell
 docker-compose up -d
 ```
+
+Download the installer from [Releases](https://github.com/AnInsomniacy/motrix-next/releases):
+
+| Architecture   | File                               |
+| -------------- | ---------------------------------- |
+| x64 (most PCs) | `MotrixNext_x.x.x_x64-setup.exe`   |
+| ARM64          | `MotrixNext_x.x.x_arm64-setup.exe` |
+
+Run the installer — it takes about 10 seconds, no reboot required.
+
+### Linux
+
+Download from [Releases](https://github.com/AnInsomniacy/motrix-next/releases):
+
+**Debian / Ubuntu:**
+
+```bash
+sudo dpkg -i MotrixNext_x.x.x_amd64.deb
+```
+
+**Fedora / RHEL:**
+
+```bash
+sudo rpm -i MotrixNext-x.x.x-1.x86_64.rpm
+```
+
+**Other distributions** — use the `.AppImage`:
+
+```bash
+chmod +x MotrixNext_x.x.x_amd64.AppImage
+./MotrixNext_x.x.x_amd64.AppImage
+```
+
+All formats are available for both x64 and ARM64.
+
+## FAQ
+
+<details>
+<summary><strong>macOS says the app is "damaged and can't be opened"</strong></summary>
+
+<br>
+
+This app is not code-signed. Open Terminal and run:
+
+```bash
+xattr -cr /Applications/MotrixNext.app
+```
+
+This removes the quarantine flag that macOS Gatekeeper applies to unsigned apps. If you installed via Homebrew with `--no-quarantine`, you won't hit this issue.
+
+</details>
+
+<details>
+<summary><strong>Why is there no portable version?</strong></summary>
+
+<br>
+
+Motrix Next relies on [Aria2 Next](https://github.com/AnInsomniacy/aria2-next) as its download engine and launches it through a bundled `motrix-next-engine` sidecar process at runtime. The sidecar binaries are built and released from the aria2-next repository for all 6 supported desktop targets. This architecture means:
+
+- The **Aria2 Next sidecar binary must exist alongside the main executable** — it cannot be embedded into a single `.exe`.
+- **Deep links** (`magnet://`, `ed2k://`, `thunder://`) and **file associations** (`.torrent`) require Windows registry entries that only an installer can configure.
+- The **auto-updater** needs a known installation path to replace files in place.
+
+These are fundamental constraints of the Tauri sidecar model and the Windows operating system, not limitations we can work around. Notable Tauri projects like [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) (80k+ stars) previously shipped portable builds but [discontinued them](https://clash-verge.com/) due to the same set of issues.
+
+We provide **NSIS installers** for Windows — lightweight (~20 MB), fast to install, and fully featured.
+
+</details>
+
+## Code Signing
+
+Motrix Next is **not code-signed** on macOS or Windows, so your browser or antivirus software may show a security warning when downloading or running the installer.
+
+The app is fully open-source and every release binary is built automatically by [GitHub Actions CI](https://github.com/AnInsomniacy/motrix-next/actions). For added peace of mind, you can always [build from source](#development).
+
+Release `.sig` files are Tauri updater signatures, not GPG signatures. They can be verified with minisign using the following two-line public key format required by minisign:
+
+```text
+untrusted comment: minisign public key: 76210453A979C645
+RWRFxnmpUwQhdu1ykhDbEnVZguwQfLA60/oBA3rIlP0Z+L06b3u2NtJN
+```
+
+Save the key as `motrix-next.pub`, then replace `MotrixNext_x.x.x_<file>` with the release file you downloaded:
+
+```bash
+python3 -c 'import base64,sys; sys.stdout.write(base64.b64decode(sys.stdin.read()).decode())' \
+  < MotrixNext_x.x.x_<file>.sig \
+  > MotrixNext_x.x.x_<file>.minisig
+
+minisign -V \
+  -m MotrixNext_x.x.x_<file> \
+  -x MotrixNext_x.x.x_<file>.minisig \
+  -p motrix-next.pub
+```
+
+Expected result:
+
+```text
+Signature and comment signature verified
+```
+
+If the artifact was changed:
+
+```text
+Signature verification failed
+```
+
+> [!NOTE]
+> See our [Code Signing Policy](docs/CODE_SIGNING.md) and [Privacy Policy](docs/PRIVACY.md).
+
+## Development
+
+### Prerequisites
+
+- [Rust](https://rustup.rs/) (latest stable)
+- [Node.js](https://nodejs.org/) >= 22
+- [pnpm](https://pnpm.io/) 10.x, managed by the `packageManager` field in `package.json`
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/AnInsomniacy/motrix-next.git
+cd motrix-next
+
+# Install frontend dependencies
+pnpm install
+
+# Start development server (launches Tauri + Vite)
+pnpm tauri dev
+
+# Build for production
+pnpm tauri build
+```
+
+### Project Structure
+
+```
+motrix-next/
+├── src/                        # Frontend (Vue 3 + TypeScript)
+│   ├── api/                    # aria2-compatible JSON-RPC client
+│   ├── components/             # Vue components
+│   │   ├── about/              #   About panel
+│   │   ├── common/             #   Shared UI primitives
+│   │   ├── layout/             #   Sidebar, speedometer, navigation
+│   │   ├── preference/         #   Settings pages, update dialog
+│   │   ├── task/               #   Task list, detail, add task
+│   │   └── tray/               #   Tray action bridge
+│   ├── composables/            # Reusable composition functions
+│   ├── router/                 # Vue Router configuration
+│   ├── shared/                 # Shared utilities & config
+│   │   ├── constants/          #   Split constant modules
+│   │   ├── locales/            #   26 language packs
+│   │   ├── utils/              #   Pure utility functions (with tests)
+│   │   ├── types.ts            #   TypeScript interfaces
+│   │   ├── constants.ts        #   App constants & defaults
+│   │   └── configKeys.ts       #   Persisted config key registry
+│   ├── stores/                 # Pinia state management (with tests)
+│   ├── styles/                 # Global CSS custom properties
+│   └── views/                  # Page-level route views
+├── src-tauri/                  # Backend (Rust + Tauri 2)
+│   ├── src/
+│   │   ├── aria2/              #   Native Rust aria2 JSON-RPC client
+│   │   ├── commands/           #   Tauri invoke handlers (config, engine, fs, etc.)
+│   │   ├── engine/             #   Aria2 Next sidecar lifecycle (args, state, cleanup)
+│   │   ├── services/           #   Runtime services (stat, speed, monitor, HTTP API, deep links)
+│   │   ├── db_guard.rs         #   SQLite health checks and rebuild guard
+│   │   ├── error.rs            #   AppError enum
+│   │   ├── gpu_guard.rs        #   Linux GPU compatibility guard
+│   │   ├── history.rs          #   SQLite history persistence
+│   │   ├── menu.rs             #   Native menu builder
+│   │   ├── tray.rs             #   System tray setup
+│   │   ├── upnp.rs             #   UPnP/IGD port mapping
+│   │   └── lib.rs              #   Tauri builder & plugin registration
+│   ├── binaries/               #   Aria2 Next sidecar binaries (6 platforms)
+│   └── migrations/             #   SQLite schema migrations
+├── scripts/                    # bump-version.sh, release.sh
+├── .github/workflows/          # CI (ci.yml) + Release (release.yml)
+└── website/                    # Landing page (static HTML)
+```
+
+## Contributing
+
+PRs and issues are welcome! Please read the [Contributing Guide](docs/CONTRIBUTING.md) and [Code of Conduct](docs/CODE_OF_CONDUCT.md) before getting started.
+
+## Acknowledgements
+
+- [Motrix](https://github.com/agalwood/Motrix) by [agalwood](https://github.com/agalwood) and all its contributors
+- [Aria2 Next](https://github.com/AnInsomniacy/aria2-next) — the maintained download engine at the core
+- Community translators who contributed 26 locale packs for worldwide accessibility
+
+## Sponsor
+
+Built in the hours I should've been writing my thesis — I'm a PhD student surviving on instant noodles 🍜
+
+This app is not code-signed on macOS or Windows — Apple charges $99/year, and a Windows Authenticode certificate costs $300–600/year. That's a lot of instant noodles.
+
+[Buy me a coffee ☕](https://github.com/AnInsomniacy/AnInsomniacy/blob/main/SPONSOR.md) — maybe one day I can afford those certificates, so antivirus software stops treating my app like a criminal 🥲
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=AnInsomniacy/motrix-next&type=Date)](https://star-history.com/#AnInsomniacy/motrix-next&Date)
+
+## License
+
+[MIT](https://opensource.org/licenses/MIT) — Copyright (c) 2025-present AnInsomniacy

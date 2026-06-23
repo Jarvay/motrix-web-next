@@ -137,7 +137,7 @@ function createDeps() {
     onAbout: vi.fn(),
   }
 
-  return { deps, appStore, message }
+  return { deps, appStore, taskStore, message }
 }
 
 function mountComposable(deps: UseAppEventsDeps) {
@@ -240,6 +240,31 @@ describe('useAppEvents', () => {
     const removeGuard = routerBeforeEachMock.mock.results[0]?.value as (() => void) | undefined
     expect(removeGuard).toBeDefined()
     expect(removeGuard).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps task data intact while task route tabs switch', async () => {
+    const { deps, taskStore } = createDeps()
+    taskStore.taskList = [{ gid: 'old-1' }, { gid: 'old-2' }]
+    taskStore.selectedGidList = ['old-1']
+    const { setupListeners } = mountComposable(deps)
+
+    await setupListeners()
+
+    const guard = routerBeforeEachMock.mock.calls[0]?.[0] as
+      | ((
+          to: { name: string; params: { status: string }; path: string },
+          from: { name: string; params: { status: string }; path: string },
+        ) => unknown)
+      | undefined
+    expect(guard).toBeDefined()
+
+    guard?.(
+      { name: 'task', params: { status: 'active' }, path: '/task/active' },
+      { name: 'task', params: { status: 'all' }, path: '/task/all' },
+    )
+
+    expect(taskStore.taskList).toEqual([{ gid: 'old-1' }, { gid: 'old-2' }])
+    expect(taskStore.selectedGidList).toEqual(['old-1'])
   })
 
   it('does not process external input when the Rust pending queue is empty', async () => {

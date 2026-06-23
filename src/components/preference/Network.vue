@@ -44,6 +44,7 @@ import {
   useDialog,
 } from 'naive-ui'
 const needsRestart = ref(false)
+const showUserAgentManager = ref(false)
 import PreferenceActionBar from './PreferenceActionBar.vue'
 import PreferenceCheckboxGrid from './PreferenceCheckboxGrid.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
@@ -112,7 +113,7 @@ function buildForm() {
 
 const { restartEngine } = useEngineRestart()
 
-const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceForm({
+const { form, isDirty, handleSave, handleReset, resetSnapshot, patchSnapshot } = usePreferenceForm({
   buildForm,
   buildSystemConfig: buildNetworkSystemConfig,
   transformForStore: transformNetworkForStore,
@@ -213,6 +214,30 @@ function cleanUserAgent() {
   form.value.userAgent = sanitizeHeaderValue(form.value.userAgent as string)
 }
 
+async function handleUserAgentManagerSave(payload: {
+  profiles: typeof form.value.userAgentProfiles
+  rules: typeof form.value.userAgentRules
+  recentProfileIds: typeof form.value.recentUserAgentProfileIds
+}) {
+  form.value.userAgentProfiles = payload.profiles
+  form.value.userAgentRules = payload.rules
+  form.value.recentUserAgentProfileIds = payload.recentProfileIds
+  const saved = await preferenceStore.updateAndSave({
+    userAgentProfiles: payload.profiles,
+    userAgentRules: payload.rules,
+    recentUserAgentProfileIds: payload.recentProfileIds,
+  })
+  if (!saved) {
+    message.error(t('preferences.save-fail-message'))
+    return
+  }
+  patchSnapshot({
+    userAgentProfiles: payload.profiles,
+    userAgentRules: payload.rules,
+    recentUserAgentProfileIds: payload.recentProfileIds,
+  } as Partial<typeof form.value>)
+}
+
 function handleProxySwitch(value: boolean) {
   form.value.proxy.mode = proxySwitchValueToMode(value)
 }
@@ -246,6 +271,60 @@ onMounted(() => {
 <template>
   <div class="preference-form-wrapper">
     <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <!-- User-Agent -->
+      <NDivider title-placement="left">{{ t('preferences.user-agent') }}</NDivider>
+      <NFormItem :label="t('preferences.mock-user-agent')">
+        <div class="ua-field-wrapper">
+          <NInput
+            v-model:value="form.userAgent"
+            type="textarea"
+            :autosize="{ minRows: 2, maxRows: 4 }"
+            placeholder="User-Agent"
+          />
+          <div class="ua-warn-collapse" :class="{ 'ua-warn-collapse--open': uaHasIssue }">
+            <div class="ua-warn-collapse__inner">
+              <div class="ua-warn-bar">
+                <span class="ua-warn-text">⚠ {{ t('preferences.ua-unsafe-chars-detected') }}</span>
+                <NButton size="tiny" type="primary" ghost @click="cleanUserAgent">
+                  {{ t('preferences.ua-sanitize') }}
+                </NButton>
+              </div>
+            </div>
+          </div>
+        </div>
+      </NFormItem>
+      <NFormItem label=" ">
+        <div class="ua-preset-row">
+          <NButtonGroup size="small">
+            <NButton @click="changeUA('chrome')">Chrome</NButton>
+            <NButton @click="changeUA('edge')">Edge</NButton>
+            <NButton @click="changeUA('safari')">Safari</NButton>
+            <NButton @click="changeUA('firefox')">Firefox</NButton>
+          </NButtonGroup>
+          <NButton class="ua-reset-btn" size="small" ghost @click="form.userAgent = ''">
+            {{ t('preferences.ua-reset') }}
+          </NButton>
+        </div>
+      </NFormItem>
+      <NFormItem :label="t('preferences.ua-saved')">
+        <div class="ua-manager-entry">
+          <div class="ua-manager-entry-text">
+            <strong>{{ t('preferences.ua-manager-title') }}</strong>
+            <span>
+              {{
+                t('preferences.ua-manager-summary', {
+                  profiles: form.userAgentProfiles.length,
+                  rules: form.userAgentRules.length,
+                })
+              }}
+            </span>
+          </div>
+          <NButton size="small" @click="showUserAgentManager = true">
+            {{ t('preferences.ua-manage') }}
+          </NButton>
+        </div>
+      </NFormItem>
+
       <!-- Proxy -->
       <NDivider title-placement="left">{{ t('preferences.proxy') }}</NDivider>
       <NFormItem>
@@ -296,49 +375,6 @@ onMounted(() => {
           </NFormItem>
         </div>
       </div>
-
-      <!-- User-Agent -->
-      <NDivider title-placement="left">{{ t('preferences.user-agent') }}</NDivider>
-      <NFormItem :label="t('preferences.mock-user-agent')">
-        <div class="ua-field-wrapper">
-          <NInput
-            v-model:value="form.userAgent"
-            type="textarea"
-            :autosize="{ minRows: 2, maxRows: 4 }"
-            placeholder="User-Agent"
-          />
-          <div class="ua-warn-collapse" :class="{ 'ua-warn-collapse--open': uaHasIssue }">
-            <div class="ua-warn-collapse__inner">
-              <div class="ua-warn-bar">
-                <span class="ua-warn-text">⚠ {{ t('preferences.ua-unsafe-chars-detected') }}</span>
-                <NButton size="tiny" type="primary" ghost @click="cleanUserAgent">
-                  {{ t('preferences.ua-sanitize') }}
-                </NButton>
-              </div>
-            </div>
-          </div>
-        </div>
-      </NFormItem>
-      <NFormItem label=" ">
-        <div class="ua-preset-row">
-          <NButtonGroup size="small">
-            <NButton @click="changeUA('chrome')">Chrome</NButton>
-            <NButton @click="changeUA('edge')">Edge</NButton>
-            <NButton @click="changeUA('safari')">Safari</NButton>
-            <NButton @click="changeUA('firefox')">Firefox</NButton>
-          </NButtonGroup>
-          <NButton class="ua-reset-btn" size="small" ghost @click="form.userAgent = ''">
-            {{ t('preferences.ua-reset') }}
-          </NButton>
-        </div>
-      </NFormItem>
-      <NFormItem :label="t('preferences.ua-saved')">
-        <UserAgentManager
-          v-model:profiles="form.userAgentProfiles"
-          v-model:rules="form.userAgentRules"
-          v-model:recent-profile-ids="form.recentUserAgentProfileIds"
-        />
-      </NFormItem>
 
       <!-- Port conflict recovery -->
       <NDivider title-placement="left">{{ t('preferences.port-conflict-recovery') }}</NDivider>
@@ -460,6 +496,13 @@ onMounted(() => {
         <NSwitch v-model:value="form.asyncDns" />
       </NFormItem>
     </NForm>
+    <UserAgentManager
+      v-model:show="showUserAgentManager"
+      :profiles="form.userAgentProfiles"
+      :rules="form.userAgentRules"
+      :recent-profile-ids="form.recentUserAgentProfileIds"
+      @save="handleUserAgentManagerSave"
+    />
     <PreferenceActionBar :is-dirty="isDirty" @save="handleSave" @discard="handleReset" @restart="handleManualRestart" />
   </div>
 </template>
@@ -509,6 +552,34 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+.ua-manager-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--m3-outline-variant) 62%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--m3-surface-container-low) 54%, transparent);
+}
+.ua-manager-entry-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ua-manager-entry-text strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.ua-manager-entry-text span {
+  overflow: hidden;
+  color: var(--n-text-color-3);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .ua-warn-collapse {
   display: grid;

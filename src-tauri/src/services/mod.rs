@@ -5,6 +5,7 @@
 //! - `stat` — Global stat polling (download/upload speed)
 //! - `speed` — Speed limit scheduler (time-of-day limits)
 //! - `monitor` — Task lifecycle monitor (completion/error notifications)
+//! - `aria2_events` — WebSocket bridge for immediate aria2 notifications
 //!
 //! The `on_engine_ready()` function orchestrates post-start initialization:
 //! 1. Updates `Aria2Client` credentials to match the just-started engine
@@ -12,6 +13,7 @@
 //! 3. Syncs global options to aria2 via `changeGlobalOption`
 //! 4. Stops old background services and spawns fresh ones
 
+pub mod aria2_events;
 pub mod config;
 pub mod deep_link;
 pub mod external_input;
@@ -53,6 +55,7 @@ const NON_HOT_RELOADABLE: &[&str] = &[
     "bt-max-peers",
     "bt-require-crypto",
     "enable-dht",
+    "enable-dht6",
     "enable-peer-exchange",
     // aria2 docs exclusions
     "checksum",
@@ -221,6 +224,13 @@ async fn spawn_background_services(app: &tauri::AppHandle) {
             log::debug!("runtime_services: stopped old task_monitor");
         }
     }
+    if let Some(es) = app.try_state::<aria2_events::Aria2EventState>() {
+        let mut guard = es.0.lock().await;
+        if let Some(old) = guard.take() {
+            old.stop();
+            log::debug!("runtime_services: stopped old aria2_event_listener");
+        }
+    }
 
     // Spawn fresh services
     let stat_handle = stat::spawn_stat_service(app.clone(), aria2_arc.clone());
@@ -236,6 +246,13 @@ async fn spawn_background_services(app: &tauri::AppHandle) {
     let monitor_handle = monitor::spawn_task_monitor(app.clone(), aria2_arc);
     if let Some(ts) = app.try_state::<TaskMonitorState>() {
         *ts.0.lock().await = Some(monitor_handle);
+    }
+
+    if let Some(aria2) = app.try_state::<Aria2State>() {
+        let event_handle = aria2_events::spawn_aria2_event_listener(app.clone(), aria2.0.clone());
+        if let Some(es) = app.try_state::<aria2_events::Aria2EventState>() {
+            *es.0.lock().await = Some(event_handle);
+        }
     }
 
     // HTTP API — keep running across engine restarts.  Idempotent: skips
@@ -496,6 +513,7 @@ mod tests {
     #[test]
     fn non_hot_reloadable_contains_startup_only_keys() {
         assert!(NON_HOT_RELOADABLE.contains(&"enable-dht"));
+        assert!(NON_HOT_RELOADABLE.contains(&"enable-dht6"));
         assert!(NON_HOT_RELOADABLE.contains(&"enable-peer-exchange"));
         assert!(NON_HOT_RELOADABLE.contains(&"bt-enable-lpd"));
         assert!(NON_HOT_RELOADABLE.contains(&"bt-force-encryption"));

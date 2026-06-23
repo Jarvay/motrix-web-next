@@ -13,6 +13,7 @@ import {
   BUILTIN_CATEGORY_TEMPLATES,
   COMPLETED_RECORD_RETENTION_OPTIONS,
 } from '@shared/constants'
+import { normalizeFileCategory } from '@shared/utils/fileCategory'
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -62,15 +63,17 @@ function hydrateCategories(categories: FileCategory[], baseDir: string): FileCat
     BUILTIN_CATEGORY_TEMPLATES.map((t) => [t.label, t.subdirName]),
   )
 
-  return categories.map((cat) => {
-    const isBuiltIn = cat.builtIn ?? BUILTIN_CATEGORY_LABELS.has(cat.label)
-    let directory = cat.directory
-    if (!directory) {
-      const subdirName = templateMap.get(cat.label)
-      directory = subdirName ? `${normalizedBase}/${subdirName}` : normalizedBase
-    }
-    return { ...cat, builtIn: isBuiltIn, directory }
-  })
+  return categories
+    .map((cat) => {
+      const isBuiltIn = cat.builtIn ?? BUILTIN_CATEGORY_LABELS.has(cat.label)
+      let directory = cat.directory
+      if (!directory) {
+        const subdirName = templateMap.get(cat.label)
+        directory = subdirName ? `${normalizedBase}/${subdirName}` : normalizedBase
+      }
+      return { ...cat, builtIn: isBuiltIn, directory }
+    })
+    .map(normalizeFileCategory)
 }
 
 // ── Pure Functions ──────────────────────────────────────────────────
@@ -147,6 +150,8 @@ export function transformDownloadsForStore(f: DownloadsForm): Partial<AppConfig>
   // the categories array is empty (edge case from GitHub issue #229).
   if (f.fileCategoryEnabled && (!f.fileCategories || f.fileCategories.length === 0)) {
     data.fileCategories = buildDefaultCategories(f.dir)
+  } else {
+    data.fileCategories = f.fileCategories.map(normalizeFileCategory)
   }
 
   data.split = f.split

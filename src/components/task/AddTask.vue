@@ -11,6 +11,8 @@ import { ADD_TASK_TYPE, ENGINE_MAX_CONNECTION_PER_SERVER } from '@shared/constan
 import { detectResource, bytesToSize } from '@shared/utils'
 import { calcColumnWidth } from '@shared/utils/calcColumnWidth'
 import { mergeRawUriLines, normalizeUriLines, extractMagnetDisplayName } from '@shared/utils/batchHelpers'
+import { resolveDownloadCategory } from '@shared/utils/fileCategory'
+import { buildOuts } from '@shared/utils/rename'
 import {
   buildEngineOptions,
   classifySubmitError,
@@ -299,10 +301,59 @@ const categoryEnabled = computed(() => preferenceStore.config.fileCategoryEnable
 /** Dynamic label: switches between original 'Save to' and 'Custom Path' based on classification state. */
 const dirLabel = computed(() => (categoryEnabled.value ? t('task.task-custom-dir') : t('task.task-dir')))
 
-/** The resolved hint text key: changes based on whether user manually overrode the path. */
-const categoryHintKey = computed(() =>
-  dirUserModified.value ? 'task.category-hint-overridden' : 'task.category-hint-active',
-)
+function resolveCategoryMatches(): Map<string, { label: string; directory: string }> {
+  const uris = normalizeUriLines(form.value.uris).filter((uri) => !isMagnetUri(uri))
+  const outs = uris.length > 1 && form.value.out ? buildOuts(uris, form.value.out) : []
+  const matched = new Map<string, { label: string; directory: string }>()
+
+  for (const [index, uri] of uris.entries()) {
+    const context = form.value.uriRequestContexts?.[uri]
+    const category = resolveDownloadCategory(
+      outs[index] || form.value.out || uri,
+      preferenceStore.config.fileCategories,
+      {
+        urls: [uri, context?.finalUrl ?? '', context?.url ?? '', context?.referer ?? ''],
+      },
+    )
+    if (!category) continue
+    const label = category.builtIn ? t(`preferences.${category.label}`) : category.label
+    matched.set(category.directory, { label, directory: category.directory })
+  }
+
+  return matched
+}
+
+const categoryMatches = computed(() => {
+  if (!categoryEnabled.value || dirUserModified.value) return new Map<string, { label: string; directory: string }>()
+  return resolveCategoryMatches()
+})
+
+const categoryMatchPreview = computed(() => {
+  const matched = categoryMatches.value
+  if (matched.size !== 1) return undefined
+  return matched.values().next().value
+})
+
+const displayedDir = computed(() => {
+  if (dirUserModified.value) return form.value.dir
+  return categoryMatchPreview.value?.directory ?? form.value.dir
+})
+
+const categoryPreviewText = computed(() => {
+  if (!categoryEnabled.value) return ''
+  if (dirUserModified.value) return t('task.category-hint-overridden')
+
+  const uris = normalizeUriLines(form.value.uris).filter((uri) => !isMagnetUri(uri))
+  if (uris.length === 0) return t('task.category-hint-active')
+
+  const matched = categoryMatchPreview.value
+  if (matched) return t('task.category-match-single', { category: matched.label })
+
+  const matchedSize = categoryMatches.value.size
+  if (matchedSize === 0) return t('task.category-match-none')
+  if (matchedSize > 1) return t('task.category-match-multiple')
+  return t('task.category-match-none')
+})
 
 /** Handles user manually editing the dir field. */
 function onDirInput(value: string) {
@@ -764,7 +815,7 @@ function kindTagType(kind: string): 'info' | 'success' | 'warning' {
             <div style="width: 100%">
               <NInputGroup>
                 <NInput
-                  :value="form.dir"
+                  :value="displayedDir"
                   style="flex: 1"
                   :placeholder="categoryEnabled ? t('task.category-dir-placeholder') : ''"
                   @update:value="onDirInput"
@@ -776,11 +827,15 @@ function kindTagType(kind: string): 'info' | 'success' | 'warning' {
                 </NButton>
                 <DirectoryPopover @select="onDirectorySelect" />
               </NInputGroup>
-              <Transition name="category-hint" mode="out-in">
-                <div v-if="categoryEnabled" :key="categoryHintKey" class="category-hint-text">
-                  ⓘ {{ t(categoryHintKey) }}
+              <div class="category-hint-collapse" :class="{ 'category-hint-collapse--open': !!categoryPreviewText }">
+                <div class="category-hint-collapse__inner">
+                  <Transition name="category-hint" mode="out-in">
+                    <div v-if="categoryPreviewText" :key="categoryPreviewText" class="category-hint-text">
+                      ⓘ {{ categoryPreviewText }}
+                    </div>
+                  </Transition>
                 </div>
-              </Transition>
+              </div>
             </div>
           </NFormItem>
           <AdvancedOptions
@@ -953,6 +1008,17 @@ function kindTagType(kind: string): 'info' | 'success' | 'warning' {
 }
 
 /* ── Category hint below dir field ────────────────────────────────── */
+.category-hint-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.2, 0, 0, 1);
+}
+.category-hint-collapse--open {
+  grid-template-rows: 1fr;
+}
+.category-hint-collapse__inner {
+  overflow: hidden;
+}
 .category-hint-text {
   font-size: var(--font-size-sm, 12px);
   color: var(--n-text-color-3, #999);

@@ -18,8 +18,6 @@ import {
   SAFE_LIMIT_SPLIT,
   SAFE_LIMIT_CONNECTION_PER_SERVER,
   SCHEDULE_DAY,
-  buildDefaultCategories,
-  MAX_FILE_CATEGORIES,
 } from '@shared/constants'
 import { useAppMessage } from '@/composables/useAppMessage'
 import {
@@ -30,8 +28,6 @@ import {
   resolveCompletedRecordRetentionDays,
   transformDownloadsForStore,
 } from '@/composables/useDownloadsPreference'
-import type { FileCategory } from '@shared/types'
-import { vAutoAnimate } from '@formkit/auto-animate'
 import {
   NForm,
   NFormItem,
@@ -45,7 +41,6 @@ import {
   NInputGroup,
   NText,
   NCollapseTransition,
-  NDynamicTags,
   NIcon,
   useDialog,
 } from 'naive-ui'
@@ -53,6 +48,7 @@ import PreferenceActionBar from './PreferenceActionBar.vue'
 import PreferenceCheckboxGrid from './PreferenceCheckboxGrid.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 import DirectoryPopover from '@/components/common/DirectoryPopover.vue'
+import FileCategoryManager from './FileCategoryManager.vue'
 import { FolderOpenOutline } from '@vicons/ionicons5'
 
 const { t } = useI18n()
@@ -129,7 +125,7 @@ function buildForm() {
   return buildDownloadsForm(preferenceStore.config, defaultDownloadDir.value)
 }
 
-const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceForm({
+const { form, isDirty, handleSave, handleReset, resetSnapshot, patchSnapshot } = usePreferenceForm({
   buildForm,
   buildSystemConfig: buildDownloadsSystemConfig,
   transformForStore: transformDownloadsForStore,
@@ -240,34 +236,21 @@ function handleDownloadValueChange(val: number | null) {
 }
 
 // ── File categories ─────────────────────────────────────────────────
-let categoryUid = 0
-function ensureCategoryUid(cat: FileCategory): string {
-  const record = cat as unknown as Record<string, unknown>
-  if (!record._uid) {
-    Object.defineProperty(cat, '_uid', { value: `cat-${++categoryUid}`, enumerable: false })
+const showCategoryManager = ref(false)
+const categorySummary = computed(() => {
+  const categories = form.value.fileCategories
+  const urlRuleCount = categories.reduce((total, category) => total + (category.urlPatterns?.length ?? 0), 0)
+  return t('preferences.file-category-summary', { count: categories.length, url: urlRuleCount })
+})
+const categoryBaseDir = computed(() => form.value.dir || defaultDownloadDir.value)
+async function handleCategoryManagerSave(categories: typeof form.value.fileCategories) {
+  form.value.fileCategories = categories
+  const saved = await preferenceStore.updateAndSave({ fileCategories: categories })
+  if (!saved) {
+    message.error(t('preferences.save-fail-message'))
+    return
   }
-  return record._uid as string
-}
-function handleCategoryLabelChange(index: number, label: string) {
-  form.value.fileCategories[index].label = label
-}
-function handleCategoryDirInput(index: number, value: string) {
-  form.value.fileCategories[index].directory = value
-}
-function handleCategoryExtChange(index: number, extensions: string[]) {
-  form.value.fileCategories[index].extensions = extensions.map((e) => e.toLowerCase().replace(/^\./, ''))
-}
-function handleDeleteCategory(index: number) {
-  form.value.fileCategories.splice(index, 1)
-}
-function handleAddCategory() {
-  if (form.value.fileCategories.length >= MAX_FILE_CATEGORIES) return
-  const baseDir = form.value.dir || defaultDownloadDir.value
-  form.value.fileCategories.push({ label: '', extensions: [], directory: baseDir, builtIn: false })
-}
-function handleResetCategories() {
-  const baseDir = form.value.dir || defaultDownloadDir.value
-  form.value.fileCategories = buildDefaultCategories(baseDir)
+  patchSnapshot({ fileCategories: categories } as Partial<typeof form.value>)
 }
 async function handleSelectDir() {
   const selected = await openDialog({ directory: true, multiple: false })
@@ -276,11 +259,6 @@ async function handleSelectDir() {
 function handleRecentDirSelect(dir: string) {
   form.value.dir = dir
 }
-async function handleSelectCategoryDir(index: number) {
-  const selected = await openDialog({ directory: true, multiple: false })
-  if (typeof selected === 'string') form.value.fileCategories[index].directory = selected
-}
-
 // ── Speed limit toggle ──────────────────────────────────────────────
 async function handleSpeedLimitToggle() {
   if (!isEngineReady()) return
@@ -425,56 +403,14 @@ onMounted(async () => {
       </NFormItem>
       <NCollapseTransition :show="form.fileCategoryEnabled">
         <NFormItem :show-label="false">
-          <div class="file-category-list">
-            <div v-auto-animate="{ duration: 250, easing: 'ease-out' }" class="file-category-cards">
-              <div v-for="(cat, idx) in form.fileCategories" :key="ensureCategoryUid(cat)" class="file-category-card">
-                <div class="file-category-header">
-                  <span v-if="cat.builtIn" class="file-category-label">{{ t(`preferences.${cat.label}`) }}</span>
-                  <NInput
-                    v-else
-                    :value="cat.label"
-                    size="small"
-                    :placeholder="t('preferences.file-category-custom-label')"
-                    class="pref-number"
-                    @update:value="(v: string) => handleCategoryLabelChange(idx, v)"
-                  />
-                  <NButton
-                    class="ghost-btn--danger file-category-delete-button"
-                    size="tiny"
-                    ghost
-                    @click="handleDeleteCategory(idx)"
-                  >
-                    {{ t('edit.delete') }}
-                  </NButton>
-                </div>
-                <NDynamicTags
-                  :value="cat.extensions.map((e: string) => `.${e}`)"
-                  size="small"
-                  @update:value="(tags: string[]) => handleCategoryExtChange(idx, tags)"
-                />
-                <NInputGroup>
-                  <NInput
-                    :value="cat.directory"
-                    size="small"
-                    class="pref-control-full"
-                    @update:value="(v: string) => handleCategoryDirInput(idx, v)"
-                  />
-                  <NButton size="small" class="pref-icon-button-sm" @click="handleSelectCategoryDir(idx)">
-                    <template #icon>
-                      <NIcon :size="14"><FolderOpenOutline /></NIcon>
-                    </template>
-                  </NButton>
-                </NInputGroup>
-              </div>
+          <div class="file-category-summary-row">
+            <div class="file-category-summary-text">
+              <span>{{ categorySummary }}</span>
+              <NText depth="3">{{ t('preferences.file-category-manager-hint') }}</NText>
             </div>
-            <div class="file-category-actions">
-              <NButton size="small" dashed @click="handleAddCategory">
-                {{ t('preferences.file-category-add') }}
-              </NButton>
-              <NButton size="small" quaternary @click="handleResetCategories">
-                ↺ {{ t('preferences.file-category-reset') }}
-              </NButton>
-            </div>
+            <NButton size="small" @click="showCategoryManager = true">
+              {{ t('preferences.file-category-manage') }}
+            </NButton>
           </div>
         </NFormItem>
       </NCollapseTransition>
@@ -608,6 +544,12 @@ onMounted(async () => {
       </NCollapseTransition>
     </NForm>
     <PreferenceActionBar :is-dirty="isDirty" @save="handleSave" @discard="handleReset" @restart="handleManualRestart" />
+    <FileCategoryManager
+      v-model:show="showCategoryManager"
+      :categories="form.fileCategories"
+      :base-dir="categoryBaseDir"
+      @save="handleCategoryManagerSave"
+    />
   </div>
 </template>
 
@@ -639,48 +581,22 @@ onMounted(async () => {
   max-height: 60px;
 }
 
-/* ── File Category List ──────────────────────────────────────────── */
-.file-category-list {
+.file-category-summary-row {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 4px 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
-}
-.file-category-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.file-category-card {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   padding: 10px 12px;
+  border: 1px solid var(--m3-outline-variant);
   border-radius: 8px;
-  background: var(--n-color, var(--m3-surface-container-low));
-  border: 1px solid var(--n-border-color, var(--m3-outline-variant));
-  transition: border-color 0.2s ease;
+  background: var(--m3-surface-container-low);
 }
-.file-category-card:hover {
-  border-color: var(--color-primary);
-}
-.file-category-header {
+
+.file-category-summary-text {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.file-category-delete-button {
-  margin-left: auto;
-}
-.file-category-label {
+  flex-direction: column;
+  gap: 2px;
   font-size: 13px;
-  font-weight: 500;
-}
-.file-category-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 4px;
 }
 </style>

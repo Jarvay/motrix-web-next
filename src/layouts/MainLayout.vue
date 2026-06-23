@@ -26,14 +26,18 @@ import { ARIA2_ERROR_CODES } from '@shared/aria2ErrorCodes'
 import { TASK_STATUS } from '@shared/constants'
 import { useHistoryStore } from '@/stores/history'
 import {
-  parseFilesForSelection,
   buildSelectFileOption,
   buildStatusAwareConfirmAction,
   getPendingMagnetSelectionGids,
-  getResolvedMagnetSelection,
 } from '@/composables/useMagnetFlow'
 import type { MagnetFileItem } from '@/composables/useMagnetFlow'
 import aria2Api, { checkPathExists, checkPathIsDir, showItemInDir, openPathNormalized } from '@/api/aria2'
+import {
+  listenForAria2DownloadComplete,
+  resolveNextPendingMagnetMetadata,
+  resolvePendingMagnetMetadata,
+  type MagnetMetadataState,
+} from '@/composables/useMagnetMetadataEvents'
 import { usePlatform } from '@/composables/usePlatform'
 import { throttledResizeHandler, cancelPendingResize } from '@/layouts/resizeThrottle'
 import AsideBar from '@/components/layout/AsideBar.vue'
@@ -128,7 +132,8 @@ let unlistenResize: (() => void) | null = null
 let unlistenExitDialog: (() => void) | null = null
 let unlistenStat: (() => void) | null = null
 let lifecycleService: ReturnType<typeof createTaskLifecycleService> | null = null
-let magnetPollTimer: ReturnType<typeof setTimeout> | null = null
+let unlistenAria2DownloadComplete: (() => void) | null = null
+let stopPendingMagnetWatch: (() => void) | null = null
 let unlistenFocusRecheck: (() => void) | null = null
 let unlistenAppToast: (() => void) | null = null
 
@@ -297,62 +302,63 @@ function stopStatListener() {
 
 // ── Magnet metadata monitoring (app-level) ──────────────────────────
 
-/**
- * Poll pending magnet metadata tasks for native aria2 follow-up downloads.
- *
- * With pause-metadata=true, aria2 resolves metadata on one GID and creates a
- * paused content task exposed through followedBy.
- *
- * When multiple magnets are added concurrently, only one dialog is shown at
- * a time. The poll pauses while a dialog is open and resumes after the user
- * confirms or cancels — preventing dialog state from being overwritten.
- */
-function startMagnetPoll() {
-  if (magnetPollTimer) clearTimeout(magnetPollTimer)
+async function resolvePendingMagnet(gid: string): Promise<boolean> {
+  return resolvePendingMagnetMetadata(magnetMetadataDeps(), gid)
+}
 
-  async function tick() {
-    const gids = appStore.pendingMagnetGids
+async function resolveNextPendingMagnet() {
+  await resolveNextPendingMagnetMetadata(magnetMetadataDeps())
+}
 
-    // Don't overwrite an open dialog — pause polling and let
-    // confirm/cancel handler restart it for remaining GIDs.
-    if (magnetSelectVisible.value) {
-      magnetPollTimer = null
-      return
-    }
+async function startAria2DownloadCompleteListener() {
+  stopAria2DownloadCompleteListener()
+  unlistenAria2DownloadComplete = await listenForAria2DownloadComplete(resolvePendingMagnet)
+}
 
-    if (gids.length === 0) {
-      magnetPollTimer = null
-      return
-    }
+function stopAria2DownloadCompleteListener() {
+  unlistenAria2DownloadComplete?.()
+  unlistenAria2DownloadComplete = null
+}
 
-    for (const gid of [...gids]) {
-      try {
-        const metadataTask = await taskStore.fetchTaskStatus(gid)
-        const resolved = getResolvedMagnetSelection(metadataTask)
-        if (!resolved) continue
-
-        const task = await taskStore.fetchTaskStatus(resolved.downloadGid)
-        const files = await taskStore.getFiles(resolved.downloadGid)
-        const realFiles = files.filter((f) => Number(f.length) > 0)
-        if (realFiles.length === 0) continue
-
-        // Metadata resolved — show file selection dialog
-        appStore.pendingMagnetGids = appStore.pendingMagnetGids.filter((g) => g !== gid)
-        const parsed = parseFilesForSelection(realFiles)
-        magnetSelectFiles.value = parsed
-        magnetSelectionSession.value = resolved
-        magnetSelectName.value = task.bittorrent?.info?.name || parsed[0]?.name || t('task.magnet-task')
-        magnetSelectVisible.value = true
-        return // Process one magnet at a time
-      } catch (e) {
-        logger.debug('MainLayout.magnetPoll', `gid=${gid} metadata query skipped: ${e}`)
-      }
-    }
-
-    magnetPollTimer = setTimeout(tick, 2000)
+function magnetMetadataDeps() {
+  const state: MagnetMetadataState = {
+    get pendingGids() {
+      return appStore.pendingMagnetGids
+    },
+    set pendingGids(value) {
+      appStore.pendingMagnetGids = value
+    },
+    get visible() {
+      return magnetSelectVisible.value
+    },
+    set visible(value) {
+      magnetSelectVisible.value = value
+    },
+    get files() {
+      return magnetSelectFiles.value
+    },
+    set files(value) {
+      magnetSelectFiles.value = value
+    },
+    get session() {
+      return magnetSelectionSession.value
+    },
+    set session(value) {
+      magnetSelectionSession.value = value
+    },
+    get name() {
+      return magnetSelectName.value
+    },
+    set name(value) {
+      magnetSelectName.value = value
+    },
   }
-
-  void tick()
+  return {
+    state,
+    fetchTaskStatus: taskStore.fetchTaskStatus,
+    getFiles: taskStore.getFiles,
+    fallbackName: () => t('task.magnet-task'),
+  }
 }
 
 async function restorePendingMagnetSelections() {
@@ -396,10 +402,9 @@ async function handleMagnetConfirm(selectedIndices: number[]) {
     magnetSelectName.value = ''
   }
 
-  // Resume polling for any remaining pending magnet GIDs.
   // Delay to let the modal close animation finish before showing the next dialog.
   if (appStore.pendingMagnetGids.length > 0) {
-    setTimeout(startMagnetPoll, 350)
+    setTimeout(() => void resolveNextPendingMagnet(), 350)
   }
 }
 
@@ -419,10 +424,9 @@ async function handleMagnetCancel() {
   }
   message.info(t('task.magnet-download-cancelled') || 'Download cancelled')
 
-  // Resume polling for any remaining pending magnet GIDs.
   // Delay to let the modal close animation finish before showing the next dialog.
   if (appStore.pendingMagnetGids.length > 0) {
-    setTimeout(startMagnetPoll, 350)
+    setTimeout(() => void resolveNextPendingMagnet(), 350)
   }
 }
 
@@ -664,6 +668,7 @@ onMounted(async () => {
   }
 
   startStatListener()
+  await startAria2DownloadCompleteListener()
 
   // ── Auto-shutdown event from Rust monitor (lightweight mode fallback) ──
   unlistenPowerCountdown = await listen('power:countdown', () => {
@@ -814,15 +819,14 @@ onMounted(async () => {
     if (focused) requestFileRecheck()
   })
 
-  // ── Magnet metadata monitoring (app-level) ────────────────────────
-  // Watches pendingMagnetGids in app store and starts polling when
-  // magnet tasks are added. Runs at MainLayout level so it works
-  // even when the user navigates away from the task page.
+  // ── Magnet metadata recovery (app-level) ──────────────────────────
+  // WebSocket events handle the live path. This one-shot scan covers
+  // metadata that resolved before the listener was ready.
   await restorePendingMagnetSelections()
-  watch(
+  stopPendingMagnetWatch = watch(
     () => appStore.pendingMagnetGids,
     (gids) => {
-      if (gids.length > 0) startMagnetPoll()
+      if (gids.length > 0) void resolveNextPendingMagnet()
     },
     { immediate: true },
   )
@@ -931,12 +935,11 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopStatListener()
+  stopAria2DownloadCompleteListener()
+  stopPendingMagnetWatch?.()
+  stopPendingMagnetWatch = null
   lifecycleService?.stop()
   if (unlistenFocusRecheck) unlistenFocusRecheck()
-  if (magnetPollTimer) {
-    clearTimeout(magnetPollTimer)
-    magnetPollTimer = null
-  }
   if (unlistenDragDrop) unlistenDragDrop()
   if (unlistenMenuEvent) unlistenMenuEvent()
   if (unlistenCloseRequested) unlistenCloseRequested()

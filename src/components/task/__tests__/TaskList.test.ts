@@ -6,14 +6,6 @@ import { usePreferenceStore } from '@/stores/preference'
 import type { Aria2Task } from '@shared/types'
 import type { SortableEvent, SortableOptions } from 'sortablejs'
 
-vi.mock('@formkit/auto-animate', () => ({
-  autoAnimate: vi.fn(() => ({
-    enable: vi.fn(),
-    disable: vi.fn(),
-    destroy: vi.fn(),
-  })),
-}))
-
 const { sortableCreateMock } = vi.hoisted(() => ({
   sortableCreateMock: vi.fn((_element: HTMLElement, _options: SortableOptions) => ({ destroy: vi.fn() })),
 }))
@@ -133,5 +125,45 @@ describe('TaskList', () => {
     await sortableOptions?.onEnd?.({} as SortableEvent)
 
     expect(saveSpy).toHaveBeenCalledWith([expect.objectContaining({ gid: 'c' }), expect.objectContaining({ gid: 'd' })])
+  })
+
+  it('marks a single removed card for collapse with its current height', async () => {
+    const wrapper = mount(TaskList, {
+      global: {
+        plugins: [pinia],
+      },
+    })
+    const taskStore = useTaskStore()
+    taskStore.taskList = ['a', 'b', 'c'].map(createTaskWithGid)
+    taskStore.taskPagination.active.total = 3
+    await wrapper.vm.$nextTick()
+
+    const removed = wrapper.findAll('.task-list-item')[1].element as HTMLElement
+    Object.defineProperty(removed, 'offsetHeight', { configurable: true, value: 48 })
+
+    await wrapper.findComponent({ name: 'TransitionGroup' }).vm.$emit('before-leave', removed)
+
+    expect(removed.classList.contains('task-list-item--collapsing')).toBe(true)
+    expect(removed.style.getPropertyValue('--task-list-card-leave-height')).toBe('48px')
+  })
+
+  it('does not mark leaving cards for collapse during page swaps', async () => {
+    const wrapper = mount(TaskList, {
+      global: {
+        plugins: [pinia],
+      },
+    })
+    const taskStore = useTaskStore()
+    taskStore.taskList = ['a', 'b', 'c'].map(createTaskWithGid)
+    taskStore.taskPagination.active.total = 3
+    await wrapper.vm.$nextTick()
+
+    await wrapper.findComponent({ name: 'Transition' }).vm.$emit('before-leave')
+    const leaving = wrapper.findAll('.task-list-item')[1].element as HTMLElement
+
+    await wrapper.findComponent({ name: 'TransitionGroup' }).vm.$emit('before-leave', leaving)
+
+    expect(leaving.classList.contains('task-list-item--collapsing')).toBe(false)
+    expect(leaving.style.getPropertyValue('--task-list-card-leave-height')).toBe('')
   })
 })

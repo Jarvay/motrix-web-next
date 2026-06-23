@@ -34,6 +34,7 @@ pub(crate) const SUPPORTED_ENGINE_KEYS: &[&str] = &[
     "ed2k-udp-listen-port",
     "ed2k-upload-slots",
     "enable-dht",
+    "enable-dht6",
     "enable-http-keep-alive",
     "enable-http-pipelining",
     "enable-mmap",
@@ -286,7 +287,8 @@ mod tests {
 
     #[test]
     fn build_args_passes_whitelisted_keys() {
-        let config = json!({ "dir": "/tmp", "split": 16, "async-dns": "false" });
+        let config =
+            json!({ "dir": "/tmp", "split": 16, "async-dns": "false", "enable-dht6": "true" });
         let args = build_start_args(
             &config,
             None,
@@ -298,6 +300,7 @@ mod tests {
         assert!(args.iter().any(|a| a == "--dir=/tmp"));
         assert!(args.iter().any(|a| a == "--split=16"));
         assert!(args.iter().any(|a| a == "--async-dns=false"));
+        assert!(args.iter().any(|a| a == "--enable-dht6=true"));
     }
 
     #[test]

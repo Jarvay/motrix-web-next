@@ -4,6 +4,7 @@
  * BatchItem entries for the unified add-task dialog.
  */
 import type { BatchItemKind, BatchItem } from '@shared/types'
+import type { Aria2EngineOptions } from '@shared/types'
 import { BARE_INFO_HASH_RE } from '@shared/constants'
 import { decodeMimeWords } from 'lettercoder'
 import sanitizeFilename from 'sanitize-filename'
@@ -136,6 +137,106 @@ function normalizeRawUriLine(line: string): string {
   return normalizeInfoHash(line.trim())
 }
 
+export interface Aria2InputEntry {
+  uris: string[]
+  options: Aria2EngineOptions
+}
+
+export interface ParsedAria2Input {
+  entries: Aria2InputEntry[]
+  validLineCount: number
+}
+
+function isAria2OptionLine(line: string): boolean {
+  return line.startsWith(' ') || line.startsWith('\t')
+}
+
+function isAria2OptionAssignment(line: string): boolean {
+  return /^[A-Za-z0-9][A-Za-z0-9-]*=/.test(line)
+}
+
+function appendAria2Option(options: Aria2EngineOptions, rawLine: string): void {
+  const line = rawLine.trim()
+  const separator = line.indexOf('=')
+  if (separator <= 0) return
+
+  const key = line.slice(0, separator).trim()
+  const value = line.slice(separator + 1)
+  if (!key) return
+
+  const existing = options[key]
+  if (existing === undefined) {
+    options[key] = value
+  } else if (Array.isArray(existing)) {
+    existing.push(value)
+  } else {
+    options[key] = [existing, value]
+  }
+}
+
+function parseAria2UriLine(line: string): string[] {
+  return line
+    .split('\t')
+    .map((part) => normalizeUriLine(part))
+    .filter(Boolean)
+}
+
+function countLeadingSpaces(line: string): number {
+  const match = line.match(/^[ \t]*/)
+  return match ? match[0].length : 0
+}
+
+function trimCommonInputIndent(lines: string[]): string[] {
+  const contentIndents = lines
+    .filter((line) => {
+      const trimmed = line.trim()
+      return trimmed && !trimmed.startsWith('#') && !isAria2OptionAssignment(trimmed)
+    })
+    .map(countLeadingSpaces)
+
+  if (contentIndents.length === 0) return lines
+
+  const commonIndent = Math.min(...contentIndents)
+  if (commonIndent <= 0) return lines
+
+  return lines.map((line) => line.slice(Math.min(commonIndent, countLeadingSpaces(line))))
+}
+
+/**
+ * Parses aria2 input-file structure used by aria2-next:
+ * - a non-indented line starts one task
+ * - tab-separated URIs on that line are mirrors for the same task
+ * - following space/tab-indented key=value lines are per-task options
+ * - option validity is intentionally left to aria2-next
+ */
+export function parseAria2Input(text: string): ParsedAria2Input {
+  const entries: Aria2InputEntry[] = []
+  let current: Aria2InputEntry | null = null
+  let validLineCount = 0
+
+  for (const rawLine of trimCommonInputIndent(text.split('\n'))) {
+    const trimmed = rawLine.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+
+    if (isAria2OptionLine(rawLine) && isAria2OptionAssignment(trimmed)) {
+      if (current) {
+        appendAria2Option(current.options, rawLine)
+        validLineCount++
+      }
+      continue
+    }
+    if (isAria2OptionLine(rawLine) && current) continue
+
+    const uris = parseAria2UriLine(rawLine)
+    if (uris.length === 0) continue
+    current = { uris, options: {} }
+    entries.push(current)
+    validLineCount++
+  }
+
+  return { entries, validLineCount }
+}
+
 /**
  * Split, trim, remove blanks, and deduplicate URI lines by first occurrence.
  * Handles multiline payloads — each line is treated as an independent URI.
@@ -144,11 +245,12 @@ function normalizeRawUriLine(line: string): string {
 export function normalizeUriLines(text: string): string[] {
   const seen = new Set<string>()
   const result: string[] = []
-  for (const raw of text.split('\n')) {
-    const line = normalizeUriLine(raw)
-    if (line && !seen.has(line)) {
-      seen.add(line)
-      result.push(line)
+  for (const entry of parseAria2Input(text).entries) {
+    for (const line of entry.uris) {
+      if (!seen.has(line)) {
+        seen.add(line)
+        result.push(line)
+      }
     }
   }
   return result

@@ -308,6 +308,9 @@ export default {
   'category-hint-active':
     'Automatyczna klasyfikacja jest aktywna, pliki zostaną zapisane w odpowiednich folderach kategorii',
   'category-hint-overridden': 'Określono ścieżkę niestandardową, reguły klasyfikacji zostaną pominięte',
+  'category-match-single': 'Dopasowano: {category}',
+  'category-match-multiple': 'Pasuje wiele kategorii',
+  'category-match-none': 'Brak dopasowanej kategorii, zostanie użyta ścieżka domyślna',
   'category-dir-placeholder': 'Pozostaw puste dla automatycznej klasyfikacji',
   'favorite-folders': 'Ulubione foldery',
   'recent-folders': 'Ostatnie foldery',

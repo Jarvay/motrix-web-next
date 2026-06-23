@@ -153,6 +153,24 @@ describe('resolveArchiveAction', () => {
     expect(result!.targetDir).toBe('/Volumes/NAS/Videos')
   })
 
+  it('archives extensionless completed files by URL rule', () => {
+    const categories: FileCategory[] = [
+      {
+        label: 'Reports',
+        extensions: [],
+        urlPatterns: ['*://reports.example.com/export/*'],
+        urlPatternMode: 'wildcard',
+        directory: '/Users/test/Downloads/Reports',
+      },
+    ]
+    const task = makeTask('/Users/test/Downloads/latest', '/Users/test/Downloads')
+    task.files[0].uris = [{ uri: 'https://reports.example.com/export/latest', status: 'used' }]
+
+    const result = resolveArchiveAction(task, true, categories, BASE_DIR)
+
+    expect(result?.targetDir).toBe('/Users/test/Downloads/Reports')
+  })
+
   // ── Edge cases ─────────────────────────────────────────────────
 
   it('handles file path with spaces and special characters', () => {

@@ -48,18 +48,21 @@ describe('buildBtForm', () => {
 
   it('defaults BT discovery toggles to enabled', () => {
     const form = buildBtForm(emptyConfig)
-    expect(form.btDhtEnabled).toBe(true)
+    expect(form.btDhtIpv4Enabled).toBe(true)
+    expect(form.btDhtIpv6Enabled).toBe(true)
     expect(form.btPeerExchangeEnabled).toBe(true)
     expect(form.btLocalPeerDiscoveryEnabled).toBe(true)
   })
 
   it('reads BT discovery toggles from config', () => {
     const form = buildBtForm({
-      btDhtEnabled: false,
+      btDhtIpv4Enabled: false,
+      btDhtIpv6Enabled: true,
       btPeerExchangeEnabled: false,
       btLocalPeerDiscoveryEnabled: false,
     } as unknown as AppConfig)
-    expect(form.btDhtEnabled).toBe(false)
+    expect(form.btDhtIpv4Enabled).toBe(false)
+    expect(form.btDhtIpv6Enabled).toBe(true)
     expect(form.btPeerExchangeEnabled).toBe(false)
     expect(form.btLocalPeerDiscoveryEnabled).toBe(false)
   })
@@ -118,12 +121,13 @@ describe('buildBtForm', () => {
 
   // ── Completeness ────────────────────────────────────────────────
 
-  it('returns all 12 form fields', () => {
+  it('returns every BT form field', () => {
     const form = buildBtForm(emptyConfig)
     const expectedFields = [
       'btAutoDownloadContent',
       'btForceEncryption',
-      'btDhtEnabled',
+      'btDhtIpv4Enabled',
+      'btDhtIpv6Enabled',
       'btPeerExchangeEnabled',
       'btLocalPeerDiscoveryEnabled',
       'btMaxPeers',
@@ -147,7 +151,8 @@ describe('buildBtSystemConfig', () => {
   const baseForm: BtForm = {
     btAutoDownloadContent: true,
     btForceEncryption: false,
-    btDhtEnabled: true,
+    btDhtIpv4Enabled: true,
+    btDhtIpv6Enabled: true,
     btPeerExchangeEnabled: true,
     btLocalPeerDiscoveryEnabled: true,
     btMaxPeers: 128,
@@ -172,13 +177,25 @@ describe('buildBtSystemConfig', () => {
   it('maps BT discovery toggles to aria2 config', () => {
     const config = buildBtSystemConfig({
       ...baseForm,
-      btDhtEnabled: false,
+      btDhtIpv4Enabled: false,
+      btDhtIpv6Enabled: false,
       btPeerExchangeEnabled: false,
       btLocalPeerDiscoveryEnabled: false,
     })
     expect(config['enable-dht']).toBe('false')
+    expect(config['enable-dht6']).toBe('false')
     expect(config['enable-peer-exchange']).toBe('false')
     expect(config['bt-enable-lpd']).toBe('false')
+  })
+
+  it('maps DHT network checkboxes to aria2 IPv4 and IPv6 switches', () => {
+    const config = buildBtSystemConfig({
+      ...baseForm,
+      btDhtIpv4Enabled: true,
+      btDhtIpv6Enabled: false,
+    })
+    expect(config['enable-dht']).toBe('true')
+    expect(config['enable-dht6']).toBe('false')
   })
 
   it('mirrors force encryption into both aria2 encryption switches', () => {
@@ -238,7 +255,8 @@ describe('transformBtForStore', () => {
   const baseForm: BtForm = {
     btAutoDownloadContent: true,
     btForceEncryption: false,
-    btDhtEnabled: true,
+    btDhtIpv4Enabled: true,
+    btDhtIpv6Enabled: true,
     btPeerExchangeEnabled: true,
     btLocalPeerDiscoveryEnabled: true,
     btMaxPeers: 128,
@@ -286,11 +304,13 @@ describe('transformBtForStore', () => {
   it('preserves BT discovery toggles through transform', () => {
     const result = transformBtForStore({
       ...baseForm,
-      btDhtEnabled: false,
+      btDhtIpv4Enabled: false,
+      btDhtIpv6Enabled: true,
       btPeerExchangeEnabled: false,
       btLocalPeerDiscoveryEnabled: false,
     })
-    expect(result.btDhtEnabled).toBe(false)
+    expect(result.btDhtIpv4Enabled).toBe(false)
+    expect(result.btDhtIpv6Enabled).toBe(true)
     expect(result.btPeerExchangeEnabled).toBe(false)
     expect(result.btLocalPeerDiscoveryEnabled).toBe(false)
   })

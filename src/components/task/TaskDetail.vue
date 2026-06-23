@@ -3,6 +3,7 @@
 import { ref, computed, watch, defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { logger } from '@shared/logger'
+import { writeAppClipboardText } from '@shared/utils'
 import {
   checkTaskIsBT,
   checkTaskIsSharing,
@@ -119,7 +120,7 @@ async function copyDetailValue(value: string | number | null | undefined, label:
   const text = value === null || value === undefined ? '' : String(value)
   if (!text || text === '-') return
   try {
-    await navigator.clipboard.writeText(text)
+    await writeAppClipboardText(text)
     message.success(t('preferences.copied-to-clipboard', { label }))
   } catch (e) {
     logger.debug('TaskDetail.clipboard', `writeText failed: ${e}`)
@@ -235,6 +236,7 @@ const taskStatus = computed(() => {
   return translated !== labelKey ? translated : key
 })
 const taskFullName = computed(() => (props.task ? getTaskDisplayName(props.task, { defaultName: 'Unknown' }) : ''))
+type TaskStatusTagType = 'default' | 'success' | 'warning' | 'error' | 'info'
 
 // ── Task date display ────────────────────────────────────────────────
 const taskAddedAt = computed(() => {
@@ -282,10 +284,15 @@ function yesNo(value?: boolean | string): string {
   return normalized ? t('task.task-ed2k-yes') : t('task.task-ed2k-no')
 }
 
-const statusTagType = computed(() => {
+const statusTagType = computed<TaskStatusTagType>(() => {
   switch (taskStatusKey.value) {
     case 'active':
+    case 'waiting':
+    case 'bt-metadata-fetching':
       return 'warning'
+    case 'seeding':
+    case 'sharing':
+      return 'info'
     case 'complete':
       return 'success'
     case 'error':

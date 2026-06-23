@@ -435,7 +435,13 @@ describe('transformDownloadsForStore', () => {
       fileCategoryEnabled: true,
       fileCategories: customCategories,
     })
-    expect(result.fileCategories).toEqual(customCategories)
+    expect(result.fileCategories).toEqual([
+      {
+        ...customCategories[0],
+        urlPatterns: [],
+        urlPatternMode: 'wildcard',
+      },
+    ])
   })
 
   it('preserves dir through transform', () => {

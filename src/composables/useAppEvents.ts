@@ -77,8 +77,6 @@ interface AppEventsDeps {
     externalInputSubmitting: boolean
   }
   taskStore: {
-    taskList: unknown[]
-    selectedGidList: string[]
     hasPausedTasks: () => Promise<boolean>
     hasActiveTasks: () => Promise<boolean>
     resumeAllTask: () => Promise<unknown>
@@ -344,11 +342,6 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
   function setupNavGuard() {
     return registerCleanup(
       router.beforeEach((to, from) => {
-        if (from.name === 'task' && to.name === 'task' && from.params.status !== to.params.status) {
-          taskStore.taskList = []
-          taskStore.selectedGidList = []
-        }
-
         const leavingPrefs = from.path.startsWith('/preference') && !to.path.startsWith('/preference')
         const switchingPrefsTab =
           from.path.startsWith('/preference') && to.path.startsWith('/preference') && from.path !== to.path

@@ -9,7 +9,8 @@ const userKeys = [
   'auto-select-all-bt-files-from-extension',
   'silent-auto-submit-from-extension',
   'async-dns',
-  'bt-dht-enabled',
+  'bt-dht-ipv-4-enabled',
+  'bt-dht-ipv-6-enabled',
   'bt-local-peer-discovery-enabled',
   'bt-peer-exchange-enabled',
   'bt-tracker-auto-sync',
@@ -125,6 +126,7 @@ const systemKeys = [
   'enable-http-pipelining',
   'enable-mmap',
   'enable-dht',
+  'enable-dht6',
   'enable-peer-exchange',
   'file-allocation',
   'force-sequential',
@@ -193,7 +195,8 @@ const systemKeys = [
 ]
 
 const needRestartKeys = [
-  'bt-dht-enabled',
+  'bt-dht-ipv-4-enabled',
+  'bt-dht-ipv-6-enabled',
   'bt-enable-lpd',
   'bt-force-encryption',
   'bt-local-peer-discovery-enabled',
@@ -207,6 +210,7 @@ const needRestartKeys = [
   'ed2k-udp-listen-port',
   'ed2k-upload-slots',
   'enable-dht',
+  'enable-dht6',
   'enable-peer-exchange',
   'listen-port',
   'rpc-listen-port',

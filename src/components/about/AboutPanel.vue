@@ -10,6 +10,7 @@ import { getVersion } from '@tauri-apps/api/app'
 import { getVersion as getAria2Version } from '@/api/aria2'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { logger } from '@shared/logger'
+import { writeAppClipboardText } from '@shared/utils'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ close: [] }>()
@@ -110,7 +111,7 @@ const links = [
 
 async function copyToClipboard(text: string, label: string) {
   try {
-    await navigator.clipboard.writeText(text)
+    await writeAppClipboardText(text)
     message.success(t('about.version-copied', { label }))
   } catch (e) {
     logger.debug('AboutPanel.clipboard', `writeText failed: ${e}`)

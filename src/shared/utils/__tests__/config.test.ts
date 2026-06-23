@@ -140,7 +140,8 @@ describe('checkIsNeedRestart', () => {
     expect(checkIsNeedRestart({ dhtListenPort: 26702 })).toBe(true)
   })
   it('returns true for BT discovery and encryption session keys', () => {
-    expect(checkIsNeedRestart({ btDhtEnabled: false })).toBe(true)
+    expect(checkIsNeedRestart({ btDhtIpv4Enabled: false })).toBe(true)
+    expect(checkIsNeedRestart({ btDhtIpv6Enabled: false })).toBe(true)
     expect(checkIsNeedRestart({ btPeerExchangeEnabled: false })).toBe(true)
     expect(checkIsNeedRestart({ btLocalPeerDiscoveryEnabled: false })).toBe(true)
     expect(checkIsNeedRestart({ btForceEncryption: true })).toBe(true)

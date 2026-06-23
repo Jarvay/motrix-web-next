@@ -361,7 +361,8 @@ export const DEFAULT_APP_CONFIG = {
 
   // ── BitTorrent (qBT/Transmission/Deluge conventions) ──────────
   btMaxPeers: ENGINE_DEFAULT_BT_MAX_PEERS, // aria2 default=55; qBT=100, Transmission=60, Deluge=200
-  btDhtEnabled: true, // improves peer discovery; also enables UDP tracker support
+  btDhtIpv4Enabled: true, // improves peer discovery; also enables UDP tracker support
+  btDhtIpv6Enabled: true, // restores IPv6 DHT peer discovery
   btPeerExchangeEnabled: true, // improves peer discovery inside active swarms
   btLocalPeerDiscoveryEnabled: true, // aria2.conf legacy default; helps LAN peers
   btForceEncryption: false, // qBT default "Allow", not "Force"; forcing reduces peers

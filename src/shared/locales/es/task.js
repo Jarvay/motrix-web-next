@@ -307,6 +307,9 @@ export default {
   'category-hint-active':
     'La clasificación automática está activa, los archivos se guardarán en sus carpetas de categoría',
   'category-hint-overridden': 'Ruta personalizada especificada, las reglas de clasificación se omitirán',
+  'category-match-single': 'Coincidencia: {category}',
+  'category-match-multiple': 'Coinciden varias categorías',
+  'category-match-none': 'Sin categoría coincidente, se usará la ruta predeterminada',
   'category-dir-placeholder': 'Dejar vacío para clasificación automática',
   'favorite-folders': 'Carpetas favoritas',
   'recent-folders': 'Carpetas recientes',
